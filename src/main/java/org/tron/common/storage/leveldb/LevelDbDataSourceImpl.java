@@ -43,6 +43,7 @@ import org.iq80.leveldb.Options;
 import org.iq80.leveldb.WriteBatch;
 import org.iq80.leveldb.WriteOptions;
 import org.tron.common.storage.DbSourceInter;
+import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.FileUtil;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.common.iterator.StoreIterator;
@@ -348,6 +349,30 @@ public class LevelDbDataSourceImpl implements DbSourceInter<byte[]>,
       }
       for (iterator.seek(key); iterator.hasPrev() && i++ < limit; iterator.prev()) {
         result.add(iterator.peekPrev().getValue());
+      }
+      return result;
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    } finally {
+      resetDbLock.readLock().unlock();
+    }
+  }
+
+  public Map<byte[], byte[]> getPrevious(byte[] key) {
+    resetDbLock.readLock().lock();
+    byte[] pre = new byte[8];
+    byte[] delayUntil = new byte[8];
+    System.arraycopy(key, 0, pre, 0, 8);
+    long expireTime = ByteArray.toLong(pre);
+    try (DBIterator iterator = database.iterator()) {
+      Map<byte[], byte[]> result = new HashMap<>();
+    for (iterator.seekToFirst(); iterator.hasNext(); iterator.next()) {
+        Entry<byte[], byte[]> entry = iterator.peekNext();
+        System.arraycopy(entry.getKey(), 0, delayUntil, 0, 8);
+        if (expireTime < ByteArray.toLong(delayUntil)) {
+          break;
+        }
+        result.put(entry.getKey(), entry.getValue());
       }
       return result;
     } catch (IOException e) {
