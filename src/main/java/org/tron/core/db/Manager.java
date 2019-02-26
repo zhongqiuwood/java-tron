@@ -706,12 +706,12 @@ public class Manager {
     }
     long transactionExpiration = transactionCapsule.getExpiration();
     long headBlockTime = getHeadBlockTimeStamp();
-    if (transactionExpiration <= headBlockTime ||
+    /*if (transactionExpiration <= headBlockTime ||
         transactionExpiration > headBlockTime + Constant.MAXIMUM_TIME_UNTIL_EXPIRATION) {
       throw new TransactionExpirationException(
           "transaction expiration, transaction expiration time is " + transactionExpiration
               + ", but headBlockTime is " + headBlockTime);
-    }
+    }*/
   }
 
   void validateDup(TransactionCapsule transactionCapsule) throws DupTransactionException {
@@ -1073,7 +1073,7 @@ public class Manager {
     if (block.getNum() != 1) {
       slot = witnessController.getSlotAtTime(block.getTimeStamp());
     }
-    for (int i = 1; i < slot; ++i) {
+    /*for (int i = 1; i < slot; ++i) {
       if (!witnessController.getScheduledWitness(i).equals(block.getWitnessAddress())) {
         WitnessCapsule w =
             this.witnessStore
@@ -1084,7 +1084,8 @@ public class Manager {
             "{} miss a block. totalMissed = {}", w.createReadableString(), w.getTotalMissed());
       }
       this.dynamicPropertiesStore.applyBlock(false);
-    }
+    }*/
+
     this.dynamicPropertiesStore.applyBlock(true);
 
     if (slot <= 0) {
@@ -1224,6 +1225,10 @@ public class Manager {
 
     // no need tapos validation when processing deferred transaction at the second time.
     validateTapos(trxCap);
+    if (trxCap.getTransactionType() != TransactionCapsule.executingDeferredTransaction) {
+      //validateTapos(trxCap);
+    }
+
     validateCommon(trxCap);
 
     if (trxCap.getInstance().getRawData().getContractList().size() != 1) {
@@ -2117,5 +2122,24 @@ public class Manager {
     logger.debug("cancel deferred transaction {} successfully", transactionId.toString());
 
     return true;
+  }
+
+  public void insertWitness(byte[] keyAddress, long voteCount, int idx) {
+    ByteString address = ByteString.copyFrom(keyAddress);
+
+    final AccountCapsule accountCapsule;
+    if (!this.accountStore.has(keyAddress)) {
+      accountCapsule = new AccountCapsule(ByteString.EMPTY,
+              address, AccountType.AssetIssue, 0L);
+    } else {
+      accountCapsule = this.accountStore.getUnchecked(keyAddress);
+    }
+    accountCapsule.setIsWitness(true);
+    this.accountStore.put(keyAddress, accountCapsule);
+
+    final WitnessCapsule witnessCapsule =
+            new WitnessCapsule(address, voteCount, "mock_witness_" + idx);
+    witnessCapsule.setIsJobs(true);
+    this.witnessStore.put(keyAddress, witnessCapsule);
   }
 }
