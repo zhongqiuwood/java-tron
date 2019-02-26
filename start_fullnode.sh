@@ -20,6 +20,6 @@ done
 total=`cat /proc/meminfo  |grep MemTotal |awk -F ' ' '{print $2}'`
 xmx=`echo "$total/1024/1024*0.8" | bc |awk -F. '{print $1"g"}'`
 logtime=`date +%Y-%m-%d_%H-%M-%S`
-nohup java -Xmx$xmx -jar /home/java-tron/java-tron/build/libs/FullNode.jar --witness -c /home/java-tron/config.conf   >> start.log 2>&1 &
+nohup java -Xmx$xmx -jar /home/java-tron/java-tron/build/libs/FullNode.jar -c /home/java-tron/config.conf   >> start.log 2>&1 &
 pid=`ps -ef |grep FullNode.jar |grep -v grep |awk '{print $2}'`
 echo "start java-tron with pid $pid on $HOSTNAME"
