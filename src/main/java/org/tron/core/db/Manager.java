@@ -1185,6 +1185,9 @@ public class Manager {
 
   // deferred transaction is processed for the first time, use the trx id received from wallet to represent the first trx record
   public boolean processDeferTransaction(final TransactionCapsule trxCap, BlockCapsule blockCap, TransactionTrace transactionTrace){
+    if (trxCap.getDeferredSeconds() > 0) {
+      trxCap.setReferenceBlockNumber(getDynamicPropertiesStore().getLatestBlockHeaderNumber());
+    }
 
     transactionTrace.init(blockCap, eventPluginLoaded);
 
@@ -1199,7 +1202,7 @@ public class Manager {
     TransactionInfoCapsule transactionInfo = TransactionInfoCapsule
             .buildInstance(trxCap, blockCap, transactionTrace);
     transactionHistoryStore.put(trxCap.getTransactionId().getBytes(), transactionInfo);
-    
+
     postContractTrigger(transactionTrace, false);
 
     try {
@@ -1223,10 +1226,7 @@ public class Manager {
     }
 
     // no need tapos validation when processing deferred transaction at the second time.
-    if (trxCap.getTransactionType() != TransactionCapsule.executingDeferredTransaction) {
-      //validateTapos(trxCap);
-    }
-
+    validateTapos(trxCap);
     validateCommon(trxCap);
 
     if (trxCap.getInstance().getRawData().getContractList().size() != 1) {
@@ -1236,7 +1236,7 @@ public class Manager {
 
     validateDup(trxCap);
 
-    if (!trxCap.validateSignature(this)) {
+    if (trxCap.getTransactionType() != TransactionCapsule.executingDeferredTransaction && !trxCap.validateSignature(this)) {
       throw new ValidateSignatureException("trans sig validate failed");
     }
 
@@ -1294,7 +1294,6 @@ public class Manager {
 
     // if event subscribe is enabled, post contract triggers to queue
     postContractTrigger(trace, false);
-    //
     Contract contract = trxCap.getInstance().getRawData().getContract(0);
     if (isMultSignTransaction(trxCap.getInstance())) {
       ownerAddressSet.add(ByteArray.toHexString(TransactionCapsule.getOwner(contract)));

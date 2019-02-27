@@ -35,6 +35,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
@@ -124,6 +125,7 @@ import org.tron.protos.Contract.TriggerSmartContract;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
+import org.tron.protos.Protocol.DeferredTransaction;
 import org.tron.protos.Protocol.DelegatedResourceAccountIndex;
 import org.tron.protos.Protocol.Exchange;
 import org.tron.protos.Protocol.Permission;
@@ -1213,14 +1215,30 @@ public class Wallet {
     return null;
   }
 
-  public Transaction getDeferredTransactionById(ByteString transactionId) {
+  public DeferredTransaction getDeferredTransactionById(ByteString transactionId) {
     if (Objects.isNull(transactionId)) {
       return null;
     }
     DeferredTransactionCapsule deferredTransactionCapsule = dbManager.getDeferredTransactionStore().getByTransactionId(transactionId);
 
     if (deferredTransactionCapsule != null) {
-      return deferredTransactionCapsule.getDeferredTransaction().getTransaction();
+      return deferredTransactionCapsule.getDeferredTransaction();
+    }
+
+    TransactionCapsule transactionCapsule = dbManager.getTransactionStore().getUnchecked(transactionId.toByteArray());
+
+    if (Objects.nonNull(transactionCapsule)) {
+      transactionCapsule.setReference(transactionCapsule.getReferenceBlockNumber());
+      TransactionCapsule generateTransaction = dbManager.getTransactionStore()
+          .getUnchecked(transactionCapsule.getTransactionId().getBytes());
+      if (Objects.nonNull(generateTransaction)) {
+        DeferredTransaction.Builder deferredTransaction = DeferredTransaction.newBuilder();
+        deferredTransaction.setTransactionId(transactionCapsule.getTransactionId().getByteString());
+        deferredTransaction.setSenderAddress(transactionCapsule.getSenderAddress());
+        deferredTransaction.setReceiverAddress(transactionCapsule.getToAddress());
+        deferredTransaction.setTransaction(transactionCapsule.getInstance());
+        return deferredTransaction.build();
+      }
     }
     return null;
   }
