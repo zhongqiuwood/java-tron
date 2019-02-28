@@ -1224,12 +1224,8 @@ public class Manager {
     }
 
     // no need tapos validation when processing deferred transaction at the second time.
-    validateTapos(trxCap);
-    if (trxCap.getTransactionType() != TransactionCapsule.executingDeferredTransaction) {
-      //validateTapos(trxCap);
-    }
-
-    validateCommon(trxCap);
+   // validateTapos(trxCap);
+   // validateCommon(trxCap);
 
     if (trxCap.getInstance().getRawData().getContractList().size() != 1) {
       throw new ContractSizeNotEqualToOneException(
@@ -1238,9 +1234,9 @@ public class Manager {
 
     validateDup(trxCap);
 
-    if (trxCap.getTransactionType() != TransactionCapsule.EXECUTINGDEFERREDTRANSACTION && !trxCap.validateSignature(this)) {
-      throw new ValidateSignatureException("trans sig validate failed");
-    }
+//    if (trxCap.getTransactionType() != TransactionCapsule.EXECUTINGDEFERREDTRANSACTION && !trxCap.validateSignature(this)) {
+//      throw new ValidateSignatureException("trans sig validate failed");
+//    }
 
     TransactionTrace trace = new TransactionTrace(trxCap, this);
     trxCap.setTrxTrace(trace);
