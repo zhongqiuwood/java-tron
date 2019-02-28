@@ -23,7 +23,6 @@ public class CancelDeferredTransactionContractActuator extends AbstractActuator 
   public boolean execute(TransactionResultCapsule capsule) throws ContractExeException {
     long fee = calcFee();
     final CancelDeferredTransactionContract cancelDeferredTransactionContract;
-    // todo calculate fee
     try {
       cancelDeferredTransactionContract = this.contract.unpack(CancelDeferredTransactionContract.class);
       dbManager.cancelDeferredTransaction(cancelDeferredTransactionContract.getTransactionId());
@@ -65,7 +64,7 @@ public class CancelDeferredTransactionContractActuator extends AbstractActuator 
 
     ByteString sendAddress = capsule.getSenderAddress();
     ByteString ownerAddress = cancelDeferredTransactionContract.getOwnerAddress();
-    if (sendAddress.equals(ownerAddress) == false) {
+    if (!sendAddress.equals(ownerAddress)) {
       throw new ContractValidateException("not have right to cancel!");
     }
     return true;
