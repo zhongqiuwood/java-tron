@@ -70,6 +70,7 @@ public abstract class AbstractTransactionCreator extends Level2Strategy {
 
 
   long time = System.currentTimeMillis();
+  long delaySeconds = 1;
   AtomicLong count = new AtomicLong();
   public Transaction createTransaction(com.google.protobuf.Message message,
                                        ContractType contractType) {
@@ -87,7 +88,7 @@ public abstract class AbstractTransactionCreator extends Level2Strategy {
 
     transaction = setExpiration(transaction, gTime);
 
-
+    transaction = TransactionUtils.setDelaySeconds(transaction, delaySeconds);
 
     return transaction;
 

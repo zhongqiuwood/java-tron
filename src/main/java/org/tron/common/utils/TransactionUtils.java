@@ -159,4 +159,10 @@ public class TransactionUtils {
     builder.setRawData(rowBuilder.build());
     return builder.build();
   }
+
+  public static Transaction setDelaySeconds(Transaction transaction, long delaySeconds){
+    Transaction.raw rawData =  transaction.getRawData().toBuilder()
+        .setDelaySeconds(delaySeconds).build();
+    return transaction.toBuilder().setRawData(rawData).build();
+  }
 }
