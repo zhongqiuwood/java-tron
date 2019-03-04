@@ -3,6 +3,7 @@ package org.tron.stresstest.dispatch.creator.transfer;
 import com.google.protobuf.ByteString;
 import lombok.Setter;
 import org.tron.common.crypto.ECKey;
+import org.tron.common.utils.TransactionUtils;
 import org.tron.core.Wallet;
 import org.tron.stresstest.dispatch.GoodCaseTransactonCreator;
 import org.tron.stresstest.dispatch.TransactionFactory;
@@ -31,6 +32,7 @@ public class NiceTransferTransactionCreator extends AbstractTransferTransactionC
         .setAmount(amount)
         .build();
     Protocol.Transaction transaction = createTransaction(contract, ContractType.TransferContract);
+    transaction = TransactionUtils.setDelaySeconds(transaction, 1000);
 
     transaction = sign(transaction, ECKey.fromPrivate(ByteArray.fromHexString(privateKey)));
     return transaction;
