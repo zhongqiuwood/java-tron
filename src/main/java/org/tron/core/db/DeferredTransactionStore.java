@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.tron.core.capsule.DeferredTransactionCapsule;
+import static org.tron.core.config.Parameter.NodeConstant.MAX_TRANSACTION_PENDING;
 import java.util.List;
 
 @Slf4j(topic = "DB")
@@ -27,7 +28,7 @@ public class DeferredTransactionStore extends TronStoreWithRevoking<DeferredTran
     }
 
     public List<DeferredTransactionCapsule> getScheduledTransactions (long time){
-        return revokingDB.getValuesPrevious(Longs.toByteArray(time), Long.MAX_VALUE).stream()
+        return revokingDB.getValuesPrevious(Longs.toByteArray(time), MAX_TRANSACTION_PENDING).stream()
             .filter(Objects::nonNull)
             .map(DeferredTransactionCapsule::new)
             .collect(Collectors.toList());
@@ -35,23 +36,6 @@ public class DeferredTransactionStore extends TronStoreWithRevoking<DeferredTran
 
     public void removeDeferredTransaction(DeferredTransactionCapsule deferredTransactionCapsule) {
         revokingDB.delete(deferredTransactionCapsule.getKey());
-    }
-
-    public DeferredTransactionCapsule getByTransactionKey(byte[] key){
-        DeferredTransactionCapsule deferredTransactionCapsule = null;
-        try{
-            byte[] value = revokingDB.get(key);
-            if (ArrayUtils.isEmpty(value)) {
-                return null;
-            }
-
-            deferredTransactionCapsule = new DeferredTransactionCapsule(value);
-        }
-        catch (Exception e){
-            logger.error("{}", e);
-        }
-
-        return deferredTransactionCapsule;
     }
 
     public DeferredTransactionCapsule getByTransactionId(ByteString transactionId) {

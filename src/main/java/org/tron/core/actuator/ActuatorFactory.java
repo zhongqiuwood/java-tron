@@ -35,16 +35,16 @@ public class ActuatorFactory {
     Preconditions.checkNotNull(manager, "manager is null");
     Protocol.Transaction.raw rawData = transactionCapsule.getInstance().getRawData();
     rawData.getContractList()
-        .forEach(contract -> actuatorList.add(getActuatorByContract(contract, manager,transactionCapsule.getDeferredSeconds())));
+        .forEach(contract -> actuatorList.add(getActuatorByContract(contract, manager)));
     return actuatorList;
   }
 
-  private static Actuator getActuatorByContract(Contract contract, Manager manager, long delaySeconds) {
+  private static Actuator getActuatorByContract(Contract contract, Manager manager) {
     switch (contract.getType()) {
       case AccountUpdateContract:
         return new UpdateAccountActuator(contract.getParameter(), manager);
       case TransferContract:
-        return new TransferActuator(contract.getParameter(), manager, delaySeconds);
+        return new TransferActuator(contract.getParameter(), manager);
       case TransferAssetContract:
         return new TransferAssetActuator(contract.getParameter(), manager);
       case VoteAssetContract:

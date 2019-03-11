@@ -10,7 +10,6 @@ public abstract class AbstractActuator implements Actuator {
 
   protected Any contract;
   protected Manager dbManager;
-  protected long delaySeconds;
 
   public Deposit getDeposit() {
     return deposit;
@@ -25,11 +24,5 @@ public abstract class AbstractActuator implements Actuator {
   AbstractActuator(Any contract, Manager dbManager) {
     this.contract = contract;
     this.dbManager = dbManager;
-  }
-
-  AbstractActuator(Any contract, Manager dbManager, long delaySeconds) {
-    this.contract = contract;
-    this.dbManager = dbManager;
-    this.delaySeconds = delaySeconds;
   }
 }

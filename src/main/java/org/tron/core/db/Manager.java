@@ -95,6 +95,8 @@ import org.tron.core.exception.UnLinkedBlockException;
 import org.tron.core.exception.VMIllegalException;
 import org.tron.core.exception.ValidateScheduleException;
 import org.tron.core.exception.ValidateSignatureException;
+import org.tron.core.exception.WhitelistException;
+import org.tron.core.services.WhitelistService;
 import org.tron.core.services.WitnessService;
 import org.tron.core.witness.ProposalController;
 import org.tron.core.witness.WitnessController;
@@ -102,7 +104,6 @@ import org.tron.protos.Protocol.DeferredTransaction;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract;
-import org.tron.protos.Protocol.Transaction.Result.contractResult;
 
 
 @Slf4j(topic = "DB")
@@ -469,7 +470,6 @@ public class Manager {
         .newFixedThreadPool(Args.getInstance().getValidateSignThreadNum());
     repushThread = new Thread(repushLoop);
     repushThread.start();
-
     // add contract event listener for subscribing
     if (Args.getInstance().isEventSubscribe()) {
       startEventSubscribing();
@@ -1184,14 +1184,7 @@ public class Manager {
   }
 
   // deferred transaction is processed for the first time, use the trx id received from wallet to represent the first trx record
-  public boolean processDeferTransaction(final TransactionCapsule trxCap, BlockCapsule blockCap, TransactionTrace transactionTrace){
-    // setReferenceBlockNumber used to save the transformation relationship from old transaction id to generating transaction id
-    trxCap.setReferenceBlockNumber(getDynamicPropertiesStore().getLatestBlockHeaderNumber());
-    transactionTrace.init(blockCap, eventPluginLoaded);
-
-    trxCap.setTrxTrace(transactionTrace);
-    trxCap.setResultCode(contractResult.SUCCESS);
-
+  public boolean processDeferTransaction(final TransactionCapsule trxCap, BlockCapsule blockCap, TransactionTrace transactionTrace) {
     transactionStore.put(trxCap.getTransactionId().getBytes(), trxCap);
     Optional.ofNullable(transactionCache)
             .ifPresent(t -> t.put(trxCap.getTransactionId().getBytes(),
@@ -1200,7 +1193,6 @@ public class Manager {
     TransactionInfoCapsule transactionInfo = TransactionInfoCapsule
             .buildInstance(trxCap, blockCap, transactionTrace);
     transactionHistoryStore.put(trxCap.getTransactionId().getBytes(), transactionInfo);
-
     postContractTrigger(transactionTrace, false);
 
     try {
@@ -1234,9 +1226,16 @@ public class Manager {
 
     validateDup(trxCap);
 
-//    if (trxCap.getTransactionType() != TransactionCapsule.EXECUTINGDEFERREDTRANSACTION && !trxCap.validateSignature(this)) {
-//      throw new ValidateSignatureException("trans sig validate failed");
-//    }
+    if (trxCap.getDeferredStage() != Constant.EXECUTINGDEFERREDTRANSACTION && !trxCap.validateSignature(this)) {
+      throw new ValidateSignatureException("trans sig validate failed");
+    }
+
+    try {
+      WhitelistService.check(trxCap);
+    } catch (WhitelistException e) {
+      logger.debug(e.getMessage());
+      throw new ContractValidateException(e.getMessage(), e);
+    }
 
     TransactionTrace trace = new TransactionTrace(trxCap, this);
     trxCap.setTrxTrace(trace);
@@ -1244,17 +1243,19 @@ public class Manager {
     consumeBandwidth(trxCap, trace);
     consumeMultiSignFee(trxCap, trace);
 
-    // process deferred transaction for the first time
-    if (trxCap.getTransactionType() == TransactionCapsule.UNEXECUTEDDEFERREDTRANSACTION){
-      return processDeferTransaction(trxCap, blockCap, trace);
-    }
-
     VMConfig.initVmHardFork();
     VMConfig.initAllowMultiSign(dynamicPropertiesStore.getAllowMultiSign());
     VMConfig.initAllowTvmTransferTrc10(dynamicPropertiesStore.getAllowTvmTransferTrc10());
     trace.init(blockCap, eventPluginLoaded);
     trace.checkIsConstant();
+    trace.setDeferredStage(trxCap.getDeferredStage());
+
     trace.exec();
+
+    // process deferred transaction for the first time
+    if (trxCap.getDeferredStage() == Constant.UNEXECUTEDDEFERREDTRANSACTION){
+      return processDeferTransaction(trxCap, blockCap, trace);
+    }
 
     if (Objects.nonNull(blockCap)) {
       trace.setResult();
@@ -1295,6 +1296,12 @@ public class Manager {
     Contract contract = trxCap.getInstance().getRawData().getContract(0);
     if (isMultSignTransaction(trxCap.getInstance())) {
       ownerAddressSet.add(ByteArray.toHexString(TransactionCapsule.getOwner(contract)));
+    }
+
+    if (trxCap.getDeferredStage() == Constant.EXECUTINGDEFERREDTRANSACTION) {
+      TransactionCapsule oldTrxCap = new TransactionCapsule(trxCap.getInstance());
+      oldTrxCap.generateOldDeferredTransactionId();
+      cancelDeferredTransaction(oldTrxCap.getTransactionId().getByteString());
     }
     return true;
   }
@@ -1360,8 +1367,7 @@ public class Manager {
     long postponedDeferredTrxCount = 0;
     long processedDeferredTrxCount = 0;
     long totalDeferredTransactionProcessTime = 0;
-
-    List<DeferredTransactionCapsule> deferredTransactionList = addDeferredTransactionToPending(blockCapsule);
+    addDeferredTransactionToPending(blockCapsule);
 
     Set<String> accountSet = new HashSet<>();
     Iterator<TransactionCapsule> iterator = pendingTransactions.iterator();
@@ -1391,7 +1397,7 @@ public class Manager {
       }
 
       // total process time of deferred transactions should not exceeds the maxDeferredTransactionProcessTime
-      if (trx.getTransactionType() == TransactionCapsule.EXECUTINGDEFERREDTRANSACTION){
+      if (trx.getDeferredStage() == Constant.UNEXECUTEDDEFERREDTRANSACTION){
         if (totalDeferredTransactionProcessTime >= getDynamicPropertiesStore().getMaxDeferredTransactionProcessTime()){
           logger.info("totalDeferredTransactionProcessTime {}, exceeds {}", totalDeferredTransactionProcessTime, getDynamicPropertiesStore().getMaxDeferredTransactionProcessTime());
           postponedTrxCount++;
@@ -1461,24 +1467,22 @@ public class Manager {
         logger.warn(e.getMessage(), e);
       }
 
-      if (trx.getTransactionType() == TransactionCapsule.EXECUTINGDEFERREDTRANSACTION){
+      if (trx.getDeferredStage() == Constant.UNEXECUTEDDEFERREDTRANSACTION){
         long processTime = DateTime.now().getMillis() - deferredTransactionBeginTime;
         totalDeferredTransactionProcessTime += processTime;
       }
     } // end of while
 
     session.reset();
-
-    removeScheduledTransaction(deferredTransactionList);
-
-    if (postponedTrxCount > 0) {
+    if (processedDeferredTrxCount > 0) {
       logger.info("{} transactions over the block size limit", postponedTrxCount);
     }
 
     logger.info(
         "postponedTrxCount[" + postponedTrxCount + "],TrxLeft[" + pendingTransactions.size()
             + "],repushTrxCount[" + repushTransactions.size() + "]");
-    if (deferredTransactionList.size() > 0){
+
+    if (postponedDeferredTrxCount > 0){
       logger.info("{} deferred transactions processed, {} deferred transactions postponed", processedDeferredTrxCount, postponedDeferredTrxCount);
     }
         
@@ -1510,6 +1514,7 @@ public class Manager {
     } catch (TooBigTransactionResultException e) {
       logger.info("contract not processed during TooBigTransactionResultException");
     }
+
     return null;
   }
 
@@ -2030,38 +2035,30 @@ public class Manager {
     }
   }
 
-  private List<DeferredTransactionCapsule> addDeferredTransactionToPending(final BlockCapsule blockCapsule){
+  private void addDeferredTransactionToPending(final BlockCapsule blockCapsule){
     // add deferred transactions to header of pendingTransactions
     List<DeferredTransactionCapsule> deferredTransactionList = getDeferredTransactionStore()
             .getScheduledTransactions(blockCapsule.getTimeStamp());
     for (DeferredTransactionCapsule deferredTransaction : deferredTransactionList) {
       TransactionCapsule trxCapsule = new TransactionCapsule(deferredTransaction.getDeferredTransaction().getTransaction());
-      trxCapsule.setTransactionType(TransactionCapsule.EXECUTINGDEFERREDTRANSACTION);
+      trxCapsule.setDeferredStage(Constant.EXECUTINGDEFERREDTRANSACTION);
       pendingTransactions.add(0, trxCapsule);
     }
 
-    return deferredTransactionList;
-  }
-
-  private void removeScheduledTransaction(List<DeferredTransactionCapsule> deferredTransactionList){
-    // remove deferred transactions from store after they are executed
-    deferredTransactionList.forEach(trx -> {
-      getDeferredTransactionStore().removeDeferredTransaction(trx);
-      getDeferredTransactionIdIndexStore().removeDeferredTransactionIdIndex(trx);
-    });
+    return;
   }
 
   // deferred transaction is processed for the first time, put the capsule into deferredTransaction store.
-  private void pushScheduledTransaction(BlockCapsule blockCapsule, TransactionCapsule transactionCapsule){
-
+  public void pushScheduledTransaction(BlockCapsule blockCapsule, TransactionCapsule transactionCapsule){
+    Sha256Hash originalTransactionId = transactionCapsule.getTransactionId();
     // new trx id to represent the second trx record
-    logger.info("before setReference, trxid = {}", transactionCapsule.getTransactionId());
-    transactionCapsule.setReference(this.dynamicPropertiesStore.getLatestBlockHeaderNumber());
-    logger.info("after setReference, trxid = {}", transactionCapsule.getTransactionId());
+    transactionCapsule.generateNewDeferredTransactionId();
+    logger.debug("deferred transaction trxid = {}", transactionCapsule.getTransactionId());
 
 
     DeferredTransaction.Builder deferredTransaction = DeferredTransaction.newBuilder();
-    deferredTransaction.setTransactionId(transactionCapsule.getTransactionId().getByteString());
+    // save original transactionId in order to query deferred transaction
+    deferredTransaction.setTransactionId(originalTransactionId.getByteString());
     deferredTransaction.setDelaySeconds(transactionCapsule.getDeferredSeconds());
 
     ByteString senderAddress = transactionCapsule.getSenderAddress();
@@ -2099,20 +2096,12 @@ public class Manager {
 
     DeferredTransactionCapsule deferredTransactionCapsule = getDeferredTransactionStore().getByTransactionId(transactionId);
     if (Objects.isNull(deferredTransactionCapsule)){
-      logger.error("cancelDeferredTransaction failed, transaction id not exists");
-      return false;
-    }
-    
-    long delayUntil = deferredTransactionCapsule.getDelayUntil();
-    long now = System.currentTimeMillis();
-
-    if (now >= delayUntil){
-      logger.error("failed to cancel deferred transaction {}, it should be canceled before it expires", transactionId.toString());
+      logger.info("cancelDeferredTransaction failed, transaction id not exists");
       return false;
     }
 
     getDeferredTransactionStore().removeDeferredTransaction(deferredTransactionCapsule);
-    getDeferredTransactionIdIndexStore().removeDeferredTransactionIdIndex(deferredTransactionCapsule);
+    getDeferredTransactionIdIndexStore().removeDeferredTransactionIdIndex(deferredTransactionCapsule.getTransactionId());
 
     logger.debug("cancel deferred transaction {} successfully", transactionId.toString());
 

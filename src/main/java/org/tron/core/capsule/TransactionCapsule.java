@@ -48,6 +48,7 @@ import org.tron.common.runtime.vm.program.Program.StackTooLargeException;
 import org.tron.common.runtime.vm.program.Program.StackTooSmallException;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
+import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.db.AccountStore;
 import org.tron.core.db.Manager;
@@ -106,22 +107,12 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
   private TransactionTrace trxTrace;
 
   // generateTransactionId is used to save new generating transaction in deferredTransaction
-  @Getter
-  @Setter
-  private long referenceBlockNumber;
-
-  /**
-   * transactionType is 0 representing normal transaction
-   * transactionType is 1 representing unexecuted deferred transaction
-   * transactionType is 2 representing executing deferred transaction
-   */
-  public static final int NORMALTRANSACTION = 0;
-  public static final int UNEXECUTEDDEFERREDTRANSACTION = 1;
-  public static final int EXECUTINGDEFERREDTRANSACTION = 2;
+  private long referenceBlockNumber = -1;
 
   @Getter
   @Setter
-  private int transactionType = NORMALTRANSACTION;
+  private int deferredStage = Constant.NORMALTRANSACTION;
+
   /**
    * constructor TransactionCapsule.
    */
@@ -222,9 +213,24 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     this.transaction = this.transaction.toBuilder().setRawData(rawData).build();
   }
 
-  public void setReference(long blockNum) {
+  // only used for deferred_transaction
+  // getting new transactionId for deferredTransaction
+  public void generateNewDeferredTransactionId() {
+    if (referenceBlockNumber == -1) {
+      referenceBlockNumber = this.transaction.getRawData().getRefBlockNum();
+    }
     Transaction.raw rawData = this.transaction.getRawData().toBuilder()
-        .setRefBlockNum(blockNum)
+        .setRefBlockNum(referenceBlockNumber + 1)
+        .build();
+    this.transaction = this.transaction.toBuilder().setRawData(rawData).build();
+  }
+
+  public void generateOldDeferredTransactionId() {
+    if (referenceBlockNumber == -1) {
+      referenceBlockNumber = this.transaction.getRawData().getRefBlockNum();
+    }
+    Transaction.raw rawData = this.transaction.getRawData().toBuilder()
+        .setRefBlockNum(referenceBlockNumber - 1)
         .build();
     this.transaction = this.transaction.toBuilder().setRawData(rawData).build();
   }
@@ -815,6 +821,12 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     return this.transaction.getRawData().getDelaySeconds();
   }
 
+  public void setDeferredSeconds(long delaySeconds) {
+    Transaction.raw rawData = this.transaction.getRawData().toBuilder()
+        .setDelaySeconds(delaySeconds)
+        .build();
+    this.transaction = this.transaction.toBuilder().setRawData(rawData).build();
+  }
   public ByteString getToAddress(){
     Transaction.Contract contract = this.transaction.getRawData().getContract(0);
     if (Objects.isNull(contract)){

@@ -16,6 +16,7 @@ import org.tron.core.db.common.WrappedByteArray;
 import org.tron.core.db2.common.DB;
 import org.tron.core.db2.common.IRevokingDB;
 import org.tron.core.db2.common.LevelDB;
+import org.tron.core.db2.common.RocksDB;
 import org.tron.core.db2.common.Value;
 import org.tron.core.exception.ItemNotFoundException;
 
@@ -27,12 +28,6 @@ public class RevokingDBWithCachingNewValue implements IRevokingDB {
   @Getter
   private String dbName;
   private Class<? extends DB> clz;
-
-  public RevokingDBWithCachingNewValue(String dbName) {
-    this.dbName = dbName;
-    head = new SnapshotRoot(Args.getInstance().getOutputDirectoryByDbName(dbName), dbName);
-    mode.set(true);
-  }
 
   public RevokingDBWithCachingNewValue(String dbName, Class<? extends DB> clz) {
     this.dbName = dbName;
@@ -74,11 +69,7 @@ public class RevokingDBWithCachingNewValue implements IRevokingDB {
   public synchronized void reset() {
     head().reset();
     head().close();
-    if (clz == null) {
-      head = new SnapshotRoot(Args.getInstance().getOutputDirectoryByDbName(dbName), dbName);
-    } else {
-      head = new SnapshotRoot(Args.getInstance().getOutputDirectoryByDbName(dbName), dbName, clz);
-    }
+    head = new SnapshotRoot(Args.getInstance().getOutputDirectoryByDbName(dbName), dbName, clz);
   }
 
   @Override
@@ -202,26 +193,5 @@ public class RevokingDBWithCachingNewValue implements IRevokingDB {
       }
     }
     return result;
-  }
-
-  // for unit test
-  @Override
-  public Set<byte[]> getAllValues(long limit){
-    Map<WrappedByteArray, WrappedByteArray> collection = new HashMap<>();
-    if (head.getPrevious() != null) {
-      ((SnapshotImpl) head).collect(collection);
-    }
-    Map<WrappedByteArray, WrappedByteArray> levelDBMap = new HashMap<>();
-
-    ((LevelDB) ((SnapshotRoot) head.getRoot()).db).getDb().getAll(limit).entrySet().stream()
-        .map(e -> Maps.immutableEntry(WrappedByteArray.of(e.getKey()), WrappedByteArray.of(e.getValue())))
-        .forEach(e -> levelDBMap.put(e.getKey(), e.getValue()));
-    levelDBMap.putAll(collection);
-
-    return levelDBMap.entrySet().stream()
-        .limit(limit)
-        .map(Map.Entry::getValue)
-        .map(WrappedByteArray::getBytes)
-        .collect(Collectors.toSet());
   }
 }
