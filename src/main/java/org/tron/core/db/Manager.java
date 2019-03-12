@@ -1226,7 +1226,7 @@ public class Manager {
 
     validateDup(trxCap);
 
-    if (trxCap.getDeferredStage() != Constant.EXECUTINGDEFERREDTRANSACTION && !trxCap.validateSignature(this)) {
+    if (!trxCap.validateSignature(this)) {
       throw new ValidateSignatureException("trans sig validate failed");
     }
 
