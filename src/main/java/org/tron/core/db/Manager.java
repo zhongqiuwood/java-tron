@@ -1062,10 +1062,18 @@ public class Manager {
         ownerAddressSet.addAll(result);
       }
     }
-    logger.info("pushBlock block number:{}, cost/txs:{}/{}",
+
+    int excuteTrx = 0;
+    for (TransactionCapsule trx : block.getTransactions()) {
+        if (trx.getInstance().getRawData().getRefBlockNum() > 0) {
+          excuteTrx ++;
+        }
+    }
+    logger.info("pushBlock block number:{}, cost/txs:{}/{}, excute:{}",
         block.getNum(),
         System.currentTimeMillis() - start,
-        block.getTransactions().size());
+        block.getTransactions().size(),
+        excuteTrx);
   }
 
   public void updateDynamicProperties(BlockCapsule block) {
