@@ -1065,7 +1065,7 @@ public class Manager {
 
     int excuteTrx = 0;
     for (TransactionCapsule trx : block.getTransactions()) {
-        if (trx.getInstance().getRawData().getRefBlockNum() > 0) {
+        if (trx.getInstance().getRawData().getDeferredStage().getStage() == Constant.EXECUTINGDEFERREDTRANSACTION) {
           excuteTrx ++;
         }
     }
