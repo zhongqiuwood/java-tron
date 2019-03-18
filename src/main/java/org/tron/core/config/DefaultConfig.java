@@ -10,6 +10,8 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
 import org.tron.core.config.args.Args;
+import org.tron.core.db.DeferredTransactionCache;
+import org.tron.core.db.DeferredTransactionIdIndexCache;
 import org.tron.core.db.RevokingDatabase;
 import org.tron.core.db.RevokingStore;
 import org.tron.core.db.TransactionCache;
@@ -96,6 +98,26 @@ public class DefaultConfig {
       return new TransactionCache("trans-cache");
     }
 
+    return null;
+  }
+
+  @Bean
+  public DeferredTransactionCache deferredTransactionCache() {
+    int dbVersion = Args.getInstance().getStorage().getDbVersion();
+    if (dbVersion == 2) {
+      return new DeferredTransactionCache("deferred-transaction-cache");
+    }
+    logger.info("use dbversion 2(not deferred transaction cache)");
+    return null;
+  }
+
+  @Bean
+  public DeferredTransactionIdIndexCache deferredTransactionIdIndexCache() {
+    int dbVersion = Args.getInstance().getStorage().getDbVersion();
+    if (dbVersion == 2) {
+      return new DeferredTransactionIdIndexCache("deferred-transaction-id-index-cache");
+    }
+    logger.info("use dbversion 2(not deferred transaction id index cache)");
     return null;
   }
 
