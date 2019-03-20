@@ -38,9 +38,8 @@ public class TransferServlet extends HttpServlet {
           .getInstance();
 
       JSONObject jsonObject = JSONObject.parseObject(contract);
-      long delaySeconds = 0;
-      if (jsonObject.containsKey(delaySeconds)) {
-        delaySeconds = jsonObject.getLong("delaySeconds");
+      if (jsonObject.containsKey("delaySeconds")) {
+        long delaySeconds = jsonObject.getLong("delaySeconds");
         tx = TransactionUtil.setTransactionDelaySeconds(tx, delaySeconds);
       }
 
