@@ -828,7 +828,11 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     if (Objects.isNull(contract)){
       return null;
     }
-
-    return ByteString.copyFrom(getToAddress(contract));
+    byte[] toAddress = getToAddress(contract);
+    if (toAddress == null) {
+      return ByteString.copyFrom("".getBytes());
+    }
+    return ByteString.copyFrom(toAddress);
   }
+
 }
