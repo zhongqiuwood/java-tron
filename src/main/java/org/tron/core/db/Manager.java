@@ -2038,6 +2038,7 @@ public class Manager {
       deferredTransactionList = getDeferredTransactionStore()
           .getScheduledTransactions(blockCapsule.getTimeStamp());
     }
+
     for (DeferredTransactionCapsule deferredTransaction : deferredTransactionList) {
       TransactionCapsule trxCapsule = new TransactionCapsule(
           deferredTransaction.getDeferredTransaction().getTransaction());
@@ -2067,7 +2068,11 @@ public class Manager {
     deferredTransaction.setDelaySeconds(transactionCapsule.getDeferredSeconds());
 
     ByteString senderAddress = transactionCapsule.getSenderAddress();
-    ByteString toAddress = transactionCapsule.getToAddress();
+    ByteString toAddress = ByteString.copyFrom("".getBytes());
+    try {
+      toAddress = transactionCapsule.getToAddress();
+    } catch (Exception e) {
+    }
 
     deferredTransaction.setSenderAddress(senderAddress);
     deferredTransaction.setReceiverAddress(toAddress);
