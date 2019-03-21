@@ -1832,6 +1832,7 @@ public class Manager {
     closeOneStore(transactionHistoryStore);
     closeOneStore(votesStore);
     closeOneStore(delegatedResourceStore);
+    closeOneStore(delegatedResourceAccountIndexStore);
     closeOneStore(assetIssueV2Store);
     closeOneStore(exchangeV2Store);
     closeOneStore(deferredTransactionStore);
@@ -2054,8 +2055,6 @@ public class Manager {
           deferredTransaction.getDeferredTransaction().getTransaction());
       pendingTransactions.add(0, trxCapsule);
     }
-
-    return;
   }
 
   // deferred transaction is processed for the first time, put the capsule into deferredTransaction store.
@@ -2113,7 +2112,7 @@ public class Manager {
     getDeferredTransactionStore().put(deferredTransactionCapsule);
     getDeferredTransactionIdIndexStore().put(deferredTransactionCapsule);
 
-    this.dynamicPropertiesStore.saveDeferredTransactionOccupySpace(deferredTransactionMaxSize + transactionCapsule.getData().length);
+    this.dynamicPropertiesStore.saveDeferredTransactionOccupySpace(deferredTransactionMaxSize + deferredTransactionCapsule.getData().length);
   }
 
   public boolean cancelDeferredTransaction(ByteString transactionId){
@@ -2137,6 +2136,8 @@ public class Manager {
     getDeferredTransactionStore().removeDeferredTransaction(deferredTransactionCapsule);
     getDeferredTransactionIdIndexStore().removeDeferredTransactionIdIndex(transactionId);
 
+    long deferredTransactionOccupySpace = this.dynamicPropertiesStore.getDeferredTransactionOccupySpace();
+    this.dynamicPropertiesStore.saveDeferredTransactionOccupySpace(deferredTransactionOccupySpace - deferredTransactionCapsule.getData().length);
     logger.debug("cancel deferred transaction {} successfully", transactionId.toString());
 
     return true;
