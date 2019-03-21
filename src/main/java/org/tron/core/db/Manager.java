@@ -2117,6 +2117,7 @@ public class Manager {
 
     getDeferredTransactionStore().put(deferredTransactionCapsule);
     getDeferredTransactionIdIndexStore().put(deferredTransactionCapsule);
+
     this.dynamicPropertiesStore.saveDeferredTransactionOccupySpace(deferredTransactionOccupySize + deferredTransactionCapsule.getData().length);
   }
 
