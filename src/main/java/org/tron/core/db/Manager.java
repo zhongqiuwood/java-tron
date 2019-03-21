@@ -20,6 +20,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -71,6 +72,7 @@ import org.tron.core.config.args.Args;
 import org.tron.core.config.args.GenesisBlock;
 import org.tron.core.db.KhaosDatabase.KhaosBlock;
 import org.tron.core.db.api.AssetUpdateHelper;
+import org.tron.core.db.common.WrappedByteArray;
 import org.tron.core.db2.core.ISession;
 import org.tron.core.db2.core.ITronChainBase;
 import org.tron.core.db2.core.SnapshotManager;
@@ -607,16 +609,20 @@ public class Manager {
 
     if (Objects.nonNull(getDeferredTransactionCache())
         && Objects.nonNull(getDeferredTransactionIdIndexCache())) {
+
       futures.add(service.submit(() -> {
-        getDeferredTransactionStore().revokingDB.getAllValues().forEach((key, value) -> {
-          getDeferredTransactionCache().put(key, value);
-        });
+        long deferredTransactionOccupySpace = 0;
+        for (Map.Entry<WrappedByteArray, WrappedByteArray> entry : getDeferredTransactionStore().revokingDB.getAllValues().entrySet()) {
+          deferredTransactionOccupySpace += entry.getValue().getBytes().length;
+          getDeferredTransactionCache().put(entry.getKey(), entry.getValue());
+        }
+        this.dynamicPropertiesStore.saveDeferredTransactionOccupySpace(deferredTransactionOccupySpace);
       }));
 
       futures.add(service.submit(() -> {
-        getDeferredTransactionIdIndexStore().revokingDB.getAllValues().forEach((key, value) -> {
-          getDeferredTransactionIdIndexCache().put(key, value);
-        });
+        for (Map.Entry<WrappedByteArray, WrappedByteArray> entry : getDeferredTransactionIdIndexStore().revokingDB.getAllValues().entrySet()) {
+          getDeferredTransactionIdIndexCache().put(entry.getKey(), entry.getValue());
+        }
       }));
     }
 
@@ -2064,10 +2070,10 @@ public class Manager {
     transactionCapsule.setDeferredStage(Constant.EXECUTINGDEFERREDTRANSACTION);
     logger.debug("deferred transaction trxid = {}", transactionCapsule.getTransactionId());
 
-    Long deferredTransactionMaxSize = this.dynamicPropertiesStore.getDeferredTransactionOccupySpace();
-    if (deferredTransactionMaxSize + transactionCapsule.getData().length
+    Long deferredTransactionOccupySize = this.dynamicPropertiesStore.getDeferredTransactionOccupySpace();
+    if (deferredTransactionOccupySize + transactionCapsule.getData().length
         > Constant.MAX_DEFERRED_TRANSACTION_OCCUPY_SPACE) {
-      logger.info("deferred transaction over limit, the size is " + deferredTransactionMaxSize + " bytes");
+      logger.info("deferred transaction over limit, the size is " + deferredTransactionOccupySize + " bytes");
       return;
     }
 
@@ -2111,8 +2117,7 @@ public class Manager {
 
     getDeferredTransactionStore().put(deferredTransactionCapsule);
     getDeferredTransactionIdIndexStore().put(deferredTransactionCapsule);
-
-    this.dynamicPropertiesStore.saveDeferredTransactionOccupySpace(deferredTransactionMaxSize + deferredTransactionCapsule.getData().length);
+    this.dynamicPropertiesStore.saveDeferredTransactionOccupySpace(deferredTransactionOccupySize + deferredTransactionCapsule.getData().length);
   }
 
   public boolean cancelDeferredTransaction(ByteString transactionId){
