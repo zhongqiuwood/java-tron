@@ -487,7 +487,7 @@ public class Manager {
         deferredTransactionList = getDeferredTransactionStore()
                 .getScheduledTransactions();
       }
-    }, 1, 3, TimeUnit.SECONDS);
+    }, 1, 1, TimeUnit.SECONDS);
 
     // add contract event listener for subscribing
     if (Args.getInstance().isEventSubscribe()) {
