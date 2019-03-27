@@ -22,9 +22,6 @@ public class DeferredTransactionStore extends TronStoreWithRevoking<DeferredTran
   private DeferredTransactionIdIndexStore deferredTransactionIdIndexStore;
 
   @Autowired
-  private DynamicPropertiesStore dynamicPropertiesStore;
-
-  @Autowired
   private DeferredTransactionStore(@Value("deferred_transaction") String dbName) {
     super(dbName);
   }
