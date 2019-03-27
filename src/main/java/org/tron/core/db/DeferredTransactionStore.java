@@ -41,7 +41,7 @@ public class DeferredTransactionStore extends TronStoreWithRevoking<DeferredTran
   }
 
   public List<DeferredTransactionCapsule> getScheduledTransactions() {
-    return getScheduledTransactions(dynamicPropertiesStore.getLatestBlockHeaderTimestamp());
+    return getScheduledTransactions(System.currentTimeMillis());
   }
 
   public void removeDeferredTransaction(DeferredTransactionCapsule deferredTransactionCapsule) {
