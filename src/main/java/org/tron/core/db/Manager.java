@@ -1276,11 +1276,13 @@ public class Manager {
 
     validateDup(trxCap);
 
+    if (!trxCap.validateSignature(this)) {
+      throw new ValidateSignatureException("trans sig validate failed");
+    }
+
     if (trxCap.getDeferredSeconds() > 0
         && trxCap.getDeferredStage() == Constant.EXECUTINGDEFERREDTRANSACTION) {
       trxCap = getExecutingDeferredTransaction(trxCap, blockCap);
-    } else if (!trxCap.validateSignature(this)) {
-      throw new ValidateSignatureException("trans sig validate failed");
     }
 
     TransactionTrace trace = new TransactionTrace(trxCap, this);
