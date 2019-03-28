@@ -2134,7 +2134,6 @@ public class Manager {
     deferredTransaction.setDelayUntil(delayUntil);
     deferredTransaction.setExpiration(delayUntil
         + Args.getInstance().getTrxExpirationTimeInMilliseconds());
-    
     deferredTransaction.setTransaction(transactionCapsule.getInstance());
 
     DeferredTransactionCapsule deferredTransactionCapsule = new DeferredTransactionCapsule(
