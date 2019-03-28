@@ -603,13 +603,6 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
       return true;
     }
 
-    Transaction originalTransaction = null;
-
-    if (getDeferredSeconds() > 0 && getDeferredStage() == Constant.EXECUTINGDEFERREDTRANSACTION) {
-      originalTransaction = this.transaction;
-      this.setDeferredStage(Constant.UNEXECUTEDDEFERREDTRANSACTION);
-    }
-
     if (this.transaction.getSignatureCount() <= 0
         || this.transaction.getRawData().getContractCount() <= 0) {
       throw new ValidateSignatureException("miss sig or contract");
@@ -633,10 +626,6 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     } catch (SignatureFormatException e) {
       isVerified = false;
       throw new ValidateSignatureException(e.getMessage());
-    }
-
-    if (Objects.nonNull(originalTransaction)) {
-      this.transaction = originalTransaction;
     }
 
     isVerified = true;
