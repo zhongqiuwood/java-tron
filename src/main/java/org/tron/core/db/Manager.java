@@ -2130,6 +2130,26 @@ public class Manager {
     getDeferredTransactionIdIndexStore().put(deferredTransactionCapsule);
   }
 
+  public void insertWitness(byte[] keyAddress, long voteCount, int idx) {
+    ByteString address = ByteString.copyFrom(keyAddress);
+
+    final AccountCapsule accountCapsule;
+    if (!this.accountStore.has(keyAddress)) {
+      accountCapsule = new AccountCapsule(ByteString.EMPTY,
+          address, AccountType.AssetIssue, 0L);
+    } else {
+      accountCapsule = this.accountStore.getUnchecked(keyAddress);
+    }
+    accountCapsule.setIsWitness(true);
+    this.accountStore.put(keyAddress, accountCapsule);
+
+    final WitnessCapsule witnessCapsule =
+        new WitnessCapsule(address, voteCount, "mock_witness_" + idx);
+    witnessCapsule.setIsJobs(true);
+    this.witnessStore.put(keyAddress, witnessCapsule);
+  }
+
+
   public boolean cancelDeferredTransaction(ByteString transactionId) {
     DeferredTransactionCapsule deferredTransactionCapsule
         = getDeferredTransactionStore().getByTransactionId(transactionId);

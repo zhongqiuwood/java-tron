@@ -3,9 +3,8 @@ package org.tron.program;
 import ch.qos.logback.classic.Level;
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.joran.JoranConfigurator;
-import java.io.File;
-
 import com.google.protobuf.ByteString;
+import java.io.File;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -77,7 +76,6 @@ public class FullNode {
     shutdown(appT);
 
     mockWitness(context);
-
     // grpc api server
     RpcApiService rpcApiService = context.getBean(RpcApiService.class);
     appT.addService(rpcApiService);
@@ -110,15 +108,14 @@ public class FullNode {
     logger.info("********register application shutdown hook********");
     Runtime.getRuntime().addShutdownHook(new Thread(app::shutdown));
   }
-
   private static void mockWitness(TronApplicationContext context) {
     Manager manager = context.getBean(Manager.class);
     String[] localWitnesses = {
-            "TXtrbmfwZ2LxtoCveEhZT86fTss1w8rwJE",
-            "TWKKwLswTTcK5cp31F2bAteQrzU8cYhtU5",
-            "TT4MHXVApKfbcq7cDLKnes9h9wLSD4eMJi",
-            "TCw4yb4hS923FisfMsxAzQ85srXkK6RWGk",
-            "TLYUrci5Qw5fUPho2GvFv38kAK4QSmdhhN"
+        "TXtrbmfwZ2LxtoCveEhZT86fTss1w8rwJE",
+        "TWKKwLswTTcK5cp31F2bAteQrzU8cYhtU5",
+        "TT4MHXVApKfbcq7cDLKnes9h9wLSD4eMJi",
+        "TCw4yb4hS923FisfMsxAzQ85srXkK6RWGk",
+        "TLYUrci5Qw5fUPho2GvFv38kAK4QSmdhhN"
 
     };
     AccountCapsule existAccount = manager.getAccountStore().get(Wallet.decodeFromBase58Check(localWitnesses[0]));
