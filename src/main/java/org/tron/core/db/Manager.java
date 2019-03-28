@@ -233,6 +233,7 @@ public class Manager {
   private ForkController forkController = ForkController.instance();
 
   private Set<String> ownerAddressSet = new HashSet<>();
+
   @Getter
   private ScheduledFuture<?> deferredTransactionTask;
 
@@ -722,6 +723,11 @@ public class Manager {
           "too big transaction, the size is " + transactionCapsule.getData().length + " bytes");
     }
     long transactionExpiration = transactionCapsule.getExpiration();
+    if (transactionCapsule.getDeferredSeconds() > 0
+        && transactionCapsule.getDeferredStage() == Constant.EXECUTINGDEFERREDTRANSACTION) {
+      transactionExpiration += transactionCapsule.getDeferredSeconds() * 1000;
+    }
+
     long headBlockTime = getHeadBlockTimeStamp();
     /*if (transactionExpiration <= headBlockTime ||
         transactionExpiration > headBlockTime + Constant.MAXIMUM_TIME_UNTIL_EXPIRATION) {
@@ -1286,6 +1292,7 @@ public class Manager {
     }else if (!trxCap.validateSignature(this)) {
       throw new ValidateSignatureException("trans sig validate failed");
     }
+
 
     TransactionTrace trace = new TransactionTrace(trxCap, this);
     trxCap.setTrxTrace(trace);
@@ -2125,10 +2132,9 @@ public class Manager {
     // delay until
     long delayUntil = publishTime + transactionCapsule.getDeferredSeconds() * 1000;
     deferredTransaction.setDelayUntil(delayUntil);
-
-    // expiration
-    long expiration = delayUntil + Args.getInstance().getTrxExpirationTimeInMilliseconds();
-    transactionCapsule.setExpiration(expiration);
+    deferredTransaction.setExpiration(delayUntil
+        + Args.getInstance().getTrxExpirationTimeInMilliseconds());
+    
     deferredTransaction.setTransaction(transactionCapsule.getInstance());
 
     DeferredTransactionCapsule deferredTransactionCapsule = new DeferredTransactionCapsule(
@@ -2190,7 +2196,7 @@ public class Manager {
     return true;
   }
 
-  ByteString recoveryTransactionId(TransactionCapsule trxCap) {
+  private ByteString recoveryTransactionId(TransactionCapsule trxCap) {
     TransactionCapsule oldTrxCap = new TransactionCapsule(trxCap.getInstance());
     oldTrxCap.setDeferredStage(Constant.UNEXECUTEDDEFERREDTRANSACTION);
     return oldTrxCap.getTransactionId().getByteString();

@@ -5,9 +5,13 @@ import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
+import org.tron.common.utils.StringUtil;
+import org.tron.core.Wallet;
+import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.DeferredTransactionCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.db.Manager;
+import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.protos.Contract.CancelDeferredTransactionContract;
@@ -21,16 +25,26 @@ public class CancelDeferredTransactionContractActuator extends AbstractActuator 
   }
 
   @Override
-  public boolean execute(TransactionResultCapsule capsule) throws ContractExeException {
+  public boolean execute(TransactionResultCapsule capsule)
+      throws ContractExeException {
     long fee = calcFee();
     final CancelDeferredTransactionContract cancelDeferredTransactionContract;
     try {
       cancelDeferredTransactionContract = this.contract
               .unpack(CancelDeferredTransactionContract.class);
       dbManager.cancelDeferredTransaction(cancelDeferredTransactionContract.getTransactionId());
+      dbManager.adjustBalance(getOwnerAddress().toByteArray(), -fee);
+      // Add to blackhole address
+      dbManager.adjustBalance(dbManager.getAccountStore().getBlackhole().createDbKey(), fee);
+
+    } catch (BalanceInsufficientException e) {
+      logger.debug(e.getMessage(), e);
+      capsule.setStatus(fee, code.FAILED);
+      throw new ContractExeException(e.getMessage());
     } catch (InvalidProtocolBufferException e) {
       logger.debug(e.getMessage(), e);
       capsule.setStatus(fee, code.FAILED);
+      throw new ContractExeException(e.getMessage());
     }
 
     return true;
@@ -74,9 +88,27 @@ public class CancelDeferredTransactionContractActuator extends AbstractActuator 
     }
 
     ByteString ownerAddress = cancelDeferredTransactionContract.getOwnerAddress();
+    if (!Wallet.addressValid(ownerAddress.toByteArray())) {
+      throw new ContractValidateException("Invalid ownerAddress");
+    }
+
     if (!sendAddress.equals(ownerAddress)) {
       throw new ContractValidateException("not have right to cancel!");
     }
+
+    AccountCapsule accountCapsule = dbManager.getAccountStore().get(ownerAddress.toByteArray());
+    if (accountCapsule == null) {
+      String readableOwnerAddress = StringUtil.createReadableString(ownerAddress);
+      throw new ContractValidateException(
+          "Account[" + readableOwnerAddress + "] not exists");
+    }
+
+    final long fee = calcFee();
+    if (accountCapsule.getBalance() < fee) {
+      throw new ContractValidateException(
+          "Validate CreateAccountActuator error, insufficient fee.");
+    }
+
     return true;
   }
 
