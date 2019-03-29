@@ -1307,8 +1307,12 @@ public class Manager {
     trace.checkIsConstant();
     trace.setDeferredStage(trxCap.getDeferredStage());
 
-    trace.exec();
+    if (trxCap.getDeferredStage() == Constant.EXECUTINGDEFERREDTRANSACTION) {
+      cancelDeferredTransaction(recoveryTransactionId(trxCap));
+    }
 
+    trace.exec();
+    
     // process deferred transaction for the first time
     if (trxCap.getDeferredStage() == Constant.UNEXECUTEDDEFERREDTRANSACTION) {
       return processDeferTransaction(trxCap, blockCap, trace);
@@ -1354,9 +1358,6 @@ public class Manager {
       ownerAddressSet.add(ByteArray.toHexString(TransactionCapsule.getOwner(contract)));
     }
 
-    if (trxCap.getDeferredStage() == Constant.EXECUTINGDEFERREDTRANSACTION) {
-      cancelDeferredTransaction(recoveryTransactionId(trxCap));
-    }
     return true;
   }
 
