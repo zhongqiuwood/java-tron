@@ -195,7 +195,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     try {
       this.getAllowDeferredTransaction();
     } catch (IllegalArgumentException e) {
-      this.saveAllowDeferredTransaction(Args.getInstance().getAllowDeferredTransaction());
+      this.saveAllowDeferredTransaction(1);
     }
 
     try {
