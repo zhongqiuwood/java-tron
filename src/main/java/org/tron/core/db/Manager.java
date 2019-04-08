@@ -80,6 +80,8 @@ import org.tron.core.config.args.Args;
 import org.tron.core.config.args.GenesisBlock;
 import org.tron.core.db.KhaosDatabase.KhaosBlock;
 import org.tron.core.db.api.AssetUpdateHelper;
+import org.tron.core.db.fast.TrieService;
+import org.tron.core.db.fast.callback.FastSyncCallBack;
 import org.tron.core.db2.core.ISession;
 import org.tron.core.db2.core.ITronChainBase;
 import org.tron.core.db2.core.SnapshotManager;
@@ -232,6 +234,11 @@ public class Manager {
   @Getter
   private ForkController forkController = ForkController.instance();
 
+  @Autowired
+  private FastSyncCallBack fastSyncCallBack;
+
+  @Autowired
+  private TrieService trieService;
   private Set<String> ownerAddressSet = new HashSet<>();
 
   @Getter
@@ -446,6 +453,8 @@ public class Manager {
 
   @PostConstruct
   public void init() {
+    fastSyncCallBack.setManager(this);
+    trieService.setManager(this);
     revokingStore.disable();
     revokingStore.check();
     this.setWitnessController(WitnessController.createInstance(this));
@@ -865,7 +874,7 @@ public class Manager {
       ContractExeException, ValidateSignatureException, AccountResourceInsufficientException,
       TransactionExpirationException, TooBigTransactionException, DupTransactionException,
       TaposException, ValidateScheduleException, ReceiptCheckErrException,
-      VMIllegalException, TooBigTransactionResultException, DeferredTransactionException {
+      VMIllegalException, TooBigTransactionResultException, DeferredTransactionException, BadBlockException {
     processBlock(block);
     this.blockStore.put(block.getBlockId().getBytes(), block);
     this.blockIndexStore.put(block.getBlockId());
@@ -882,7 +891,7 @@ public class Manager {
       ValidateScheduleException, AccountResourceInsufficientException, TaposException,
       TooBigTransactionException, TooBigTransactionResultException, DupTransactionException, TransactionExpirationException,
       NonCommonBlockException, ReceiptCheckErrException,
-      VMIllegalException, DeferredTransactionException {
+      VMIllegalException, DeferredTransactionException, BadBlockException {
     Pair<LinkedList<KhaosBlock>, LinkedList<KhaosBlock>> binaryTree;
     try {
       binaryTree =
@@ -929,7 +938,8 @@ public class Manager {
             | TooBigTransactionException
             | TooBigTransactionResultException
             | ValidateScheduleException
-            | VMIllegalException e) {
+            | VMIllegalException
+            | BadBlockException e) {
           logger.warn(e.getMessage(), e);
           exception = e;
           throw e;
@@ -1419,6 +1429,8 @@ public class Manager {
     blockCapsule.generatedByMyself = true;
     session.reset();
     session.setValue(revokingStore.buildSession());
+    //
+    fastSyncCallBack.preExecute(blockCapsule);
 
     if (needCheckWitnessPermission && !witnessService.
         validateWitnessPermission(witnessCapsule.getAddress())) {
@@ -1537,6 +1549,8 @@ public class Manager {
       }
     } // end of while
 
+    fastSyncCallBack.executeGenerateFinish();
+
     session.reset();
     if (postponedTrxCount > 0) {
       logger.info("{} transactions over the block size limit", postponedTrxCount);
@@ -1629,17 +1643,15 @@ public class Manager {
       throws ValidateSignatureException, ContractValidateException, ContractExeException,
       AccountResourceInsufficientException, TaposException, TooBigTransactionException,
       DupTransactionException, TransactionExpirationException, ValidateScheduleException,
-      ReceiptCheckErrException, VMIllegalException, TooBigTransactionResultException, DeferredTransactionException {
+      ReceiptCheckErrException, VMIllegalException, TooBigTransactionResultException, DeferredTransactionException, BadBlockException {
     // todo set revoking db max size.
 
     // checkWitness
     if (!witnessController.validateWitnessSchedule(block)) {
       throw new ValidateScheduleException("validateWitnessSchedule error");
     }
-
     //reset BlockEnergyUsage
     this.dynamicPropertiesStore.saveBlockEnergyUsage(0);
-
     //parallel check sign
     if (!block.generatedByMyself) {
       try {
@@ -1649,13 +1661,18 @@ public class Manager {
         Thread.currentThread().interrupt();
       }
     }
-
-    for (TransactionCapsule transactionCapsule : block.getTransactions()) {
-      transactionCapsule.setBlockNum(block.getNum());
-      if (block.generatedByMyself) {
-        transactionCapsule.setVerified(true);
+    try {
+      fastSyncCallBack.preExecute(block);
+      for (TransactionCapsule transactionCapsule : block.getTransactions()) {
+        transactionCapsule.setBlockNum(block.getNum());
+        if (block.generatedByMyself) {
+          transactionCapsule.setVerified(true);
+        }
+        processTransaction(transactionCapsule, block);
       }
-      processTransaction(transactionCapsule, block);
+      fastSyncCallBack.executePushFinish();
+    } finally {
+      fastSyncCallBack.exceptionFinish();
     }
 
     boolean needMaint = needMaintenance(block.getTimeStamp());
@@ -1671,12 +1688,12 @@ public class Manager {
       energyProcessor.updateTotalEnergyAverageUsage();
       energyProcessor.updateAdaptiveTotalEnergyLimit();
     }
-    this.updateDynamicProperties(block);
-    this.updateSignedWitness(block);
-    this.updateLatestSolidifiedBlock();
-    this.updateTransHashCache(block);
+    updateSignedWitness(block);
+    updateLatestSolidifiedBlock();
+    updateTransHashCache(block);
     updateMaintenanceState(needMaint);
     updateRecentBlock(block);
+    updateDynamicProperties(block);
   }
 
 
