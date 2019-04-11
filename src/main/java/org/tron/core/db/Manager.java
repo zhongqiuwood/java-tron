@@ -2,6 +2,7 @@ package org.tron.core.db;
 
 import static org.tron.core.config.Parameter.ChainConstant.SOLIDIFIED_THRESHOLD;
 import static org.tron.core.config.Parameter.NodeConstant.MAX_TRANSACTION_PENDING;
+import static org.tron.protos.Protocol.Transaction.Contract.ContractType.TransferContract;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
@@ -1273,6 +1274,23 @@ public class Manager {
     return new TransactionCapsule(deferredTransactionCapsule.getInstance().getTransaction());
   }
 
+  void validateDeferredTransactionType(TransactionCapsule trxCap) throws ContractValidateException{
+    switch (trxCap.getInstance().getRawData().getContractList().get(0).getType()) {
+      case TransferContract:
+      case AccountUpdateContract:
+      case TransferAssetContract:
+      case AccountCreateContract:
+      case UnfreezeAssetContract:
+      case UpdateAssetContract:
+      case SetAccountIdContract:
+      case UpdateSettingContract:
+      case UpdateEnergyLimitContract:
+        break;
+      default:
+        throw new ContractValidateException("Contract type not support deferred transaction");
+    }
+  }
+
   /**
    * Process transaction.
    */
@@ -1280,11 +1298,6 @@ public class Manager {
       throws ValidateSignatureException, ContractValidateException, ContractExeException,
       AccountResourceInsufficientException, TransactionExpirationException, TooBigTransactionException, TooBigTransactionResultException,
       DupTransactionException, TaposException, ReceiptCheckErrException, VMIllegalException, DeferredTransactionException {
-    if (trxCap.getDeferredSeconds() > 0 && dynamicPropertiesStore.getAllowDeferredTransaction() != 1) {
-      throw new ContractValidateException("deferred transaction is not allowed, "
-          + "need to be opened by the committee");
-    }
-
     if (trxCap == null) {
       return false;
     }
@@ -1292,10 +1305,13 @@ public class Manager {
     // no need tapos validation when processing deferred transaction at the second time.
    // validateTapos(trxCap);
    // validateCommon(trxCap);
-
     if (trxCap.getInstance().getRawData().getContractList().size() != 1) {
       throw new ContractSizeNotEqualToOneException(
           "act size should be exactly 1, this is extend feature");
+    }
+
+    if (trxCap.getDeferredSeconds() != 0 || trxCap.getDeferredStage() != Constant.NORMALTRANSACTION) {
+      validateDeferredTransactionType(trxCap);
     }
 
     validateDup(trxCap);
@@ -1500,7 +1516,9 @@ public class Manager {
       }
       // apply transaction
       try (ISession tmpSeesion = revokingStore.buildSession()) {
+        fastSyncCallBack.preExeTrans();
         processTransaction(trx, blockCapsule);
+        fastSyncCallBack.exeTransFinish();
         tmpSeesion.merge();
         // push into block
         blockCapsule.addTransaction(trx);
@@ -1668,7 +1686,9 @@ public class Manager {
         if (block.generatedByMyself) {
           transactionCapsule.setVerified(true);
         }
+        fastSyncCallBack.preExeTrans();
         processTransaction(transactionCapsule, block);
+        fastSyncCallBack.exeTransFinish();
       }
       fastSyncCallBack.executePushFinish();
     } finally {
