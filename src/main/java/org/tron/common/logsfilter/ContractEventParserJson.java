@@ -1,27 +1,24 @@
 package org.tron.common.logsfilter;
 
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
 import java.math.BigInteger;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
-
-import com.sun.org.apache.xpath.internal.operations.Mult;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.pf4j.util.StringUtils;
 import org.spongycastle.crypto.OutputLengthException;
 import org.spongycastle.util.Arrays;
 import org.spongycastle.util.encoders.Hex;
-import org.tron.common.crypto.Hash;
 import org.tron.common.runtime.utils.MUtil;
 import org.tron.common.runtime.vm.DataWord;
-import org.tron.common.utils.ByteArray;
 import org.tron.core.Wallet;
-import org.tron.protos.Protocol.SmartContract.ABI;
 
 @Slf4j(topic = "Parser")
-public class ContractEventParser {
+public class ContractEventParserJson {
 
   private static final int DATAWORD_UNIT_SIZE = 32;
 
@@ -40,7 +37,7 @@ public class ContractEventParser {
    * parse Event Topic into map NOTICE: In solidity, Indexed Dynamic types's topic is just
    * EVENT_INDEXED_ARGS
    */
-  public static Map<String, String> parseTopics(List<byte[]> topicList, ABI.Entry entry) {
+  public static Map<String, String> parseTopics(List<byte[]> topicList, JSONObject entry) {
     Map<String, String> map = new HashMap<>();
     if (topicList == null || topicList.isEmpty()) {
       return map;
@@ -48,22 +45,29 @@ public class ContractEventParser {
 
     // the first is the signature.
     int index = 1;
-    List<ABI.Entry.Param> list = entry.getInputsList();
+    JSONArray inputs = entry.getJSONArray("inputs");
 
     // in case indexed topics doesn't match
     if (topicsMatched(topicList, entry)) {
-      for (int i = 0; i < list.size(); ++i) {
-        ABI.Entry.Param param = list.get(i);
-        if (param.getIndexed()) {
-          if (index >= topicList.size()) {
-            break;
+      for (int i = 0; i < inputs.size(); ++i) {
+        JSONObject param = inputs.getJSONObject(i);
+
+        if (inputs.getJSONObject(i).getBoolean("indexed") != null) {
+          if (!inputs.getJSONObject(i).getBoolean("indexed")) {
+            continue;
           }
-          String str = parseTopic(topicList.get(index++), param.getType());
-          if (StringUtils.isNotNullOrEmpty(param.getName())) {
-            map.put(param.getName(), str);
-          }
-          map.put("" + i, str);
+        } else {
+          continue;
         }
+
+        if (index >= topicList.size()) {
+          break;
+        }
+        String str = parseTopic(topicList.get(index++), param.getString("type"));
+        if (StringUtils.isNotNullOrEmpty(param.getString("name"))) {
+          map.put(param.getString("name"), str);
+        }
+        map.put("" + i, str);
       }
     } else {
       for (int i = 1; i < topicList.size(); ++i) {
@@ -79,7 +83,7 @@ public class ContractEventParser {
    * Array are not support yet (then return {"0": Hex.toHexString(data)}).
    */
   public static Map<String, String> parseEventData(byte[] data,
-      List<byte[]> topicList, ABI.Entry entry) {
+      List<byte[]> topicList, JSONObject entry) {
     Map<String, String> map = new HashMap<>();
     if (ArrayUtils.isEmpty(data)) {
       return map;
@@ -91,28 +95,34 @@ public class ContractEventParser {
     }
 
     // the first is the signature.
-    List<ABI.Entry.Param> list = entry.getInputsList();
+    JSONArray inputs = entry.getJSONArray("inputs");
     Integer startIndex = 0;
+
     try {
       // this one starts from the first position.
       int index = 0;
-      for (Integer i = 0; i < list.size(); ++i) {
-        ABI.Entry.Param param = list.get(i);
-        if (param.getIndexed()) {
-          continue;
-        }
-        if (startIndex == 0) {
-          startIndex = i;
-        }
+      if (inputs != null) {
+        for (Integer i = 0; i < inputs.size(); ++i) {
+          JSONObject param = inputs.getJSONObject(i);
 
-        String str = parseDataBytes(data, param.getType(), index++);
-        if (StringUtils.isNotNullOrEmpty(param.getName())) {
-          map.put(param.getName(), str);
-        }
-        map.put("" + i, str);
+          if (inputs.getJSONObject(i).getBoolean("indexed") != null) {
+            if (inputs.getJSONObject(i).getBoolean("indexed")) {
+              continue;
+            }
+          }
 
-      }
-      if (list.size() == 0) {
+          if (startIndex == 0) {
+            startIndex = i;
+          }
+
+          String str = parseDataBytes(data, param.getString("type"), index++);
+          if (StringUtils.isNotNullOrEmpty(param.getString("name"))) {
+            map.put(param.getString("name"), str);
+          }
+          map.put("" + i, str);
+
+        }
+      } else {
         map.put("0", Hex.toHexString(data));
       }
     } catch (UnsupportedOperationException e) {
@@ -123,14 +133,17 @@ public class ContractEventParser {
     return map;
   }
 
-  private static boolean topicsMatched(List<byte[]> topicList, ABI.Entry entry) {
+  private static boolean topicsMatched(List<byte[]> topicList, JSONObject entry) {
     if (topicList == null || topicList.isEmpty()) {
       return true;
     }
     int inputSize = 1;
-    for (ABI.Entry.Param param : entry.getInputsList()) {
-      if (param.getIndexed()) {
-        inputSize++;
+    JSONArray inputs = entry.getJSONArray("inputs");
+    for (int i = 0; i < inputs.size(); i++) {
+      if (inputs.getJSONObject(i).getBoolean("indexed") != null) {
+        if (inputs.getJSONObject(i).getBoolean("indexed")) {
+          inputSize++;
+        }
       }
     }
     return inputSize == topicList.size();
@@ -156,7 +169,8 @@ public class ContractEventParser {
         byte[] lengthBytes = subBytes(data, start, DATAWORD_UNIT_SIZE);
         // this length is byte count. no need X 32
         int length = intValueExact(lengthBytes);
-        byte[] realBytes = length > 0 ? subBytes(data, start + DATAWORD_UNIT_SIZE, length) : new byte[0];
+        byte[] realBytes =
+            length > 0 ? subBytes(data, start + DATAWORD_UNIT_SIZE, length) : new byte[0];
         return type == Type.STRING ? new String(realBytes) : Hex.toHexString(realBytes);
       }
     } catch (OutputLengthException | ArithmeticException e) {
@@ -171,15 +185,15 @@ public class ContractEventParser {
       // ignore not valide type such as "int92", "bytes33", these types will be compiled failed.
       if (type.startsWith("int") || type.startsWith("uint") || type.startsWith("trcToken")) {
         return Type.INT_NUMBER;
-      } else if ("bool".equals(type)) {
+      } else if (type.equals("bool")) {
         return Type.BOOL;
-      } else if ("address".equals(type)) {
+      } else if (type.equals("address")) {
         return Type.ADDRESS;
       } else if (Pattern.matches("^bytes\\d+$", type)) {
         return Type.FIXED_BYTES;
-      } else if ("string".equals(type)) {
+      } else if (type.equals("string")) {
         return Type.STRING;
-      } else if ("bytes".equals(type)) {
+      } else if (type.equals("bytes")) {
         return Type.BYTES;
       }
     }
