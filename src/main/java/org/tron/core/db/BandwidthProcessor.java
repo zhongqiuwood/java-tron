@@ -70,14 +70,17 @@ public class BandwidthProcessor extends ResourceProcessor {
 
     if (dbManager.getDynamicPropertiesStore().supportVM()) {
       bytesSize = trx.getInstance().toBuilder().clearRet().build().getSerializedSize();
+      logger.info("wubin1 trxId {}, bandwidth cost :{}", trx.getTransactionId(), bytesSize);
     } else {
       bytesSize = trx.getSerializedSize();
+      logger.info("wubin1 trxId {}, bandwidth cost :{}", trx.getTransactionId(), bytesSize);
     }
 
     if (trx.getDeferredStage() == Constant.UNEXECUTEDDEFERREDTRANSACTION) {
       // push deferred transaction into store, charge bandwidth for transaction data ahead of time, don't charge twice.
       // additional bandwitdth for canceling deferred transaction, whether that be successfully executing, failure or expiration.
       bytesSize += trx.getTransactionId().getBytes().length;
+      logger.info("wubin2 trxId {}, bandwidth cost :{}", trx.getTransactionId(), trx.getTransactionId().getBytes().length);
     } else if (trx.getDeferredStage() == Constant.EXECUTINGDEFERREDTRANSACTION) {
       // don't charge bandwidth twice when executing deferred tranaction
       bytesSize = 0;
