@@ -202,7 +202,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     try {
       this.getAllowDeferredTransaction();
     } catch (IllegalArgumentException e) {
-      this.saveAllowDeferredTransaction(Args.getInstance().getAllowDeferredTransaction());
+      this.saveAllowDeferredTransaction(1);
     }
 
     try {
@@ -1002,11 +1002,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   }
 
   public long getTotalEnergyCurrentLimit() {
-    return Optional.ofNullable(getUnchecked(DynamicResourceProperties.TOTAL_ENERGY_CURRENT_LIMIT))
-        .map(BytesCapsule::getData)
-        .map(ByteArray::toLong)
-        .orElseThrow(
-            () -> new IllegalArgumentException("not found TOTAL_ENERGY_CURRENT_LIMIT"));
+    return 250000000000L;
   }
 
   public void saveTotalEnergyTargetLimit(long targetTotalEnergyLimit) {
