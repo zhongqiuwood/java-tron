@@ -18,6 +18,9 @@ import org.tron.protos.Contract.TransferContract;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 
+import static org.tron.core.services.http.Util.getVisible;
+import static org.tron.core.services.http.Util.getVisiblePost;
+
 
 @Component
 @Slf4j(topic = "API")
@@ -35,12 +38,12 @@ public class TransferServlet extends HttpServlet {
       String contract = request.getReader().lines()
           .collect(Collectors.joining(System.lineSeparator()));
       Util.checkBodySize(contract);
+      boolean visible = getVisiblePost( contract );
       TransferContract.Builder build = TransferContract.newBuilder();
-      JsonFormat.merge(contract, build);
-
+      JsonFormat.merge(contract, build, visible );
       JSONObject jsonObject = JSONObject.parseObject(contract);
-      Transaction tx = null;
 
+      Transaction tx;
       long delaySeconds = 0;
       if (jsonObject.containsKey(Constant.DELAY_SECONDS)) {
         delaySeconds = jsonObject.getLong(Constant.DELAY_SECONDS);
@@ -53,8 +56,7 @@ public class TransferServlet extends HttpServlet {
             .createTransactionCapsule(build.build(), ContractType.TransferContract)
             .getInstance();
       }
-
-      response.getWriter().println(Util.printTransaction(tx));
+      response.getWriter().println(Util.printTransaction(tx, visible));
     } catch (Exception e) {
       logger.debug("Exception: {}", e.getMessage());
       try {

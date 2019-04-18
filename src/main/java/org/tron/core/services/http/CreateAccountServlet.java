@@ -17,6 +17,9 @@ import org.tron.protos.Protocol.DeferredStage;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 
+import static org.tron.core.services.http.Util.getVisible;
+import static org.tron.core.services.http.Util.getVisiblePost;
+
 
 @Component
 @Slf4j(topic = "API")
@@ -30,8 +33,9 @@ public class CreateAccountServlet extends HttpServlet {
       String contract = request.getReader().lines()
           .collect(Collectors.joining(System.lineSeparator()));
       Util.checkBodySize(contract);
+      boolean visible = getVisiblePost(contract);
       AccountCreateContract.Builder build = AccountCreateContract.newBuilder();
-      JsonFormat.merge(contract, build);
+      JsonFormat.merge(contract, build, visible);
 
       JSONObject jsonObject = JSONObject.parseObject(contract);
       long delaySeconds = 0;
@@ -39,17 +43,16 @@ public class CreateAccountServlet extends HttpServlet {
       if (jsonObject.containsKey(Constant.DELAY_SECONDS)) {
         delaySeconds = jsonObject.getLong(Constant.DELAY_SECONDS);
       }
-      
+
       if (delaySeconds > 0) {
         tx = wallet.createDeferredTransactionCapsule(build.build(), delaySeconds, ContractType.AccountCreateContract).getInstance();
         tx = TransactionUtil.setTransactionDelaySeconds(tx, delaySeconds);
       } else {
         tx = wallet
-            .createTransactionCapsule(build.build(), ContractType.AccountCreateContract)
-            .getInstance();
+            .createTransactionCapsule(build.build(), ContractType.AccountCreateContract).getInstance();
       }
 
-      response.getWriter().println(Util.printTransaction(tx));
+      response.getWriter().println(Util.printTransaction(tx, visible));
     } catch (Exception e) {
       logger.debug("Exception: {}", e.getMessage());
       try {

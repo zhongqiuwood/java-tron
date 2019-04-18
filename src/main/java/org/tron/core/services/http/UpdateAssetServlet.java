@@ -18,6 +18,9 @@ import org.tron.protos.Contract.UpdateAssetContract;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 
+import static org.tron.core.services.http.Util.getVisible;
+import static org.tron.core.services.http.Util.getVisiblePost;
+
 
 @Component
 @Slf4j(topic = "API")
@@ -35,9 +38,10 @@ public class UpdateAssetServlet extends HttpServlet {
       String contract = request.getReader().lines()
           .collect(Collectors.joining(System.lineSeparator()));
       Util.checkBodySize(contract);
+      boolean visible = getVisiblePost( contract );
       UpdateAssetContract.Builder build = UpdateAssetContract.newBuilder();
-      JsonFormat.merge(contract, build);
       long delaySeconds = 0;
+      JsonFormat.merge(contract, build, visible );
       JSONObject jsonObject = JSONObject.parseObject(contract);
       Transaction tx;
       if (jsonObject.containsKey(Constant.DELAY_SECONDS)) {
@@ -53,7 +57,7 @@ public class UpdateAssetServlet extends HttpServlet {
             .createTransactionCapsule(build.build(), ContractType.UpdateAssetContract).getInstance();
       }
 
-      response.getWriter().println(Util.printTransaction(tx));
+      response.getWriter().println(Util.printTransaction(tx, visible));
     } catch (Exception e) {
       logger.debug("Exception: {}", e.getMessage());
       try {

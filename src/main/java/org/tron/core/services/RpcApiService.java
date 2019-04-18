@@ -1,5 +1,7 @@
 package org.tron.core.services;
 
+import static io.grpc.stub.ServerCalls.asyncUnimplementedUnaryCall;
+
 import com.google.common.base.Preconditions;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.Message;
@@ -32,6 +34,7 @@ import org.tron.api.GrpcAPI.BlockList;
 import org.tron.api.GrpcAPI.BlockListExtention;
 import org.tron.api.GrpcAPI.BlockReference;
 import org.tron.api.GrpcAPI.BytesMessage;
+import org.tron.api.GrpcAPI.DeferredTransactionMessage;
 import org.tron.api.GrpcAPI.DelegatedResourceList;
 import org.tron.api.GrpcAPI.DelegatedResourceMessage;
 import org.tron.api.GrpcAPI.EasyTransferAssetByPrivateMessage;
@@ -641,6 +644,22 @@ public class RpcApiService implements Service {
         responseObserver.onNext(null);
       }
       responseObserver.onCompleted();
+    }
+
+    @Override
+    public void createDeferredTransaction(DeferredTransactionMessage request,
+        StreamObserver<Transaction> responseObserver) {
+      try {
+        responseObserver
+            .onNext(
+                createTransactionCapsule(request, ContractType.DeferredTransactionContract).getInstance());
+      } catch (ContractValidateException e) {
+        responseObserver
+            .onNext(null);
+        logger.debug("ContractValidateException: {}", e.getMessage());
+      }
+      responseObserver.onCompleted();
+
     }
 
     @Override

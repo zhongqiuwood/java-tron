@@ -16,6 +16,9 @@ import org.tron.protos.Contract.TransferAssetContract;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 
+import static org.tron.core.services.http.Util.getVisible;
+import static org.tron.core.services.http.Util.getVisiblePost;
+
 
 @Component
 @Slf4j(topic = "API")
@@ -33,25 +36,26 @@ public class TransferAssetServlet extends HttpServlet {
       String contract = request.getReader().lines()
           .collect(Collectors.joining(System.lineSeparator()));
       Util.checkBodySize(contract);
+      boolean visible = getVisiblePost( contract );
       TransferAssetContract.Builder build = TransferAssetContract.newBuilder();
-      JsonFormat.merge(contract, build);
+      JsonFormat.merge(contract, build, visible );
+
       JSONObject jsonObject = JSONObject.parseObject(contract);
       long delaySeconds = 0;
+      Transaction tx;
       if (jsonObject.containsKey(Constant.DELAY_SECONDS)) {
         delaySeconds = jsonObject.getLong(Constant.DELAY_SECONDS);
       }
 
-      Transaction tx;
       if (delaySeconds > 0) {
-        tx = wallet.createDeferredTransactionCapsule(build.build(), delaySeconds, ContractType.TransferAssetContract).getInstance();
+        tx = wallet.createDeferredTransactionCapsule(build.build(), delaySeconds, ContractType.AccountCreateContract).getInstance();
         tx = TransactionUtil.setTransactionDelaySeconds(tx, delaySeconds);
       } else {
         tx = wallet
-            .createTransactionCapsule(build.build(), ContractType.TransferAssetContract)
-            .getInstance();
+            .createTransactionCapsule(build.build(), ContractType.AccountCreateContract).getInstance();
       }
 
-      response.getWriter().println(Util.printTransaction(tx));
+      response.getWriter().println(Util.printTransaction(tx, visible));
     } catch (Exception e) {
       logger.debug("Exception: {}", e.getMessage());
       try {
