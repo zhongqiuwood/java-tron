@@ -132,9 +132,10 @@ public class UnfreezeAssetActuator extends AbstractActuator {
     }
 
     if (delaySecond > 0) {
+      long deferredFee = TransactionUtil
+          .calcDeferredTransactionFee(dbManager, delaySecond);
       delaySecond = 0;
-      if (accountCapsule.getBalance() < TransactionUtil
-          .calcDeferredTransactionFee(dbManager, delaySecond)) {
+      if (accountCapsule.getBalance() < deferredFee) {
         throw new ContractValidateException(
             "Validate Actuator error, insufficient fee.");
       }

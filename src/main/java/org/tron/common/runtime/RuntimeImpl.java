@@ -166,7 +166,7 @@ public class RuntimeImpl implements Runtime {
 
     for (Actuator act : actuatorList) {
       if (trace.getDeferredStage() == Constant.UNEXECUTEDDEFERREDTRANSACTION){
-        trace.validateDeferredFee();
+        act.validateDeferredTransaction(trx.getRawData().getDeferredStage().getDelaySeconds());
         trace.chargeDeferredFee(trxCap.getDeferredSeconds(), result.getRet());
       }
       else {

@@ -67,22 +67,29 @@ public class TriggerSmartContractServlet extends HttpServlet {
 
       long feeLimit = jsonObject.getLongValue("fee_limit");
 
-      TransactionCapsule trxCap = wallet
-          .createTransactionCapsule(build.build(), ContractType.TriggerSmartContract);
+      long delaySeconds = 0;
 
-      Transaction.Builder txBuilder = trxCap.getInstance().toBuilder();
-      Transaction.raw.Builder rawBuilder = trxCap.getInstance().getRawData().toBuilder();
+      Transaction transaction;
+      if (jsonObject.containsKey(Constant.DELAY_SECONDS)) {
+        delaySeconds = jsonObject.getLong(Constant.DELAY_SECONDS);
+      }
+
+      if (delaySeconds > 0) {
+        transaction = wallet.createDeferredTransactionCapsule(build.build(), delaySeconds, ContractType.TriggerSmartContract).getInstance();
+        transaction = TransactionUtil.setTransactionDelaySeconds(transaction, delaySeconds);
+      } else {
+        transaction = wallet
+            .createTransactionCapsule(build.build(), ContractType.TriggerSmartContract).getInstance();
+      }
+
+      Transaction.Builder txBuilder = transaction.toBuilder();
+      Transaction.raw.Builder rawBuilder = transaction.getRawData().toBuilder();
       rawBuilder.setFeeLimit(feeLimit);
       txBuilder.setRawData(rawBuilder);
 
       Transaction trx = wallet
           .triggerContract(build.build(), new TransactionCapsule(txBuilder.build()), trxExtBuilder,
               retBuilder);
-      if (jsonObject.containsKey(Constant.DELAY_SECONDS)) {
-        long delaySeconds = jsonObject.getLong(Constant.DELAY_SECONDS);
-        trx = TransactionUtil.setTransactionDelaySeconds(trx, delaySeconds);
-      }
-
       trxExtBuilder.setTransaction(trx);
       retBuilder.setResult(true).setCode(response_code.SUCCESS);
     } catch (ContractValidateException e) {

@@ -80,12 +80,21 @@ public class DeployContractServlet extends HttpServlet {
       }
 
       build.setNewContract(smartBuilder);
-      Transaction tx = wallet
-          .createTransactionCapsule(build.build(), ContractType.CreateSmartContract).getInstance();
+
+      long delaySeconds = 0;
+      Transaction tx;
       if (jsonObject.containsKey(Constant.DELAY_SECONDS)) {
-        long delaySeconds = jsonObject.getLong(Constant.DELAY_SECONDS);
-        tx = TransactionUtil.setTransactionDelaySeconds(tx, delaySeconds);
+        delaySeconds = jsonObject.getLong(Constant.DELAY_SECONDS);
       }
+
+      if (delaySeconds > 0) {
+        tx = wallet.createDeferredTransactionCapsule(build.build(), delaySeconds, ContractType.CreateSmartContract).getInstance();
+        tx = TransactionUtil.setTransactionDelaySeconds(tx, delaySeconds);
+      } else {
+        tx = wallet
+            .createTransactionCapsule(build.build(), ContractType.CreateSmartContract).getInstance();
+      }
+
       Transaction.Builder txBuilder = tx.toBuilder();
       Transaction.raw.Builder rawBuilder = tx.getRawData().toBuilder();
       rawBuilder.setFeeLimit(feeLimit);

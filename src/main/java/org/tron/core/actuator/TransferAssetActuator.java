@@ -185,8 +185,9 @@ public class TransferAssetActuator extends AbstractActuator {
     } else {
       fee = fee + dbManager.getDynamicPropertiesStore().getCreateNewAccountFeeInSystemContract();
       if (delaySecond > 0) {
+        long deferredFee = TransactionUtil.calcDeferredTransactionFee(dbManager, delaySecond);
         delaySecond = 0;
-        if (ownerAccount.getBalance() < TransactionUtil.calcDeferredTransactionFee(dbManager, delaySecond)) {
+        if (ownerAccount.getBalance() < deferredFee) {
           throw new ContractValidateException(
               "Validate TransferAssetActuator error, insufficient fee.");
         }

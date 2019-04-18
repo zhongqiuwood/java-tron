@@ -44,21 +44,14 @@ public class TransferServlet extends HttpServlet {
       long delaySeconds = 0;
       if (jsonObject.containsKey(Constant.DELAY_SECONDS)) {
         delaySeconds = jsonObject.getLong(Constant.DELAY_SECONDS);
-        if (delaySeconds > 0) {
-          Contract.DeferredTransactionContract.Builder builder = Contract.DeferredTransactionContract.newBuilder();
-          builder.setParameter(Any.pack(build.build()));
-          builder.setDelaySecond(delaySeconds);
-          builder.setType(ContractType.TransferContract.getNumber());
-          tx = wallet.createTransactionCapsule(build.build(), ContractType.DeferredTransactionContract)
-              .getInstance();
-        } else {
-          tx = wallet.createTransactionCapsule(build.build(), ContractType.TransferContract)
-              .getInstance();
-        }
       }
-
       if (delaySeconds > 0) {
+        tx = wallet.createDeferredTransactionCapsule(build.build(), delaySeconds, ContractType.TransferContract).getInstance();
         tx = TransactionUtil.setTransactionDelaySeconds(tx, delaySeconds);
+      } else {
+        tx = wallet
+            .createTransactionCapsule(build.build(), ContractType.TransferContract)
+            .getInstance();
       }
 
       response.getWriter().println(Util.printTransaction(tx));

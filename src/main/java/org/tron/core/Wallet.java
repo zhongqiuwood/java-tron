@@ -415,6 +415,11 @@ public class Wallet {
       }
     }
 
+    if (contractType == ContractType.CreateSmartContract ||
+        contractType == ContractType.TriggerSmartContract ) {
+      TransactionUtil.validateDeferredTransactionFee(trx, delaySecond, dbManager);
+    }
+
     if (contractType == ContractType.CreateSmartContract) {
 
       CreateSmartContract contract = ContractCapsule

@@ -39,24 +39,18 @@ public class UpdateAssetServlet extends HttpServlet {
       JsonFormat.merge(contract, build);
       long delaySeconds = 0;
       JSONObject jsonObject = JSONObject.parseObject(contract);
-      Transaction tx = null;
+      Transaction tx;
       if (jsonObject.containsKey(Constant.DELAY_SECONDS)) {
         delaySeconds = jsonObject.getLong(Constant.DELAY_SECONDS);
-        if (delaySeconds > 0) {
-          Contract.DeferredTransactionContract.Builder builder = Contract.DeferredTransactionContract.newBuilder();
-          builder.setParameter(Any.pack(build.build()));
-          builder.setDelaySecond(delaySeconds);
-          builder.setType(ContractType.UpdateAssetContract.getNumber());
-          tx = wallet.createTransactionCapsule(build.build(), ContractType.DeferredTransactionContract)
-              .getInstance();
-        } else {
-          tx =  wallet
-              .createTransactionCapsule(build.build(), ContractType.UpdateAssetContract).getInstance();
-        }
       }
 
       if (delaySeconds > 0) {
+        tx =  wallet
+            .createDeferredTransactionCapsule(build.build(), delaySeconds, ContractType.UpdateAssetContract).getInstance();
         tx = TransactionUtil.setTransactionDelaySeconds(tx, delaySeconds);
+      } else {
+        tx =  wallet
+            .createTransactionCapsule(build.build(), ContractType.UpdateAssetContract).getInstance();
       }
 
       response.getWriter().println(Util.printTransaction(tx));

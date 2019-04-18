@@ -124,8 +124,9 @@ public class TransferActuator extends AbstractActuator {
       }
 
       if (delaySecond > 0) {
+        long deferredFee = TransactionUtil.calcDeferredTransactionFee(dbManager, delaySecond);
         delaySecond = 0;
-        if ( balance < TransactionUtil.calcDeferredTransactionFee(dbManager, delaySecond)) {
+        if ( balance < deferredFee) {
           throw new ContractValidateException(
               "Validate TransferContract error, balance is not sufficient.");
         }
