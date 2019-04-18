@@ -278,7 +278,8 @@ message Transaction {
       UpdateEnergyLimitContract = 45;
       AccountPermissionUpdateContract = 46;
       CancelDeferredTransactionContract = 47;
-      DeferredTransactionContract = 48;
+      ClearABIContract = 48;
+      DeferredTransactionContract = 49;
     }
     ContractType type = 1;
     google.protobuf.Any parameter = 2;

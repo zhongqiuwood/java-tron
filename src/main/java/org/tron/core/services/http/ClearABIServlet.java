@@ -12,41 +12,37 @@ import org.springframework.stereotype.Component;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.utils.TransactionUtil;
-import org.tron.protos.Contract.AccountCreateContract;
-import org.tron.protos.Protocol.DeferredStage;
+import org.tron.protos.Contract.ClearABIContract;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 
 
 @Component
 @Slf4j(topic = "API")
-public class CreateAccountServlet extends HttpServlet {
+public class ClearABIServlet extends HttpServlet {
 
   @Autowired
   private Wallet wallet;
+
+  protected void doGet(HttpServletRequest request, HttpServletResponse response) {
+
+  }
 
   protected void doPost(HttpServletRequest request, HttpServletResponse response) {
     try {
       String contract = request.getReader().lines()
           .collect(Collectors.joining(System.lineSeparator()));
       Util.checkBodySize(contract);
-      AccountCreateContract.Builder build = AccountCreateContract.newBuilder();
+      ClearABIContract.Builder build = ClearABIContract.newBuilder();
       JsonFormat.merge(contract, build);
+      Transaction tx = wallet
+          .createTransactionCapsule(build.build(), ContractType.ClearABIContract)
+          .getInstance();
 
       JSONObject jsonObject = JSONObject.parseObject(contract);
-      long delaySeconds = 0;
-      Transaction tx;
       if (jsonObject.containsKey(Constant.DELAY_SECONDS)) {
-        delaySeconds = jsonObject.getLong(Constant.DELAY_SECONDS);
-      }
-      
-      if (delaySeconds > 0) {
-        tx = wallet.createDeferredTransactionCapsule(build.build(), delaySeconds, ContractType.AccountCreateContract).getInstance();
+        long delaySeconds = jsonObject.getLong(Constant.DELAY_SECONDS);
         tx = TransactionUtil.setTransactionDelaySeconds(tx, delaySeconds);
-      } else {
-        tx = wallet
-            .createTransactionCapsule(build.build(), ContractType.AccountCreateContract)
-            .getInstance();
       }
 
       response.getWriter().println(Util.printTransaction(tx));

@@ -39,17 +39,16 @@ public class UpdateSettingServlet extends HttpServlet {
       JSONObject jsonObject = JSONObject.parseObject(contract);
       if (jsonObject.containsKey(Constant.DELAY_SECONDS)) {
         delaySeconds = jsonObject.getLong(Constant.DELAY_SECONDS);
-        if (delaySeconds > 0) {
-          build.setDelaySeconds(delaySeconds);
-        }
       }
 
-      Transaction tx = wallet
-          .createTransactionCapsule(build.build(), ContractType.UpdateSettingContract)
-          .getInstance();
-
+      Transaction tx;
       if (delaySeconds > 0) {
+        tx = wallet.createDeferredTransactionCapsule(build.build(), delaySeconds, ContractType.UpdateSettingContract).getInstance();
         tx = TransactionUtil.setTransactionDelaySeconds(tx, delaySeconds);
+      } else {
+        tx = wallet
+            .createTransactionCapsule(build.build(), ContractType.UpdateSettingContract)
+            .getInstance();
       }
 
       response.getWriter().println(Util.printTransaction(tx));
