@@ -48,11 +48,11 @@ public class TransferAssetServlet extends HttpServlet {
       }
 
       if (delaySeconds > 0) {
-        tx = wallet.createDeferredTransactionCapsule(build.build(), delaySeconds, ContractType.AccountCreateContract).getInstance();
+        tx = wallet.createDeferredTransactionCapsule(build.build(), delaySeconds, ContractType.TransferAssetContract).getInstance();
         tx = TransactionUtil.setTransactionDelaySeconds(tx, delaySeconds);
       } else {
         tx = wallet
-            .createTransactionCapsule(build.build(), ContractType.AccountCreateContract).getInstance();
+            .createTransactionCapsule(build.build(), ContractType.TransferAssetContract).getInstance();
       }
 
       response.getWriter().println(Util.printTransaction(tx, visible));
