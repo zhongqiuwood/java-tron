@@ -395,14 +395,16 @@ public class Wallet {
   public TransactionCapsule createTransactionCapsule(com.google.protobuf.Message message,
       ContractType contractType) throws ContractValidateException {
     long delaySecond = 0;
+    TransactionCapsule trx = null;
     if (contractType == ContractType.DeferredTransactionContract) {
       DeferredTransactionMessage deferredTransactionContract = (DeferredTransactionMessage) message;
-      message = deferredTransactionContract.getParameter();
       contractType = ContractType.forNumber(deferredTransactionContract.getType());
       delaySecond = deferredTransactionContract.getDelaySecond();
+      trx = new TransactionCapsule(deferredTransactionContract.getParameter(), contractType);
+    } else {
+      trx = new TransactionCapsule(message, contractType);
     }
 
-    TransactionCapsule trx = new TransactionCapsule(message, contractType);
     if (contractType != ContractType.CreateSmartContract
         && contractType != ContractType.TriggerSmartContract) {
       List<Actuator> actList = ActuatorFactory.createActuator(trx, dbManager);
