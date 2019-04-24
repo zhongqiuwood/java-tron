@@ -44,6 +44,7 @@ import org.tron.core.Wallet;
 import org.tron.core.actuator.Actuator;
 import org.tron.core.actuator.ActuatorFactory;
 import org.tron.core.capsule.*;
+import org.tron.core.capsule.utils.TransactionUtil;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.EnergyProcessor;
 import org.tron.core.db.TransactionTrace;
@@ -341,7 +342,7 @@ public class RuntimeImpl implements Runtime {
         cpuLimitRatio = 1.0;
       } else {
         // self witness or other witness or fullnode verifies block
-        if (trx.getRet(0).getContractRet() == contractResult.OUT_OF_TIME) {
+        if (trx.getRetCount() != 0 && trx.getRet(0).getContractRet() == contractResult.OUT_OF_TIME) {
           cpuLimitRatio = Args.getInstance().getMinTimeRatio();
         } else {
           cpuLimitRatio = Args.getInstance().getMaxTimeRatio();
@@ -390,6 +391,12 @@ public class RuntimeImpl implements Runtime {
       throw new ContractValidateException(
           "Trying to create a contract with existing contract address: " + Wallet
               .encode58Check(contractAddress));
+    }
+
+    if (trace.getDeferredStage() == Constant.UNEXECUTEDDEFERREDTRANSACTION) {
+      TransactionUtil.validateDeferredTransaction(new TransactionCapsule(trx));
+      trace.chargeDeferredFee(trx.getRawData().getDeferredStage().getDelaySeconds(), result.getRet());
+      return;
     }
 
     newSmartContract = newSmartContract.toBuilder()
@@ -533,6 +540,12 @@ public class RuntimeImpl implements Runtime {
 
     byte[] callerAddress = contract.getOwnerAddress().toByteArray();
     checkTokenValueAndId(tokenValue, tokenId);
+
+    if (trace.getDeferredStage() == Constant.UNEXECUTEDDEFERREDTRANSACTION) {
+      TransactionUtil.validateDeferredTransaction(new TransactionCapsule(trx));
+      trace.chargeDeferredFee(trx.getRawData().getDeferredStage().getDelaySeconds(), result.getRet());
+      return;
+    }
 
     byte[] code = this.deposit.getCode(contractAddress);
     if (isNotEmpty(code)) {
