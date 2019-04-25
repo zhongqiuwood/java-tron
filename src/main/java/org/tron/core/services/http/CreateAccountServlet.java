@@ -52,7 +52,7 @@ public class CreateAccountServlet extends HttpServlet {
         tx = wallet
             .createTransactionCapsule(build.build(), ContractType.AccountCreateContract).getInstance();
       }
-      tx = setTransactionPermissionId(input, tx);
+      tx = setTransactionPermissionId(jsonObject, tx);
       response.getWriter().println(Util.printCreateTransaction(tx, visible));
     } catch (Exception e) {
       logger.debug("Exception: {}", e.getMessage());

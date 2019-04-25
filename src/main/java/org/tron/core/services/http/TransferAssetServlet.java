@@ -55,13 +55,9 @@ public class TransferAssetServlet extends HttpServlet {
         tx = wallet
             .createTransactionCapsule(build.build(), ContractType.TransferAssetContract).getInstance();
       }
-<<<<<<< HEAD
-
-      response.getWriter().println(Util.printTransaction(tx, visible));
-=======
+      
       tx = setTransactionPermissionId(jsonObject, tx);
       response.getWriter().println(Util.printCreateTransaction(tx, visible));
->>>>>>> e38b6a96c98224e6554ee837dcf78c1be2377cf6
     } catch (Exception e) {
       logger.debug("Exception: {}", e.getMessage());
       try {
