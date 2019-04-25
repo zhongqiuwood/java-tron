@@ -2204,8 +2204,15 @@ public class Manager {
   private boolean validateDeferredTransaction(TransactionCapsule transactionCapsule, Manager manager)
       throws ValidateSignatureException {
     transactionCapsule.setDeferredStage(Constant.UNEXECUTEDDEFERREDTRANSACTION);
-    boolean result = transactionCapsule.validateSignature(manager);
-    transactionCapsule.setDeferredStage(Constant.EXECUTINGDEFERREDTRANSACTION);
+    boolean result;
+    try {
+      result = transactionCapsule.validateSignature(manager);
+    }catch (ValidateSignatureException exception){
+      logger.error("unknown exception happened in validate deferred transaction", exception);
+      throw exception;
+    } finally {
+      transactionCapsule.setDeferredStage(Constant.EXECUTINGDEFERREDTRANSACTION);
+    }
     return result;
   }
 }
