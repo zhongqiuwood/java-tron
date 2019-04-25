@@ -437,7 +437,6 @@ service Wallet {
   }
 
   rpc TriggerDeferredContract(DeferredTriggerContractMessage) returns (TransactionExtention) {
-
   }
   
   rpc ClearContractABI (ClearABIContract) returns (TransactionExtention) {
