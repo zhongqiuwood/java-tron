@@ -416,7 +416,7 @@ public class Wallet {
         }
       }
     }
-    
+
     if (delaySecond > 0 && (contractType == ContractType.CreateSmartContract ||
         contractType == ContractType.TriggerSmartContract)) {
       TransactionUtil.validateDeferredTransactionFee(trx, delaySecond, dbManager);
