@@ -1513,6 +1513,10 @@ public class Wallet {
       ret.setStatus(0, code.FAILED);
       retBuilder.setMessage(ByteString.copyFromUtf8(runtime.getRuntimeError())).build();
     }
+    if (runtime.getResult().isRevert()) {
+      ret.setStatus(0, code.FAILED);
+      retBuilder.setMessage(ByteString.copyFromUtf8("REVERT opcode executed")).build();
+    }
     trxCap.setResult(ret);
     return trxCap.getInstance();
   }
