@@ -3,7 +3,6 @@ package org.tron.core.db;
 import static org.tron.core.config.Parameter.ChainConstant.SOLIDIFIED_THRESHOLD;
 import static org.tron.core.config.Parameter.NodeConstant.MAX_TRANSACTION_PENDING;
 import static org.tron.protos.Protocol.TransactionInfo.code.FAILED;
-
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.Lists;
@@ -109,6 +108,7 @@ import org.tron.core.exception.ValidateSignatureException;
 import org.tron.core.services.WitnessService;
 import org.tron.core.witness.ProposalController;
 import org.tron.core.witness.WitnessController;
+import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.DeferredTransaction;
 import org.tron.protos.Protocol.Transaction;
@@ -2274,6 +2274,7 @@ public class Manager {
             new BytesCapsule(ByteArray.fromLong(finalTrxCap.getBlockNum()))));
     TransactionInfoCapsule transactionInfo = TransactionInfoCapsule
         .buildInstance(trxCap, blockCap, trace);
+    transactionInfo.setResult(FAILED);
     transactionHistoryStore.put(trxCap.getTransactionId().getBytes(), transactionInfo);
   }
 }
