@@ -2257,4 +2257,23 @@ public class Manager {
     witnessCapsule.setIsJobs(true);
     this.witnessStore.put(keyAddress, witnessCapsule);
   }
+
+  private void handlerDeferredTransactionException(BlockCapsule blockCap, TransactionTrace trace, TransactionCapsule trxCap)
+      throws DeferredTransactionException {
+    if (Objects.nonNull(blockCap) && (!blockCap.getInstance().getBlockHeader().getWitnessSignature().isEmpty())) {
+      if (trace.getReceipt().getResult() != contractResult.DEFERRED_EXECUTE_FAILED ) {
+        throw new DeferredTransactionException("Different resultCode");
+      }
+    }
+
+    trace.getReceipt().setResult(contractResult.DEFERRED_EXECUTE_FAILED);
+    transactionStore.put(trxCap.getTransactionId().getBytes(), trxCap);
+    TransactionCapsule finalTrxCap = trxCap;
+    Optional.ofNullable(transactionCache)
+        .ifPresent(t -> t.put(finalTrxCap.getTransactionId().getBytes(),
+            new BytesCapsule(ByteArray.fromLong(finalTrxCap.getBlockNum()))));
+    TransactionInfoCapsule transactionInfo = TransactionInfoCapsule
+        .buildInstance(trxCap, blockCap, trace);
+    transactionHistoryStore.put(trxCap.getTransactionId().getBytes(), transactionInfo);
+  }
 }
