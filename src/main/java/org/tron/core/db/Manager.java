@@ -2,6 +2,7 @@ package org.tron.core.db;
 
 import static org.tron.core.config.Parameter.ChainConstant.SOLIDIFIED_THRESHOLD;
 import static org.tron.core.config.Parameter.NodeConstant.MAX_TRANSACTION_PENDING;
+import static org.tron.protos.Protocol.TransactionInfo.code.FAILED;
 
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
@@ -112,6 +113,7 @@ import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.DeferredTransaction;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract;
+import org.tron.protos.Protocol.Transaction.Result.contractResult;
 
 
 @Slf4j(topic = "DB")
@@ -502,6 +504,7 @@ public class Manager {
         synchronized (lockObj) {
           deferredTransactionList = getDeferredTransactionStore()
               .getScheduledTransactions();
+
         }
       }, 1, 1, TimeUnit.SECONDS);
     }
@@ -709,6 +712,11 @@ public class Manager {
   }
 
   void validateTapos(TransactionCapsule transactionCapsule) throws TaposException {
+    if (transactionCapsule.getDeferredSeconds() > 0
+        && transactionCapsule.getDeferredStage() == Constant.EXECUTINGDEFERREDTRANSACTION) {
+      return;
+    }
+
     byte[] refBlockHash = transactionCapsule.getInstance()
         .getRawData().getRefBlockHash().toByteArray();
     byte[] refBlockNumBytes = transactionCapsule.getInstance()
@@ -1341,10 +1349,16 @@ public class Manager {
 
     if (trxCap.getDeferredStage() == Constant.EXECUTINGDEFERREDTRANSACTION) {
       cancelDeferredTransaction(recoveryTransactionId(trxCap));
+      try {
+        trace.exec();
+      } catch (Exception e) {
+        handlerDeferredTransactionException(blockCap, trace, trxCap, e);
+        return true;
+      }
+    } else {
+      trace.exec();
     }
 
-    trace.exec();
-    
     // process deferred transaction for the first time
     if (trxCap.getDeferredStage() == Constant.UNEXECUTEDDEFERREDTRANSACTION) {
       return processDeferTransaction(trxCap, blockCap, trace);
@@ -2217,5 +2231,26 @@ public class Manager {
       transactionCapsule.setDeferredStage(Constant.EXECUTINGDEFERREDTRANSACTION);
     }
     return result;
+  }
+
+  private void handlerDeferredTransactionException(BlockCapsule blockCap, TransactionTrace trace, TransactionCapsule trxCap, Exception ex)
+      throws DeferredTransactionException {
+    if (Objects.nonNull(blockCap) && (!blockCap.getInstance().getBlockHeader().getWitnessSignature().isEmpty())) {
+      if (trxCap.getContractRet() != contractResult.DEFERRED_EXECUTE_FAILED ) {
+        throw new DeferredTransactionException("Different resultCode");
+      }
+    }
+
+    trxCap.setResultCode(contractResult.DEFERRED_EXECUTE_FAILED);
+    transactionStore.put(trxCap.getTransactionId().getBytes(), trxCap);
+    TransactionCapsule finalTrxCap = trxCap;
+    Optional.ofNullable(transactionCache)
+        .ifPresent(t -> t.put(finalTrxCap.getTransactionId().getBytes(),
+            new BytesCapsule(ByteArray.fromLong(finalTrxCap.getBlockNum()))));
+    TransactionInfoCapsule transactionInfo = TransactionInfoCapsule
+        .buildInstance(trxCap, blockCap, trace);
+    transactionInfo.setResult(FAILED);
+    transactionInfo.setContractResult(ex.getMessage().getBytes());
+    transactionHistoryStore.put(trxCap.getTransactionId().getBytes(), transactionInfo);
   }
 }
