@@ -1311,8 +1311,8 @@ public class Manager {
           + "need to be opened by the committee");
     }
 
-    //validateTapos(trxCap);
-    //validateCommon(trxCap);
+    validateTapos(trxCap);
+    validateCommon(trxCap);
 
     if (trxCap.getInstance().getRawData().getContractList().size() != 1) {
       throw new ContractSizeNotEqualToOneException(
@@ -2261,12 +2261,12 @@ public class Manager {
   private void handlerDeferredTransactionException(BlockCapsule blockCap, TransactionTrace trace, TransactionCapsule trxCap)
       throws DeferredTransactionException {
     if (Objects.nonNull(blockCap) && (!blockCap.getInstance().getBlockHeader().getWitnessSignature().isEmpty())) {
-      if (trace.getReceipt().getResult() != contractResult.DEFERRED_EXECUTE_FAILED ) {
+      if (trxCap.getContractRet() != contractResult.DEFERRED_EXECUTE_FAILED ) {
         throw new DeferredTransactionException("Different resultCode");
       }
     }
 
-    trace.getReceipt().setResult(contractResult.DEFERRED_EXECUTE_FAILED);
+    trxCap.setResultCode(contractResult.DEFERRED_EXECUTE_FAILED);
     transactionStore.put(trxCap.getTransactionId().getBytes(), trxCap);
     TransactionCapsule finalTrxCap = trxCap;
     Optional.ofNullable(transactionCache)
