@@ -2250,7 +2250,7 @@ public class Manager {
     TransactionInfoCapsule transactionInfo = TransactionInfoCapsule
         .buildInstance(trxCap, blockCap, trace);
     transactionInfo.setResult(FAILED);
-    transactionInfo.setContractResult(ex.getMessage().getBytes());
+    transactionInfo.setResMessage(ex.getMessage());
     transactionHistoryStore.put(trxCap.getTransactionId().getBytes(), transactionInfo);
   }
 }
