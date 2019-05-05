@@ -1269,7 +1269,7 @@ public class Manager {
     if (Objects.isNull(deferredTransactionCapsule.getInstance())) {
       throw new DeferredTransactionException("not transaction found");
     }
-    if (transactionCapsule.getInstance().getRawData().equals(transactionCapsule.getInstance().getRawData()) == false) {
+    if (transactionCapsule.getInstance().getRawData().equals(deferredTransactionCapsule.getInstance().getTransaction().getRawData()) == false) {
       throw new DeferredTransactionException("transaction is modified");
     }
 

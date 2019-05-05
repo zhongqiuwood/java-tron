@@ -152,8 +152,9 @@ public class UpdateAssetActuator extends AbstractActuator {
     }
 
     if (delaySecond > 0) {
+      long deferredFee = TransactionUtil.calcDeferredTransactionFee(dbManager, delaySecond);
       delaySecond = 0;
-      if (account.getBalance() < TransactionUtil.calcDeferredTransactionFee(dbManager, delaySecond)) {
+      if (account.getBalance() < deferredFee) {
         throw new ContractValidateException("Validate UpdateAssetActuator error, insufficient fee.");
       }
     }
