@@ -33,6 +33,7 @@ import org.tron.common.runtime.vm.program.InternalTransaction.TrxType;
 import org.tron.common.runtime.vm.program.Program;
 import org.tron.common.runtime.vm.program.Program.JVMStackOverFlowException;
 import org.tron.common.runtime.vm.program.Program.OutOfTimeException;
+import org.tron.common.runtime.vm.program.Program.TransferException;
 import org.tron.common.runtime.vm.program.ProgramPrecompile;
 import org.tron.common.runtime.vm.program.ProgramResult;
 import org.tron.common.runtime.vm.program.invoke.ProgramInvoke;
@@ -394,7 +395,7 @@ public class RuntimeImpl implements Runtime {
     }
 
     if (trace.getDeferredStage() == Constant.UNEXECUTEDDEFERREDTRANSACTION) {
-      TransactionUtil.validateDeferredTransaction(new TransactionCapsule(trx));
+      TransactionUtil.validateDeferredTransactionFee(new TransactionCapsule(trx), trx.getRawData().getDeferredStage().getDelaySeconds(), deposit.getDbManager());
       trace.chargeDeferredFee(trx.getRawData().getDeferredStage().getDelaySeconds(), result.getRet());
       return;
     }
@@ -542,7 +543,7 @@ public class RuntimeImpl implements Runtime {
     checkTokenValueAndId(tokenValue, tokenId);
 
     if (trace.getDeferredStage() == Constant.UNEXECUTEDDEFERREDTRANSACTION) {
-      TransactionUtil.validateDeferredTransaction(new TransactionCapsule(trx));
+      TransactionUtil.validateDeferredTransactionFee(new TransactionCapsule(trx), trx.getRawData().getDeferredStage().getDelaySeconds(), deposit.getDbManager());
       trace.chargeDeferredFee(trx.getRawData().getDeferredStage().getDelaySeconds(), result.getRet());
       return;
     }
@@ -664,7 +665,9 @@ public class RuntimeImpl implements Runtime {
           result.rejectInternalTransactions();
 
           if (result.getException() != null) {
-            program.spendAllEnergy();
+            if (!(result.getException() instanceof TransferException)) {
+              program.spendAllEnergy();
+            }
             runtimeError = result.getException().getMessage();
             throw result.getException();
           } else {
@@ -698,7 +701,9 @@ public class RuntimeImpl implements Runtime {
       runtimeError = result.getException().getMessage();
       logger.info("timeout: {}", result.getException().getMessage());
     } catch (Throwable e) {
-      program.spendAllEnergy();
+      if (! (e instanceof TransferException)) {
+        program.spendAllEnergy();
+      }
       result = program.getResult();
       result.rejectInternalTransactions();
       if (Objects.isNull(result.getException())) {
