@@ -1269,6 +1269,9 @@ public class Manager {
     if (Objects.isNull(deferredTransactionCapsule.getInstance())) {
       throw new DeferredTransactionException("not transaction found");
     }
+    if (transactionCapsule.getInstance().getRawData().equals(transactionCapsule.getInstance().getRawData()) == false) {
+      throw new DeferredTransactionException("transaction is modified");
+    }
 
     return transactionCapsule;
   }
@@ -1325,9 +1328,6 @@ public class Manager {
     if (trxCap.getDeferredSeconds() > 0
         && trxCap.getDeferredStage() == Constant.EXECUTINGDEFERREDTRANSACTION) {
       trxCap = getExecutingDeferredTransaction(trxCap, blockCap);
-      if (!validateDeferredTransaction(trxCap, this)) {
-        throw new ValidateSignatureException("trans sig validate failed");
-      }
     } else if (!trxCap.validateSignature(this)) {
       throw new ValidateSignatureException("trans sig validate failed");
     }
@@ -2216,21 +2216,6 @@ public class Manager {
     TransactionCapsule oldTrxCap = new TransactionCapsule(trxCap.getInstance());
     oldTrxCap.setDeferredStage(Constant.UNEXECUTEDDEFERREDTRANSACTION);
     return oldTrxCap.getTransactionId().getByteString();
-  }
-
-  private boolean validateDeferredTransaction(TransactionCapsule transactionCapsule, Manager manager)
-      throws ValidateSignatureException {
-    transactionCapsule.setDeferredStage(Constant.UNEXECUTEDDEFERREDTRANSACTION);
-    boolean result;
-    try {
-      result = transactionCapsule.validateSignature(manager);
-    }catch (ValidateSignatureException exception){
-      logger.error("unknown exception happened in validate deferred transaction", exception);
-      throw exception;
-    } finally {
-      transactionCapsule.setDeferredStage(Constant.EXECUTINGDEFERREDTRANSACTION);
-    }
-    return result;
   }
 
   private void handlerDeferredTransactionException(BlockCapsule blockCap, TransactionTrace trace, TransactionCapsule trxCap, Exception ex)
