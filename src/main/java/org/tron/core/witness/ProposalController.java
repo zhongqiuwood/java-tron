@@ -209,6 +209,7 @@ public class ProposalController {
           if (manager.getDynamicPropertiesStore().getAllowDeferredTransaction() == 0) {
             manager.getDynamicPropertiesStore().saveAllowDeferredTransaction(entry.getValue());
             manager.getDynamicPropertiesStore().addSystemContractAndSetPermission(47);
+            manager.getDynamicPropertiesStore().addSystemContractAndSetPermission(49);
           }
           break;
         }
