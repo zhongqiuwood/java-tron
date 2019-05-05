@@ -461,6 +461,10 @@ public class Wallet {
         return builder.setResult(false).setCode(response_code.DEFERRED_SECONDS_ILLEGAL_ERROR)
             .build();
       }
+      if (trx.getDeferredSeconds() == 0 && trx.getDeferredStage() != Constant.NORMALTRANSACTION) {
+        return builder.setResult(false).setCode(response_code.DEFERRED_STAGE_ILLEGAL_ERROR)
+            .build();
+      }
 
       Message message = new TransactionMessage(signaturedTransaction);
       if (minEffectiveConnection != 0) {
