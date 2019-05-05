@@ -394,7 +394,7 @@ public class RuntimeImpl implements Runtime {
     }
 
     if (trace.getDeferredStage() == Constant.UNEXECUTEDDEFERREDTRANSACTION) {
-      TransactionUtil.validateDeferredTransaction(new TransactionCapsule(trx));
+      TransactionUtil.validateDeferredTransactionFee(new TransactionCapsule(trx), trx.getRawData().getDeferredStage().getDelaySeconds(), deposit.getDbManager());
       trace.chargeDeferredFee(trx.getRawData().getDeferredStage().getDelaySeconds(), result.getRet());
       return;
     }
@@ -542,7 +542,7 @@ public class RuntimeImpl implements Runtime {
     checkTokenValueAndId(tokenValue, tokenId);
 
     if (trace.getDeferredStage() == Constant.UNEXECUTEDDEFERREDTRANSACTION) {
-      TransactionUtil.validateDeferredTransaction(new TransactionCapsule(trx));
+      TransactionUtil.validateDeferredTransactionFee(new TransactionCapsule(trx), trx.getRawData().getDeferredStage().getDelaySeconds(), deposit.getDbManager());
       trace.chargeDeferredFee(trx.getRawData().getDeferredStage().getDelaySeconds(), result.getRet());
       return;
     }
