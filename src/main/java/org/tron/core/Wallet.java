@@ -459,10 +459,12 @@ public class Wallet {
       trx = new TransactionMessage(signaturedTransaction.toByteArray()).getTransactionCapsule();
       if (trx.getDeferredSeconds() != 0 && !TransactionUtil.validateDeferredTransaction(trx)) {
         return builder.setResult(false).setCode(response_code.DEFERRED_SECONDS_ILLEGAL_ERROR)
+            .setMessage(ByteString.copyFromUtf8("deferred transaction parameter is illegal"))
             .build();
       }
       if (trx.getDeferredSeconds() == 0 && trx.getDeferredStage() != Constant.NORMALTRANSACTION) {
         return builder.setResult(false).setCode(response_code.DEFERRED_STAGE_ILLEGAL_ERROR)
+            .setMessage(ByteString.copyFromUtf8("deferred transaction stage is illegal"))
             .build();
       }
 
