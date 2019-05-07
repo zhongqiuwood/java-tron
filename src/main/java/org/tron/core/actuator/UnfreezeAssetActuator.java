@@ -128,7 +128,7 @@ public class UnfreezeAssetActuator extends AbstractActuator {
     long allowedUnfreezeCount = accountCapsule.getFrozenSupplyList().stream()
         .filter(frozen -> frozen.getExpireTime() <= now).count();
     if (allowedUnfreezeCount <= 0) {
-      throw new ContractValidateException("It's not time to unfreeze asset supply");
+      //throw new ContractValidateException("It's not time to unfreeze asset supply");
     }
 
     if (delaySecond > 0) {
