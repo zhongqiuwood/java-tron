@@ -44,10 +44,10 @@ public class UnfreezeAssetActuator extends AbstractActuator {
       long now = dbManager.getHeadBlockTimeStamp();
       while (iterator.hasNext()) {
         Frozen next = iterator.next();
-        if (next.getExpireTime() <= now) {
+       // if (next.getExpireTime() <= now) {
           unfreezeAsset += next.getFrozenBalance();
           iterator.remove();
-        }
+        //}
       }
 
       if (dbManager.getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
