@@ -1,6 +1,7 @@
 package org.tron.core.services.http;
 
 import lombok.extern.slf4j.Slf4j;
+import org.eclipse.jetty.proxy.ConnectHandler;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
@@ -180,8 +181,14 @@ public class FullNodeHttpApiService implements Service {
   public void start() {
     try {
       server = new Server(port);
-      ServletContextHandler context = new ServletContextHandler(ServletContextHandler.SESSIONS);
-      context.setContextPath("/wallet/");
+      ConnectHandler proxy = new ConnectHandler();
+      proxy.setConnectTimeout(2000);
+      proxy.setIdleTimeout(2000);
+      server.setHandler(proxy);
+      ServletContextHandler context = new ServletContextHandler(proxy, "/wallet/",
+          ServletContextHandler.SESSIONS);
+      //    ServletContextHandler context = new ServletContextHandler(ServletContextHandler.SESSIONS);
+      //   context.setContextPath("/wallet/");
       server.setHandler(context);
 
       context.addServlet(new ServletHolder(getAccountServlet), "/getaccount");
