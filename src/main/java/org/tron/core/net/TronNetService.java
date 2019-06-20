@@ -19,6 +19,7 @@ import org.tron.core.net.messagehandler.TransactionsMsgHandler;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.net.peer.PeerStatusCheck;
 import org.tron.core.net.service.AdvService;
+import org.tron.core.net.service.FastForwardService;
 import org.tron.core.net.service.SyncService;
 import org.tron.protos.Protocol.ReasonCode;
 
@@ -34,6 +35,9 @@ public class TronNetService {
 
   @Autowired
   private SyncService syncService;
+
+  @Autowired
+  private FastForwardService fastForwardService;
 
   @Autowired
   private PeerStatusCheck peerStatusCheck;
@@ -65,6 +69,7 @@ public class TronNetService {
     channelManager.init();
     advService.init();
     syncService.init();
+    fastForwardService.init();
     peerStatusCheck.init();
     transactionsMsgHandler.init();
     logger.info("TronNetService start successfully.");
@@ -84,7 +89,7 @@ public class TronNetService {
   }
 
   public void fastForward(BlockMessage msg) {
-    advService.fastForward(msg);
+    fastForwardService.broadcast(msg);
   }
 
   protected void onMessage(PeerConnection peer, TronMessage msg) {

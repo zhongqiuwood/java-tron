@@ -4,10 +4,14 @@ import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCED_INTERV
 import static org.tron.core.config.Parameter.ChainConstant.BLOCK_SIZE;
 
 import com.google.protobuf.ByteString;
+import java.net.InetAddress;
+import java.util.HashMap;
+import java.util.concurrent.ConcurrentHashMap;
 import lombok.extern.slf4j.Slf4j;
 import org.spongycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.tron.common.overlay.server.FastForward;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.config.args.Args;
@@ -19,6 +23,7 @@ import org.tron.core.net.message.TronMessage;
 import org.tron.core.net.peer.Item;
 import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.net.service.AdvService;
+import org.tron.core.net.service.FastForwardService;
 import org.tron.core.net.service.SyncService;
 import org.tron.core.services.WitnessProductBlockService;
 import org.tron.protos.Protocol.Inventory.InventoryType;
@@ -35,6 +40,9 @@ public class BlockMsgHandler implements TronMsgHandler {
 
   @Autowired
   private SyncService syncService;
+
+  @Autowired
+  private FastForwardService fastForwardService;
 
   @Autowired
   private WitnessProductBlockService witnessProductBlockService;
@@ -63,7 +71,8 @@ public class BlockMsgHandler implements TronMsgHandler {
       long now = System.currentTimeMillis();
       long delay = now - tronNetDelegate.getHeadBlockTimeStamp() - BLOCK_PRODUCED_INTERVAL;
       long interval = blockId.getNum() - tronNetDelegate.getHeadBlockId().getNum();
-      processBlock(peer, blockMessage.getBlockCapsule());
+      processBlock(peer, blockMessage.getBlockCapsule(), delay);
+
       logger.info(
           "Receive block/interval {}/{} from {} fetch/delay {}/{}ms, txs/process {}/{}ms, witness: {}",
           blockId.getNum(),
@@ -93,7 +102,7 @@ public class BlockMsgHandler implements TronMsgHandler {
     }
   }
 
-  private void processBlock(PeerConnection peer, BlockCapsule block) throws P2pException {
+  private void processBlock(PeerConnection peer, BlockCapsule block, long delay) throws P2pException {
     BlockId blockId = block.getBlockId();
     if (!tronNetDelegate.containBlock(block.getParentBlockId())) {
       logger.warn("Get unlink block {} from {}, head is {}.", blockId.getString(),
@@ -115,8 +124,9 @@ public class BlockMsgHandler implements TronMsgHandler {
       }
       if (tronNetDelegate.validBlock(block)) {
         peer.getAdvInvReceive().put(item, System.currentTimeMillis());
-        advService.fastForward(new BlockMessage(block));
-        tronNetDelegate.trustNode(peer);
+        BlockMessage blockMessage = new BlockMessage(block);
+        fastForwardService.broadcast(blockMessage);
+        fastForwardService.processBlockMsg(blockMessage, peer, delay);
       }
     }
 
