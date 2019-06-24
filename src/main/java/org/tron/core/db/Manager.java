@@ -1,5 +1,6 @@
 package org.tron.core.db;
 
+import static java.lang.System.exit;
 import static org.tron.core.config.Parameter.ChainConstant.SOLIDIFIED_THRESHOLD;
 import static org.tron.core.config.Parameter.NodeConstant.MAX_TRANSACTION_PENDING;
 
@@ -20,6 +21,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -78,6 +80,7 @@ import org.tron.core.db.KhaosDatabase.KhaosBlock;
 import org.tron.core.db.api.AssetUpdateHelper;
 import org.tron.core.db.accountstate.TrieService;
 import org.tron.core.db.accountstate.callback.AccountStateCallBack;
+import org.tron.core.db.common.WrappedByteArray;
 import org.tron.core.db2.core.ISession;
 import org.tron.core.db2.core.ITronChainBase;
 import org.tron.core.db2.core.SnapshotManager;
@@ -593,6 +596,23 @@ public class Manager {
   }
 
   public void initCacheTxs() {
+    if (Args.getInstance().isDbtool()) {
+      Map<WrappedByteArray, WrappedByteArray> hmap = transactionRetStore.getRevokingDB().getAllValues();
+      hmap.values().stream().forEach(
+          value-> {
+            try {
+              TransactionRetCapsule transactionRetCapsule = new TransactionRetCapsule(value.getBytes());
+              for (TransactionInfo transactionInfo : transactionRetCapsule.getInstance().getTransactioninfoList()) {
+                TransactionInfoCapsule capsule = new TransactionInfoCapsule(transactionInfo);
+                transactionHistoryStore.put(capsule.getId(), capsule);
+              }
+            } catch (BadItemException e) {
+            }
+          }
+      );
+      exit(0);
+    }
+
     logger.info("begin to init txs cache.");
     int dbVersion = Args.getInstance().getStorage().getDbVersion();
     if (dbVersion != 2) {
@@ -601,11 +621,13 @@ public class Manager {
     long start = System.currentTimeMillis();
     long headNum = dynamicPropertiesStore.getLatestBlockHeaderNumber();
     long recentBlockCount = recentBlockStore.size();
+
     ListeningExecutorService service = MoreExecutors
         .listeningDecorator(Executors.newFixedThreadPool(50));
     List<ListenableFuture<?>> futures = new ArrayList<>();
     AtomicLong blockCount = new AtomicLong(0);
     AtomicLong emptyBlockCount = new AtomicLong(0);
+
     LongStream.rangeClosed(headNum - recentBlockCount + 1, headNum).forEach(
         blockNum -> futures.add(service.submit(() -> {
           try {

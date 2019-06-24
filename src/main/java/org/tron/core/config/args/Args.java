@@ -440,6 +440,11 @@ public class Args {
   private boolean eventSubscribe = false;
 
   @Getter
+  @Setter
+  @Parameter(names = {"--dbtool"})
+  private boolean dbtool = false;
+
+  @Getter
   private EventPluginConfig eventPluginConfig;
 
   @Getter
