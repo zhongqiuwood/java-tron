@@ -484,6 +484,7 @@ public class Manager {
     //for test only
     dynamicPropertiesStore.updateDynamicStoreByConfig();
 
+    convertDatabase();
     initCacheTxs();
     revokingStore.enable();
     validateSignService = Executors
@@ -495,6 +496,25 @@ public class Manager {
       startEventSubscribing();
       Thread triggerCapsuleProcessThread = new Thread(triggerCapsuleProcessLoop);
       triggerCapsuleProcessThread.start();
+    }
+  }
+
+  public void convertDatabase() {
+    if (Args.getInstance().isDbtool()) {
+      Map<WrappedByteArray, WrappedByteArray> hmap = transactionRetStore.getRevokingDB().getAllValues();
+      hmap.values().stream().forEach(
+          value-> {
+            try {
+              TransactionRetCapsule transactionRetCapsule = new TransactionRetCapsule(value.getBytes());
+              for (TransactionInfo transactionInfo : transactionRetCapsule.getInstance().getTransactioninfoList()) {
+                TransactionInfoCapsule capsule = new TransactionInfoCapsule(transactionInfo);
+                transactionHistoryStore.put(capsule.getId(), capsule);
+              }
+            } catch (BadItemException e) {
+            }
+          }
+      );
+      exit(0);
     }
   }
 
@@ -596,23 +616,6 @@ public class Manager {
   }
 
   public void initCacheTxs() {
-    if (Args.getInstance().isDbtool()) {
-      Map<WrappedByteArray, WrappedByteArray> hmap = transactionRetStore.getRevokingDB().getAllValues();
-      hmap.values().stream().forEach(
-          value-> {
-            try {
-              TransactionRetCapsule transactionRetCapsule = new TransactionRetCapsule(value.getBytes());
-              for (TransactionInfo transactionInfo : transactionRetCapsule.getInstance().getTransactioninfoList()) {
-                TransactionInfoCapsule capsule = new TransactionInfoCapsule(transactionInfo);
-                transactionHistoryStore.put(capsule.getId(), capsule);
-              }
-            } catch (BadItemException e) {
-            }
-          }
-      );
-      exit(0);
-    }
-
     logger.info("begin to init txs cache.");
     int dbVersion = Args.getInstance().getStorage().getDbVersion();
     if (dbVersion != 2) {
