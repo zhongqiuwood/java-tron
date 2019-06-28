@@ -3,15 +3,10 @@ package org.tron.core.net.messagehandler;
 import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
 import static org.tron.core.config.Parameter.ChainConstant.BLOCK_SIZE;
 
-import com.google.protobuf.ByteString;
-import java.net.InetAddress;
-import java.util.HashMap;
-import java.util.concurrent.ConcurrentHashMap;
 import lombok.extern.slf4j.Slf4j;
 import org.spongycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.tron.common.overlay.server.FastForward;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.config.args.Args;
@@ -48,8 +43,6 @@ public class BlockMsgHandler implements TronMsgHandler {
   private WitnessProductBlockService witnessProductBlockService;
 
   private int maxBlockSize = BLOCK_SIZE + 1000;
-
-  private int threshold = 3;
 
   private boolean fastForward = Args.getInstance().isFastForward();
 
@@ -112,18 +105,18 @@ public class BlockMsgHandler implements TronMsgHandler {
     }
 
     Item item = new Item(blockId, InventoryType.BLOCK);
-    if (peer.isFastForwardPeer()) {
+    if (fastForward || peer.isFastForwardPeer()) {
+      peer.getAdvInvReceive().put(item, System.currentTimeMillis());
       advService.addInvToCache(item);
     }
 
     if (fastForward) {
-      if (tronNetDelegate.getHeadBlockId().getNum() - block.getNum() > threshold) {
+      if (block.getNum() < tronNetDelegate.getHeadBlockId().getNum()) {
         logger.warn("Receive a low block {}, head {}",
             blockId.getString(), tronNetDelegate.getHeadBlockId().getString());
         return;
       }
       if (tronNetDelegate.validBlock(block)) {
-        peer.getAdvInvReceive().put(item, System.currentTimeMillis());
         BlockMessage blockMessage = new BlockMessage(block);
         fastForwardService.broadcast(blockMessage);
         fastForwardService.processBlockMsg(blockMessage, peer, delay);
