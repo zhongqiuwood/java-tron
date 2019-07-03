@@ -1,7 +1,9 @@
 package org.tron.core.net;
 
+import com.google.protobuf.ByteString;
 import java.util.Collection;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import lombok.Getter;
@@ -236,5 +238,9 @@ public class TronNetDelegate {
     } catch (ValidateSignatureException e) {
       throw new P2pException(TypeEnum.BAD_BLOCK, e);
     }
+  }
+
+  public List<ByteString> getActiveWitnesses() {
+    return witnessScheduleStore.getActiveWitnesses();
   }
 }

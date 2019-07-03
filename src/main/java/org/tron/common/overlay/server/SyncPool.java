@@ -75,8 +75,6 @@ public class SyncPool {
 
   private ScheduledExecutorService poolLoopExecutor = Executors.newSingleThreadScheduledExecutor();
 
-  private ScheduledExecutorService logExecutor = Executors.newSingleThreadScheduledExecutor();
-
   private PeerClient peerClient;
 
   public void init() {
@@ -92,13 +90,10 @@ public class SyncPool {
         logger.error("Exception in sync worker", t);
       }
     }, 30000, 3600, TimeUnit.MILLISECONDS);
+  }
 
-    logExecutor.scheduleWithFixedDelay(() -> {
-      try {
-        logActivePeers();
-      } catch (Throwable t) {
-      }
-    }, 30, 10, TimeUnit.SECONDS);
+  public void close() {
+    poolLoopExecutor.shutdownNow();
   }
 
   private void fillUp() {
@@ -130,16 +125,6 @@ public class SyncPool {
       peerClient.connectAsync(n, false);
       nodeHandlerCache.put(n, System.currentTimeMillis());
     });
-  }
-
-  synchronized void logActivePeers() {
-    String str = String.format("\n\n============ Peer stats: all %d, active %d, passive %d\n\n",
-        channelManager.getActivePeers().size(), activePeersCount.get(), passivePeersCount.get());
-    StringBuilder sb = new StringBuilder(str);
-    for (PeerConnection peer : new ArrayList<>(activePeers)) {
-      sb.append(peer.log()).append('\n');
-    }
-    logger.info(sb.toString());
   }
 
   public List<PeerConnection> getActivePeers() {
@@ -182,15 +167,6 @@ public class SyncPool {
 
   public boolean isCanConnect() {
     return passivePeersCount.get() < maxActiveNodes * (1 - activeFactor);
-  }
-
-  public void close() {
-    try {
-      poolLoopExecutor.shutdownNow();
-      logExecutor.shutdownNow();
-    } catch (Exception e) {
-      logger.warn("Problems shutting down executor", e);
-    }
   }
 
   public AtomicInteger getPassivePeersCount() {

@@ -4,6 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.logsfilter.EventPluginLoader;
+import org.tron.core.agent.AgentService;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.BlockStore;
 import org.tron.core.db.Manager;
@@ -18,6 +19,9 @@ public class ApplicationImpl implements Application {
 
   @Autowired
   private TronNetService tronNetService;
+
+  @Autowired
+  private AgentService agentService;
 
   @Autowired
   private Manager dbManager;
@@ -51,12 +55,14 @@ public class ApplicationImpl implements Application {
    */
   public void startup() {
     tronNetService.start();
+    agentService.start();
   }
 
   @Override
   public void shutdown() {
     logger.info("******** begin to shutdown ********");
-    tronNetService.close();
+    tronNetService.stop();
+    agentService.stop();
     synchronized (dbManager.getRevokingStore()) {
       closeRevokingStore();
       closeAllStore();

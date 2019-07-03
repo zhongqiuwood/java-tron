@@ -5,12 +5,14 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.codec.binary.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.core.config.args.Args;
@@ -29,7 +31,7 @@ public class FastForwardService {
 
   private boolean fastForward = Args.getInstance().isFastForward();
 
-  private ConcurrentHashMap<ByteString, WitnessInfo> witnesses = new ConcurrentHashMap<>();
+  private ConcurrentHashMap<String, WitnessInfo> witnesses = new ConcurrentHashMap<>();
 
   private HashSet<InetAddress> fastForwardNodes = new HashSet<>();
 
@@ -64,22 +66,17 @@ public class FastForwardService {
       return;
     }
 
-    ByteString witnessAddress = msg.getBlockId().getByteString();
+    String witnessAddress = Hex.encodeHexString(msg.getBlockId().getBytes());
     WitnessInfo witnessInfo = witnesses.get(witnessAddress);
     if (witnessInfo == null) {
       witnessInfo = new WitnessInfo();
       witnesses.put(witnessAddress, witnessInfo);
     }
 
-    ConcurrentHashMap<InetAddress, Long> ips = witnessInfo.getIps();
-    Long count = ips.get(peer.getInetAddress());
-    if (count == null) {
-      ips.put(peer.getInetAddress(), 1l);
-    } else {
-      ips.put(peer.getInetAddress(), count + 1);
-    }
+    witnessInfo.setNodeID(peer.getNode().getHexId());
 
     witnessInfo.getBlockCount().incrementAndGet();
+
     if (delay > 3000) {
       witnessInfo.getDelay3000().incrementAndGet();
     } else if (delay > 2500) {
@@ -93,15 +90,40 @@ public class FastForwardService {
     tronNetDelegate.trustNode(peer);
   }
 
-  @Getter
-  @Setter
-  public class WitnessInfo {
-    private AtomicLong blockCount = new AtomicLong();
-    private AtomicLong delay1000 = new AtomicLong();
-    private AtomicLong delay2000 = new AtomicLong();
-    private AtomicLong delay2500 = new AtomicLong();
-    private AtomicLong delay3000 = new AtomicLong();
-    private ConcurrentHashMap<InetAddress, Long> ips = new ConcurrentHashMap<>();
+  public Map<String, WitnessInfo> getWitnessInfo() {
+    witnesses.keySet().forEach(witness -> {
+      if (!tronNetDelegate.getActiveWitnesses().contains(ByteString.copyFrom(witness.getBytes()))) {
+        witnesses.remove(witness);
+      }
+    });
+    return witnesses;
   }
 
+
+  public class WitnessInfo {
+
+    @Getter
+    @Setter
+    private AtomicLong blockCount = new AtomicLong();
+
+    @Getter
+    @Setter
+    private AtomicLong delay1000 = new AtomicLong();
+
+    @Getter
+    @Setter
+    private AtomicLong delay2000 = new AtomicLong();
+
+    @Getter
+    @Setter
+    private AtomicLong delay2500 = new AtomicLong();
+
+    @Getter
+    @Setter
+    private AtomicLong delay3000 = new AtomicLong();
+
+    @Getter
+    @Setter
+    private String nodeID;
+  }
 }

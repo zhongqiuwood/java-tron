@@ -62,16 +62,17 @@ public class BlockMsgHandler implements TronMsgHandler {
     } else {
       Long time = peer.getAdvInvRequest().remove(new Item(blockId, InventoryType.BLOCK));
       long now = System.currentTimeMillis();
+      long fetch = time == null ? 0 : now - time;
       long delay = now - tronNetDelegate.getHeadBlockTimeStamp() - BLOCK_PRODUCED_INTERVAL;
       long interval = blockId.getNum() - tronNetDelegate.getHeadBlockId().getNum();
-      processBlock(peer, blockMessage.getBlockCapsule(), delay);
+      processBlock(peer, blockMessage.getBlockCapsule(), fetch, delay);
 
       logger.info(
           "Receive block/interval {}/{} from {} fetch/delay {}/{}ms, txs/process {}/{}ms, witness: {}",
           blockId.getNum(),
           interval,
           peer.getInetAddress(),
-          time == null ? 0 : now - time,
+          fetch,
           delay,
           ((BlockMessage) msg).getBlockCapsule().getTransactions().size(),
           System.currentTimeMillis() - now,
@@ -95,7 +96,9 @@ public class BlockMsgHandler implements TronMsgHandler {
     }
   }
 
-  private void processBlock(PeerConnection peer, BlockCapsule block, long delay) throws P2pException {
+  private void processBlock(PeerConnection peer, BlockCapsule block, long fetch, long delay)
+      throws P2pException {
+
     BlockId blockId = block.getBlockId();
     if (!tronNetDelegate.containBlock(block.getParentBlockId())) {
       logger.warn("Get unlink block {} from {}, head is {}.", blockId.getString(),
@@ -119,7 +122,9 @@ public class BlockMsgHandler implements TronMsgHandler {
       if (tronNetDelegate.validBlock(block)) {
         BlockMessage blockMessage = new BlockMessage(block);
         fastForwardService.broadcast(blockMessage);
-        fastForwardService.processBlockMsg(blockMessage, peer, delay);
+        if (fetch == 0) {
+          fastForwardService.processBlockMsg(blockMessage, peer, delay);
+        }
       }
     }
 
