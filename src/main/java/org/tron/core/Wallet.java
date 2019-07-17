@@ -21,6 +21,7 @@ package org.tron.core;
 import static org.tron.core.config.Parameter.DatabaseConstants.EXCHANGE_COUNT_LIMIT_MAX;
 import static org.tron.core.config.Parameter.DatabaseConstants.PROPOSAL_COUNT_LIMIT_MAX;
 
+import com.alibaba.fastjson.JSONObject;
 import com.google.common.base.CaseFormat;
 import com.google.common.collect.ContiguousSet;
 import com.google.common.collect.DiscreteDomain;
@@ -157,6 +158,7 @@ import org.tron.core.zen.address.PaymentAddress;
 import org.tron.core.zen.address.SpendingKey;
 import org.tron.core.zen.merkle.IncrementalMerkleTreeContainer;
 import org.tron.core.zen.merkle.IncrementalMerkleVoucherContainer;
+import org.tron.core.zen.merkle.MerkleContainer;
 import org.tron.core.zen.note.Note;
 import org.tron.core.zen.note.NoteEncryption.Encryption;
 import org.tron.core.zen.note.OutgoingPlaintext;
@@ -2696,5 +2698,35 @@ public class Wallet {
     } //end of blocklist
     return builder.build();
   }
-}
 
+  public String getShieldedMonitorInfo() {
+    JSONObject jsonObject = new JSONObject();
+    jsonObject.put("totalShiledTransactionNumber",
+        dbManager.getDynamicPropertiesStore().getTotalShieldedTransactionNumber());
+
+    JSONObject cmJsonObject = new JSONObject();
+    cmJsonObject.put("fromDb", dbManager.getMerkleContainer().getCurrentMerkle().size());
+    cmJsonObject.put("fromTransactions",
+        dbManager.getDynamicPropertiesStore().getTotalCMNumberFromTransactions());
+    jsonObject.put("cmNumber", cmJsonObject);
+
+    JSONObject nullifierJsonObject = new JSONObject();
+    nullifierJsonObject.put("fromDb", dbManager.getNullfierStore().size());
+    nullifierJsonObject
+        .put("fromTransactions", dbManager.getDynamicPropertiesStore().getTotalNullifierNumber());
+    jsonObject.put("nullifierNumber", nullifierJsonObject);
+
+    JSONObject shieldedValueJsonObject = new JSONObject();
+    shieldedValueJsonObject
+        .put("fromDb", dbManager.getDynamicPropertiesStore().getTotalShieldedPoolValue());
+    shieldedValueJsonObject.put("fromTransactions",
+        dbManager.getDynamicPropertiesStore().getShieldValueFromTransaction());
+    jsonObject.put("shieldValue", shieldedValueJsonObject);
+
+    MerkleContainer merkleContainer = dbManager.getMerkleContainer();
+    IncrementalMerkleTreeContainer currentMerkle = merkleContainer.getCurrentMerkle();
+    jsonObject.put("merkleHeight", currentMerkle.monitorMerkleHeight());
+
+    return jsonObject.toJSONString();
+  }
+}

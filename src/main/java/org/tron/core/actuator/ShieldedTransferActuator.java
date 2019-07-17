@@ -11,6 +11,7 @@ import java.util.HashSet;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.zksnark.JLibrustzcash;
 import org.tron.common.zksnark.LibrustzcashParam.CheckOutputParams;
@@ -102,6 +103,8 @@ public class ShieldedTransferActuator extends AbstractActuator {
 
     ret.setStatus(fee, code.SUCESS);
     ret.setShieldedTransactionFee(shieldedTransactionFee);
+
+    setAndCheckMonitorMerkleTree();
     return true;
   }
 
@@ -448,6 +451,53 @@ public class ShieldedTransferActuator extends AbstractActuator {
       return 0L;
     } else {
       return account.getAssetMapV2().get(zenTokenId);
+    }
+  }
+
+  private void setAndCheckMonitorMerkleTree() {
+    long newCMNumber = shieldedTransferContract.getReceiveDescriptionCount();
+    long newNullifierNumber = shieldedTransferContract.getSpendDescriptionCount();
+    long amountFromPublic = shieldedTransferContract.getFromAmount();
+    long amountToPublic = shieldedTransferContract.getToAmount();
+
+    dbManager.getDynamicPropertiesStore().saveTotalCMNumberFromTransactions(
+        dbManager.getDynamicPropertiesStore().getTotalCMNumberFromTransactions() + newCMNumber);
+    dbManager.getDynamicPropertiesStore().saveTotalNullifierNumber(
+        dbManager.getDynamicPropertiesStore().getTotalNullifierNumber() + newNullifierNumber);
+    dbManager.getDynamicPropertiesStore().saveTotalAmountFromPulic(
+        dbManager.getDynamicPropertiesStore().getTotalAmountFromPulic() + amountFromPublic);
+    dbManager.getDynamicPropertiesStore().saveTotalAmountToPublic(
+        dbManager.getDynamicPropertiesStore().getTotalAmountToPublic() + amountToPublic);
+    dbManager.getDynamicPropertiesStore().saveTotalShieldedTransactionsFee(
+        dbManager.getDynamicPropertiesStore().getTotalShieldedTransactionsFee() + calcFee());
+    dbManager.getDynamicPropertiesStore().saveTotalShieldedTransactionNumber(
+        dbManager.getDynamicPropertiesStore().getTotalShieldedTransactionNumber() + 1L);
+
+    long cmNumberFromDB = dbManager.getMerkleContainer().getCurrentMerkle().size();
+    long nullifierNumberFromDB = dbManager.getNullfierStore().size();
+    long shieldedValueFromDB = dbManager.getDynamicPropertiesStore()
+        .getTotalShieldedPoolValue();
+    long cmNumberFromTransaction = dbManager.getDynamicPropertiesStore()
+        .getTotalCMNumberFromTransactions();
+    long nullifierNumberFromTransaction = dbManager.getDynamicPropertiesStore()
+        .getTotalNullifierNumber();
+    long shieldedValueFromTransaction = dbManager.getDynamicPropertiesStore()
+        .getShieldValueFromTransaction();
+
+    logger.info(
+        "cmNumberFromDb {} cmNumberFromTransaction {} nullifierFromDb {} "
+            + "nullifierFromTransaction {} shieldValueFromDb {} shieldValueFromTransaction {}",
+        cmNumberFromDB, cmNumberFromTransaction, nullifierNumberFromDB,
+        nullifierNumberFromTransaction, shieldedValueFromDB, shieldedValueFromTransaction);
+    if (cmNumberFromDB != cmNumberFromTransaction ||
+        nullifierNumberFromDB != nullifierNumberFromTransaction ||
+        shieldedValueFromDB != shieldedValueFromTransaction) {
+      byte[] signHash = TransactionCapsule.getShieldTransactionHashIgnoreTypeException(tx);
+      logger.error("Last BlockNum {} transaction {} shield transaction check failure.",
+          dbManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber(),
+          ByteArray.toHexString(signHash));
+    } else {
+      logger.info("setAndCheckMonitorMerkleTree success!");
     }
   }
 
