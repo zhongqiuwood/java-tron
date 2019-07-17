@@ -60,7 +60,14 @@ public class IncrementalMerkleTreeContainer {
   }
 
   public String monitorMerkleHeight() {
-    String msg = "right: ";
+    String msg = "left: ";
+    if (leftIsPresent()) {
+      msg += "1 ";
+    } else {
+      msg += "0 ";
+    }
+
+    msg += "right: ";
     if (rightIsPresent()) {
       msg += "1 ";
     } else {
