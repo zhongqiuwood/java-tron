@@ -3,6 +3,7 @@ package org.tron.core.actuator;
 import static org.tron.core.zen.note.ZenChainParams.ZC_ENCCIPHERTEXT_SIZE;
 import static org.tron.core.zen.note.ZenChainParams.ZC_OUTCIPHERTEXT_SIZE;
 
+import com.alibaba.fastjson.JSONObject;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import com.google.protobuf.InvalidProtocolBufferException;
@@ -11,6 +12,7 @@ import java.util.HashSet;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
+import org.tron.common.utils.AlarmDingDing;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.zksnark.JLibrustzcash;
@@ -444,6 +446,37 @@ public class ShieldedTransferActuator extends AbstractActuator {
     }
   }
 
+  private void postAlarmToDingDing(long cmFromDb, long cmFromTransactions,
+      long nullifierFromDb, long nullifierFromTransactions, long shieldValueFromDb,
+      long shieldValueFromTransactions) {
+    //format msg
+    JSONObject jsonObject = new JSONObject();
+    JSONObject cmJsonObject = new JSONObject();
+    cmJsonObject.put("fromDb", cmFromDb);
+    cmJsonObject.put("fromTransactions", cmFromTransactions);
+    jsonObject.put("cmNumber", cmJsonObject);
+    JSONObject nullifierJsonObject = new JSONObject();
+    nullifierJsonObject.put("fromDb", nullifierFromDb);
+    nullifierJsonObject.put("fromTransactions", nullifierFromTransactions);
+    jsonObject.put("nullifierNumber", nullifierJsonObject);
+    JSONObject shieldedValueJsonObject = new JSONObject();
+    shieldedValueJsonObject.put("fromDb", shieldValueFromDb);
+    shieldedValueJsonObject.put("fromTransactions", shieldValueFromTransactions);
+    jsonObject.put("shieldValue", shieldedValueJsonObject);
+
+    JSONObject postBody = new JSONObject(true);
+    postBody.put("msgtype", "text");
+    JSONObject textObject = new JSONObject();
+    textObject.put("content", "匿名交易 " + jsonObject.toJSONString());
+    postBody.put("text", textObject);
+    JSONObject atObject = new JSONObject();
+    atObject.put("isAtAll", false);
+    postBody.put("at", atObject);
+
+    AlarmDingDing.postDingDing(postBody);
+    logger.info("send alarm {}", postBody.toJSONString());
+  }
+
   private void setAndCheckMonitorMerkleTree() {
     long newCMNumber = shieldedTransferContract.getReceiveDescriptionCount();
     long newNullifierNumber = shieldedTransferContract.getSpendDescriptionCount();
@@ -479,6 +512,10 @@ public class ShieldedTransferActuator extends AbstractActuator {
             + "nullifierFromTransaction {} shieldValueFromDb {} shieldValueFromTransaction {}",
         cmNumberFromDB, cmNumberFromTransaction, nullifierNumberFromDB,
         nullifierNumberFromTransaction, shieldedValueFromDB, shieldedValueFromTransaction);
+
+    postAlarmToDingDing(cmNumberFromDB, cmNumberFromTransaction, nullifierNumberFromDB,
+        nullifierNumberFromTransaction, shieldedValueFromDB,shieldedValueFromTransaction);
+
     if (cmNumberFromDB != cmNumberFromTransaction ||
         nullifierNumberFromDB != nullifierNumberFromTransaction ||
         shieldedValueFromDB != shieldedValueFromTransaction) {
@@ -486,6 +523,9 @@ public class ShieldedTransferActuator extends AbstractActuator {
       logger.error("Last BlockNum {} transaction {} shield transaction check failure.",
           dbManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber(),
           ByteArray.toHexString(signHash));
+
+      postAlarmToDingDing(cmNumberFromDB, cmNumberFromTransaction, nullifierNumberFromDB,
+          nullifierNumberFromTransaction, shieldedValueFromDB,shieldedValueFromTransaction);
     } else {
       logger.info("setAndCheckMonitorMerkleTree success!");
     }
