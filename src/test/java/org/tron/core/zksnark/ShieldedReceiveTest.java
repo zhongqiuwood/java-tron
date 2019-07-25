@@ -7,6 +7,7 @@ import java.io.File;
 import java.security.SignatureException;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.Setter;
@@ -38,6 +39,7 @@ import org.tron.core.actuator.Actuator;
 import org.tron.core.actuator.ActuatorFactory;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
+import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.IncrementalMerkleTreeCapsule;
 import org.tron.core.capsule.IncrementalMerkleVoucherCapsule;
 import org.tron.core.capsule.PedersenHashCapsule;
@@ -47,6 +49,7 @@ import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.capsule.TransactionResultCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.config.DefaultConfig;
+import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
 import org.tron.core.exception.AccountResourceInsufficientException;
@@ -143,6 +146,8 @@ public class ShieldedReceiveTest {
    */
   @BeforeClass
   public static void init() {
+    FileUtil.deleteDir(new File(dbPath));
+
     wallet = context.getBean(Wallet.class);
     dbManager = context.getBean(Manager.class);
     //give a big value for pool, avoid for
@@ -1031,8 +1036,9 @@ public class ShieldedReceiveTest {
     IncomingViewingKey ivk1 = fullViewingKey1.inViewingKey();
     PaymentAddress paymentAddress1 = ivk1.address(new DiversifierT()).get();
     Note note2 = new Note(paymentAddress1, 100 * 1000000L - wallet.getShieldedTransactionFee());
-    builder.addOutput(expsk.getOvk(), note2.getD(), note2.getPkD(), note2.getValue(), note2.getRcm(),
-        new byte[512]);
+    builder
+        .addOutput(expsk.getOvk(), note2.getD(), note2.getPkD(), note2.getValue(), note2.getRcm(),
+            new byte[512]);
 
     return builder;
   }
@@ -1390,10 +1396,12 @@ public class ShieldedReceiveTest {
     PaymentAddress paymentAddress1 = ivk1.address(new DiversifierT()).get();
     Note note2 = new Note(address, (100 * 1000000L - wallet.getShieldedTransactionFee()) / 2);
     //add two same output note
-    builder.addOutput(expsk.getOvk(), note2.getD(), note2.getPkD(), note2.getValue(), note2.getRcm(),
-        new byte[512]);
-    builder.addOutput(expsk.getOvk(), note2.getD(), note2.getPkD(), note2.getValue(), note2.getRcm(),
-        new byte[512]);//same output cm
+    builder
+        .addOutput(expsk.getOvk(), note2.getD(), note2.getPkD(), note2.getValue(), note2.getRcm(),
+            new byte[512]);
+    builder
+        .addOutput(expsk.getOvk(), note2.getD(), note2.getPkD(), note2.getValue(), note2.getRcm(),
+            new byte[512]);//same output cm
 
     updateTotalShieldedPoolValue(builder.getValueBalance());
     TransactionCapsule transactionCap = builder.build();
@@ -2386,7 +2394,8 @@ public class ShieldedReceiveTest {
       TransactionExpirationException, ReceiptCheckErrException, DupTransactionException,
       VMIllegalException, ValidateSignatureException, BadItemException, ContractExeException,
       AccountResourceInsufficientException, InvalidProtocolBufferException, ZksnarkException,
-      UnLinkedBlockException, ValidateScheduleException, ItemNotFoundException {
+      UnLinkedBlockException, ValidateScheduleException, ItemNotFoundException,
+      InterruptedException {
 
     byte[] privateKey = ByteArray
         .fromHexString("f4df789d3210ac881cb900464dd30409453044d2777060a0c391cbdf4c6a4f57");
@@ -2395,8 +2404,16 @@ public class ShieldedReceiveTest {
     WitnessCapsule witnessCapsule = new WitnessCapsule(ByteString.copyFrom(witnessAddress));
     dbManager.addWitness(ByteString.copyFrom(witnessAddress));
 
-    dbManager.generateBlock(witnessCapsule, System.currentTimeMillis(), privateKey,
-        false, false);
+    //sometimes generate block failed, try several times.
+    for (int times = 0; times < 5; times += 1) {
+      BlockCapsule capsule1 = dbManager
+          .generateBlock(witnessCapsule, System.currentTimeMillis(), privateKey,
+              false, false);
+      if (capsule1 != null) {
+        break;
+      }
+      TimeUnit.MILLISECONDS.sleep(ChainConstant.BLOCK_PRODUCED_INTERVAL);
+    }
 
     //create transactions
     librustzcashInitZksnarkParams();
@@ -2442,8 +2459,18 @@ public class ShieldedReceiveTest {
     Assert.assertTrue(ok);
 
     //package transaction to block
-    dbManager.generateBlock(witnessCapsule, System.currentTimeMillis(), privateKey,
-        false, false);
+    for (int times = 0; times < 5; times += 1) {
+      BlockCapsule capsule2 = dbManager
+          .generateBlock(witnessCapsule, System.currentTimeMillis(), privateKey,
+              false, false);
+      if (capsule2 != null) {
+        break;
+      }
+      TimeUnit.MILLISECONDS.sleep(ChainConstant.BLOCK_PRODUCED_INTERVAL);
+    }
+
+    BlockCapsule blockCapsule3 = new BlockCapsule(wallet.getNowBlock());
+    Assert.assertEquals("blocknum != 2", 2, blockCapsule3.getNum());
 
     // scan note by ivk
     byte[] receiverIvk = incomingViewingKey.getValue();
