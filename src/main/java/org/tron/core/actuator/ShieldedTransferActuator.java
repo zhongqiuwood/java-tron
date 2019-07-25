@@ -513,9 +513,6 @@ public class ShieldedTransferActuator extends AbstractActuator {
         cmNumberFromDB, cmNumberFromTransaction, nullifierNumberFromDB,
         nullifierNumberFromTransaction, shieldedValueFromDB, shieldedValueFromTransaction);
 
-    postAlarmToDingDing(cmNumberFromDB, cmNumberFromTransaction, nullifierNumberFromDB,
-        nullifierNumberFromTransaction, shieldedValueFromDB,shieldedValueFromTransaction);
-
     if (cmNumberFromDB != cmNumberFromTransaction ||
         nullifierNumberFromDB != nullifierNumberFromTransaction ||
         shieldedValueFromDB != shieldedValueFromTransaction) {
