@@ -15,7 +15,12 @@ package org.tron.common.utils;
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+import static org.tron.stresstest.dispatch.creator.contract.WithdrawCreator.decodeFromBase58Check;
+
 import com.google.protobuf.ByteString;
+import java.security.SignatureException;
+import java.util.Arrays;
+import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.api.GrpcAPI;
@@ -24,10 +29,6 @@ import org.tron.common.crypto.ECKey.ECDSASignature;
 import org.tron.protos.Protocol.DeferredStage;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract;
-
-import java.security.SignatureException;
-import java.util.Arrays;
-import java.util.List;
 
 public class TransactionUtils {
 
@@ -136,18 +137,36 @@ public class TransactionUtils {
   }
 
   public static Transaction sign(Transaction transaction, ECKey myKey) {
-    ByteString lockSript = ByteString.copyFrom(myKey.getAddress());
+//    ByteString lockSript = ByteString.copyFrom(myKey.getAddress());
+//    Transaction.Builder transactionBuilderSigned = transaction.toBuilder();
+//
+//    byte[] hash = Sha256Hash.hash(transaction.getRawData().toByteArray());
+//    List<Contract> listContract = transaction.getRawData().getContractList();
+//    for (int i = 0; i < listContract.size(); i++) {
+//      ECDSASignature signature = myKey.sign(hash);
+//      ByteString bsSign = ByteString.copyFrom(signature.toByteArray());
+//      transactionBuilderSigned.addSignature(
+//          bsSign);//Each contract may be signed with a different private key in the future.
+//    }
+//
+//    transaction = transactionBuilderSigned.build();
+//    return transaction;
+    byte[] chainId = decodeFromBase58Check("TUmGh8c2VcpfmJ7rBYq1FU9hneXhz3P8z3");
     Transaction.Builder transactionBuilderSigned = transaction.toBuilder();
-
     byte[] hash = Sha256Hash.hash(transaction.getRawData().toByteArray());
-    List<Contract> listContract = transaction.getRawData().getContractList();
-    for (int i = 0; i < listContract.size(); i++) {
-      ECDSASignature signature = myKey.sign(hash);
-      ByteString bsSign = ByteString.copyFrom(signature.toByteArray());
-      transactionBuilderSigned.addSignature(
-          bsSign);//Each contract may be signed with a different private key in the future.
+
+    byte[] newHash;
+    if (false) {
+      newHash = hash;
+    } else {
+      byte[] hashWithChainId = Arrays.copyOf(hash, hash.length + chainId.length);
+      System.arraycopy(chainId, 0, hashWithChainId, hash.length, chainId.length);
+      newHash = Sha256Hash.hash(hashWithChainId);
     }
 
+    ECDSASignature signature = myKey.sign(newHash);
+    ByteString bsSign = ByteString.copyFrom(signature.toByteArray());
+    transactionBuilderSigned.addSignature(bsSign);
     transaction = transactionBuilderSigned.build();
     return transaction;
   }
@@ -162,7 +181,7 @@ public class TransactionUtils {
     return builder.build();
   }
 
-/*  *//**
+  /*  *//**
    * constructor.
    *//*
   public static Transaction setDelaySeconds(Transaction transaction, long delaySeconds){
@@ -199,8 +218,6 @@ public class TransactionUtils {
 
     return builder.build();
   }
-
-
 
 
 }

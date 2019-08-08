@@ -1,10 +1,12 @@
 package org.tron.stresstest.dispatch;
 
+import static org.tron.core.Wallet.decodeFromBase58Check;
+
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import java.math.BigInteger;
+import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicLong;
 import lombok.Getter;
@@ -18,11 +20,9 @@ import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Configuration;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.TransactionUtils;
-import org.tron.core.Wallet;
 import org.tron.protos.Contract.FreezeBalanceContract;
 import org.tron.protos.Contract.UnfreezeBalanceContract;
 import org.tron.protos.Protocol.Transaction;
-import org.tron.protos.Protocol.Transaction.Contract;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.stresstest.dispatch.strategy.Level2Strategy;
 
@@ -46,6 +46,10 @@ public abstract class AbstractTransactionCreator extends Level2Strategy {
       .getString("address.commonWitnessAddress");
   protected String commonWitnessPrivateKey = Configuration.getByPath("stress.conf")
       .getString("privateKey.commonWitnessPrivateKey");
+  protected String WithdrawToPrivateKey = Configuration.getByPath("stress.conf")
+      .getString("privateKey.WithdrawToPrivateKey");
+  protected String WithdrawToAddress = Configuration.getByPath("stress.conf")
+      .getString("address.WithdrawToAddress");
 
   protected String commonContractAddress1 = Configuration.getByPath("stress.conf")
       .getString("address.commonContractAddress1");
@@ -59,6 +63,8 @@ public abstract class AbstractTransactionCreator extends Level2Strategy {
       .getString("address.commonContractAddress5");
   protected String commonContractAddress6 = Configuration.getByPath("stress.conf")
       .getString("address.commonContractAddress6");
+  protected String SideGatewayContractAddress = Configuration.getByPath("stress.conf")
+      .getString("address.SideGatewayContractAddress");
   protected String commontokenid = Configuration.getByPath("stress.conf")
       .getString("param.commontokenid");
   protected long commonexchangeid = Configuration.getByPath("stress.conf")
@@ -233,16 +239,34 @@ public abstract class AbstractTransactionCreator extends Level2Strategy {
   }
 
   public static Transaction sign(Transaction transaction, ECKey myKey) {
+//    Transaction.Builder transactionBuilderSigned = transaction.toBuilder();
+//    byte[] hash = Sha256Hash.hash(transaction.getRawData().toByteArray());
+//    List<Contract> listContract = transaction.getRawData().getContractList();
+//    for (int i = 0; i < listContract.size(); i++) {
+//      ECDSASignature signature = myKey.sign(hash);
+//      ByteString bsSign = ByteString.copyFrom(signature.toByteArray());
+//      transactionBuilderSigned.addSignature(
+//          bsSign);
+//    }
+//
+//    transaction = transactionBuilderSigned.build();
+//    return transaction;
+    byte[] chainId = decodeFromBase58Check("TUmGh8c2VcpfmJ7rBYq1FU9hneXhz3P8z3");
     Transaction.Builder transactionBuilderSigned = transaction.toBuilder();
     byte[] hash = Sha256Hash.hash(transaction.getRawData().toByteArray());
-    List<Contract> listContract = transaction.getRawData().getContractList();
-    for (int i = 0; i < listContract.size(); i++) {
-      ECDSASignature signature = myKey.sign(hash);
-      ByteString bsSign = ByteString.copyFrom(signature.toByteArray());
-      transactionBuilderSigned.addSignature(
-          bsSign);
+
+    byte[] newHash;
+    if (false) {
+      newHash = hash;
+    } else {
+      byte[] hashWithChainId = Arrays.copyOf(hash, hash.length + chainId.length);
+      System.arraycopy(chainId, 0, hashWithChainId, hash.length, chainId.length);
+      newHash = Sha256Hash.hash(hashWithChainId);
     }
 
+    ECDSASignature signature = myKey.sign(newHash);
+    ByteString bsSign = ByteString.copyFrom(signature.toByteArray());
+    transactionBuilderSigned.addSignature(bsSign);
     transaction = transactionBuilderSigned.build();
     return transaction;
   }
@@ -432,7 +456,7 @@ public abstract class AbstractTransactionCreator extends Level2Strategy {
 
     if (receiverAddress != null && !receiverAddress.equals("")) {
       ByteString receiverAddressBytes = ByteString.copyFrom(
-          Objects.requireNonNull(Wallet.decodeFromBase58Check(receiverAddress)));
+          Objects.requireNonNull(decodeFromBase58Check(receiverAddress)));
       builder.setReceiverAddress(receiverAddressBytes);
     }
     return builder.build();
@@ -447,7 +471,7 @@ public abstract class AbstractTransactionCreator extends Level2Strategy {
 
     if (receiverAddress != null && !receiverAddress.equals("")) {
       ByteString receiverAddressBytes = ByteString.copyFrom(
-          Objects.requireNonNull(Wallet.decodeFromBase58Check(receiverAddress)));
+          Objects.requireNonNull(decodeFromBase58Check(receiverAddress)));
       builder.setReceiverAddress(receiverAddressBytes);
     }
 
@@ -474,7 +498,7 @@ public abstract class AbstractTransactionCreator extends Level2Strategy {
       long count = Long.parseLong(value);
       org.tron.protos.Contract.VoteWitnessContract.Vote.Builder voteBuilder = org.tron.protos.Contract.VoteWitnessContract.Vote
           .newBuilder();
-      byte[] address = Wallet.decodeFromBase58Check(addressBase58);
+      byte[] address = decodeFromBase58Check(addressBase58);
       if (address == null) {
         continue;
       }

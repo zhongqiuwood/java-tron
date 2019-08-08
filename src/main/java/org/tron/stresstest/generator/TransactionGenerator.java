@@ -52,7 +52,6 @@ public class TransactionGenerator {
   }
 
 
-
   private void consumerGenerateTransaction() throws IOException {
     if (transactions.isEmpty()) {
       try {
@@ -64,12 +63,14 @@ public class TransactionGenerator {
     }
 
     Transaction transaction = transactions.poll();
+    //logger.info("transaction : " + transaction);
     transaction.writeDelimitedTo(fos);
 
     long count = countDownLatch.getCount();
     if (count % 10000 == 0) {
       fos.flush();
-      logger.info("Generate transaction success ------- ------- ------- ------- ------- Remain: " + countDownLatch.getCount() + ", Pending size: " + transactions.size());
+      logger.info("Generate transaction success ------- ------- ------- ------- ------- Remain: "
+          + countDownLatch.getCount() + ", Pending size: " + transactions.size());
     }
 
     countDownLatch.countDown();

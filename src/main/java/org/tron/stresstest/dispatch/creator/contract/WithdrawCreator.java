@@ -25,9 +25,8 @@ import org.tron.stresstest.dispatch.TransactionFactory;
 import org.tron.stresstest.dispatch.creator.CreatorCounter;
 import org.tron.stresstest.exception.EncodingException;
 
-
 @Setter
-public class TransferTrc20Creator extends AbstractTransactionCreator implements
+public class WithdrawCreator extends AbstractTransactionCreator implements
     GoodCaseTransactonCreator {
 
   private String ownerAddress = WithdrawToAddress;

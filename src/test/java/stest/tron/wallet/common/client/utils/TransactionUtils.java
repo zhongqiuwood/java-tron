@@ -25,7 +25,7 @@ import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.ECKey.ECDSASignature;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.protos.Protocol.Transaction;
-import org.tron.protos.Protocol.Transaction.Contract;
+import stest.tron.wallet.common.client.WalletClient;
 
 public class TransactionUtils {
 
@@ -155,20 +155,39 @@ public class TransactionUtils {
    */
 
   public static Transaction sign(Transaction transaction, ECKey myKey) {
-    ByteString lockSript = ByteString.copyFrom(myKey.getAddress());
+//    ByteString lockSript = ByteString.copyFrom(myKey.getAddress());
+//    Transaction.Builder transactionBuilderSigned = transaction.toBuilder();
+//
+//    byte[] hash = Sha256Hash.hash(transaction.getRawData().toByteArray());
+//    List<Contract> listContract = transaction.getRawData().getContractList();
+//    for (int i = 0; i < listContract.size(); i++) {
+//      ECDSASignature signature = myKey.sign(hash);
+//      ByteString bsSign = ByteString.copyFrom(signature.toByteArray());
+//      transactionBuilderSigned.addSignature(
+//          bsSign);//Each contract may be signed with a different private key in the future.
+//    }
+//
+//    transaction = transactionBuilderSigned.build();
+//    return transaction;
+    byte[] chainId = WalletClient.decodeFromBase58Check("TUmGh8c2VcpfmJ7rBYq1FU9hneXhz3P8z3");
     Transaction.Builder transactionBuilderSigned = transaction.toBuilder();
-
     byte[] hash = Sha256Hash.hash(transaction.getRawData().toByteArray());
-    List<Contract> listContract = transaction.getRawData().getContractList();
-    for (int i = 0; i < listContract.size(); i++) {
-      ECDSASignature signature = myKey.sign(hash);
-      ByteString bsSign = ByteString.copyFrom(signature.toByteArray());
-      transactionBuilderSigned.addSignature(
-          bsSign);//Each contract may be signed with a different private key in the future.
+
+    byte[] newHash;
+    if (false) {
+      newHash = hash;
+    } else {
+      byte[] hashWithChainId = Arrays.copyOf(hash, hash.length + chainId.length);
+      System.arraycopy(chainId, 0, hashWithChainId, hash.length, chainId.length);
+      newHash = Sha256Hash.hash(hashWithChainId);
     }
 
+    ECDSASignature signature = myKey.sign(newHash);
+    ByteString bsSign = ByteString.copyFrom(signature.toByteArray());
+    transactionBuilderSigned.addSignature(bsSign);
     transaction = transactionBuilderSigned.build();
     return transaction;
+
   }
 
   /**

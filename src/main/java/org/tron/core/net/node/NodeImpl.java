@@ -10,6 +10,8 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import io.grpc.ManagedChannel;
+import io.grpc.ManagedChannelBuilder;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.Deque;
@@ -20,7 +22,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Queue;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.ExecutorService;
@@ -37,8 +38,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.tron.common.crypto.Hash;
-import org.tron.common.crypto.SymmEncoder;
+import org.tron.api.GrpcAPI;
+import org.tron.api.WalletGrpc;
 import org.tron.common.overlay.discover.node.statistics.MessageCount;
 import org.tron.common.overlay.message.Message;
 import org.tron.common.overlay.server.Channel.TronState;
@@ -77,14 +78,9 @@ import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.net.peer.PeerConnectionDelegate;
 import org.tron.core.services.WitnessProductBlockService;
 import org.tron.protos.Protocol;
+import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Inventory.InventoryType;
 import org.tron.protos.Protocol.ReasonCode;
-
-import io.grpc.ManagedChannel;
-import io.grpc.ManagedChannelBuilder;
-import org.tron.api.GrpcAPI;
-import org.tron.api.WalletGrpc;
-import org.tron.protos.Protocol.Block;
 
 
 @Slf4j
@@ -347,8 +343,8 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   private AtomicLong count = new AtomicLong(0);
   private long time = System.currentTimeMillis();
   private long lastTime = System.currentTimeMillis();
-  private int  counter1 = 0;
-  private int  counter2 = 0;
+  private int counter1 = 0;
+  private int counter2 = 0;
 
   public void broadcast(Message msg) {
     InventoryType type;
@@ -361,7 +357,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
       TrxCache.put(msg.getMessageId(), (TransactionMessage) msg);
       type = InventoryType.TRX;
       long currentTime = System.currentTimeMillis();
-      if (currentTime - lastTime > 10 * 1000){
+      if (currentTime - lastTime > 10 * 1000) {
         time = currentTime;
         lastTime = currentTime;
         count.set(0);
@@ -534,15 +530,16 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     if (advObjToSpread.isEmpty()) {
       return;
     }
-    logger.info("SPREAD advObjToSpread :{} , peer size: {}", advObjToSpread.size(), getActivePeer().size());
+    logger.info("SPREAD advObjToSpread :{} , peer size: {}", advObjToSpread.size(),
+        getActivePeer().size());
     if (counter1 == 0) {
       counter1 = 1;
       ManagedChannel channelFull = null;
       WalletGrpc.WalletBlockingStub blockingStubFull = null;
-      String fullnode = "47.94.239.172:50051";
+      String fullnode = "39.106.164.249:50051";
       channelFull = ManagedChannelBuilder.forTarget(fullnode)
-              .usePlaintext(true)
-              .build();
+          .usePlaintext(true)
+          .build();
       blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
       Block nowblock = blockingStubFull.getNowBlock(GrpcAPI.EmptyMessage.newBuilder().build());
       startblockNum = nowblock.getBlockHeader().getRawData().getNumber();
@@ -557,8 +554,8 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     ConcurrentHashMap<Sha256Hash, InventoryType> spread = new ConcurrentHashMap<>();
     AtomicInteger invCount = new AtomicInteger(0);
     synchronized (advObjToSpread) {
-      for (Entry<Sha256Hash, InventoryType> entry: advObjToSpread.entrySet()) {
-        if (invCount.getAndIncrement() >= TPS){
+      for (Entry<Sha256Hash, InventoryType> entry : advObjToSpread.entrySet()) {
+        if (invCount.getAndIncrement() >= TPS) {
           break;
         }
         spread.put(entry.getKey(), entry.getValue());
@@ -567,11 +564,12 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     }
     int n = 0;
     while (spread.size() > 0 && getActivePeer().size() > 0) {
-      logger.info("SPREAD {} advObjToSpread:{} spreadSize: {}", ++n, advObjToSpread.size(), spread.size());
+      logger.info("SPREAD {} advObjToSpread:{} spreadSize: {}", ++n, advObjToSpread.size(),
+          spread.size());
 
-        if (advObjToSpread.size()  < spread.size()) {
-          logger.info("Stress task end.");
-          System.exit(0);
+      if (advObjToSpread.size() < spread.size()) {
+        logger.info("Stress task end.");
+        System.exit(0);
 
 /*          ManagedChannel channelFull = null;
           WalletGrpc.WalletBlockingStub blockingStubFull = null;
@@ -598,22 +596,25 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
               e.printStackTrace();
             }
           }*/
-        }
+      }
 
       InvToSend sendPackage = new InvToSend();
       spread.entrySet().forEach(id -> getActivePeer().stream()
-            .filter(peer -> sendPackage.getSize(peer) < 1000)
-            .sorted(Comparator.comparingInt(peer -> sendPackage.getSize(peer)))
-            .findFirst().ifPresent(peer ->{
-          sendPackage.add(id, peer);
-          spread.remove(id.getKey());
-        }));
+          .filter(peer -> sendPackage.getSize(peer) < 1000)
+          .sorted(Comparator.comparingInt(peer -> sendPackage.getSize(peer)))
+          .findFirst().ifPresent(peer -> {
+            sendPackage.add(id, peer);
+            spread.remove(id.getKey());
+          }));
       sendPackage.sendInv();
     }
     long cost = System.currentTimeMillis() - starTime;
     logger.info("SPREAD finish one spread cost: {}ms", cost);
-    if (cost < 1000){
-      try { Thread.sleep(1000 - cost); } catch (Exception e) {}
+    if (cost < 1000) {
+      try {
+        Thread.sleep(1000 - cost);
+      } catch (Exception e) {
+      }
     }
   }
 
@@ -1472,7 +1473,6 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
   public int getAdvObjToSpreadSize() {
     return advObjToSpread.size();
   }
-
 
 
 }

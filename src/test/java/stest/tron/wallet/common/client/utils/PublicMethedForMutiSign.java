@@ -328,7 +328,10 @@ public class PublicMethedForMutiSign {
       }
       ECKey ecKey = temKey;
 
-      transaction = TransactionUtils.sign(transaction, ecKey);
+      //transaction = TransactionUtils.sign(transaction, ecKey);
+      String mainGateWay = "TUmGh8c2VcpfmJ7rBYq1FU9hneXhz3P8z3";
+      transaction = TransactionUtils
+          .sign(transaction, ecKey, WalletClient.decodeFromBase58Check(mainGateWay), false);
       TransactionSignWeight weight = blockingStubFull.getTransactionSignWeight(transaction);
       if (weight.getResult().getCode()
           == TransactionSignWeight.Result.response_code.ENOUGH_PERMISSION) {
