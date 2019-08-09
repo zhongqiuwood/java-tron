@@ -5,8 +5,8 @@ import static org.tron.core.Wallet.decodeFromBase58Check;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import java.math.BigInteger;
-import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicLong;
 import lombok.Getter;
@@ -23,6 +23,7 @@ import org.tron.common.utils.TransactionUtils;
 import org.tron.protos.Contract.FreezeBalanceContract;
 import org.tron.protos.Contract.UnfreezeBalanceContract;
 import org.tron.protos.Protocol.Transaction;
+import org.tron.protos.Protocol.Transaction.Contract;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.stresstest.dispatch.strategy.Level2Strategy;
 
@@ -48,8 +49,18 @@ public abstract class AbstractTransactionCreator extends Level2Strategy {
       .getString("privateKey.commonWitnessPrivateKey");
   protected String WithdrawToPrivateKey = Configuration.getByPath("stress.conf")
       .getString("privateKey.WithdrawToPrivateKey");
+  protected String WithdrawTrc10ToPrivateKey = Configuration.getByPath("stress.conf")
+      .getString("privateKey.WithdrawTrc10ToPrivateKey");
+  protected String WithdrawTrc20ToPrivateKey = Configuration.getByPath("stress.conf")
+      .getString("privateKey.WithdrawTrc20ToPrivateKey");
+
+
   protected String WithdrawToAddress = Configuration.getByPath("stress.conf")
       .getString("address.WithdrawToAddress");
+  protected String WithdrawTrc10ToAddress = Configuration.getByPath("stress.conf")
+      .getString("address.WithdrawTrc10ToAddress");
+  protected String WithdrawTrc20ToAddress = Configuration.getByPath("stress.conf")
+      .getString("address.WithdrawTrc20ToAddress");
 
   protected String commonContractAddress1 = Configuration.getByPath("stress.conf")
       .getString("address.commonContractAddress1");
@@ -65,6 +76,9 @@ public abstract class AbstractTransactionCreator extends Level2Strategy {
       .getString("address.commonContractAddress6");
   protected String SideGatewayContractAddress = Configuration.getByPath("stress.conf")
       .getString("address.SideGatewayContractAddress");
+  protected String SideTRC20ContractContractAddress = Configuration.getByPath("stress.conf")
+      .getString("address.SideTRC20ContractContractAddress");
+
   protected String commontokenid = Configuration.getByPath("stress.conf")
       .getString("param.commontokenid");
   protected long commonexchangeid = Configuration.getByPath("stress.conf")
@@ -239,36 +253,36 @@ public abstract class AbstractTransactionCreator extends Level2Strategy {
   }
 
   public static Transaction sign(Transaction transaction, ECKey myKey) {
-//    Transaction.Builder transactionBuilderSigned = transaction.toBuilder();
-//    byte[] hash = Sha256Hash.hash(transaction.getRawData().toByteArray());
-//    List<Contract> listContract = transaction.getRawData().getContractList();
-//    for (int i = 0; i < listContract.size(); i++) {
-//      ECDSASignature signature = myKey.sign(hash);
-//      ByteString bsSign = ByteString.copyFrom(signature.toByteArray());
-//      transactionBuilderSigned.addSignature(
-//          bsSign);
-//    }
-//
-//    transaction = transactionBuilderSigned.build();
-//    return transaction;
-    byte[] chainId = decodeFromBase58Check("TUmGh8c2VcpfmJ7rBYq1FU9hneXhz3P8z3");
     Transaction.Builder transactionBuilderSigned = transaction.toBuilder();
     byte[] hash = Sha256Hash.hash(transaction.getRawData().toByteArray());
-
-    byte[] newHash;
-    if (false) {
-      newHash = hash;
-    } else {
-      byte[] hashWithChainId = Arrays.copyOf(hash, hash.length + chainId.length);
-      System.arraycopy(chainId, 0, hashWithChainId, hash.length, chainId.length);
-      newHash = Sha256Hash.hash(hashWithChainId);
+    List<Contract> listContract = transaction.getRawData().getContractList();
+    for (int i = 0; i < listContract.size(); i++) {
+      ECDSASignature signature = myKey.sign(hash);
+      ByteString bsSign = ByteString.copyFrom(signature.toByteArray());
+      transactionBuilderSigned.addSignature(
+          bsSign);
     }
 
-    ECDSASignature signature = myKey.sign(newHash);
-    ByteString bsSign = ByteString.copyFrom(signature.toByteArray());
-    transactionBuilderSigned.addSignature(bsSign);
     transaction = transactionBuilderSigned.build();
     return transaction;
+//    byte[] chainId = decodeFromBase58Check("TUmGh8c2VcpfmJ7rBYq1FU9hneXhz3P8z3");
+//    Transaction.Builder transactionBuilderSigned = transaction.toBuilder();
+//    byte[] hash = Sha256Hash.hash(transaction.getRawData().toByteArray());
+//
+//    byte[] newHash;
+//    if (false) {
+//      newHash = hash;
+//    } else {
+//      byte[] hashWithChainId = Arrays.copyOf(hash, hash.length + chainId.length);
+//      System.arraycopy(chainId, 0, hashWithChainId, hash.length, chainId.length);
+//      newHash = Sha256Hash.hash(hashWithChainId);
+//    }
+//
+//    ECDSASignature signature = myKey.sign(newHash);
+//    ByteString bsSign = ByteString.copyFrom(signature.toByteArray());
+//    transactionBuilderSigned.addSignature(bsSign);
+//    transaction = transactionBuilderSigned.build();
+//    return transaction;
   }
 
   public static Transaction mutiSignNew(Transaction transaction, String[] permissionKeyString) {

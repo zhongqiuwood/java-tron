@@ -43,7 +43,10 @@ public class CreateStressTransactionXml {
       "triggerTimeoutContractCreatorMulti",
       "SendCoin(Delay)",
       "transferTRC20",
-      "ExtCodeHash"
+      "ExtCodeHash",
+      "withdrawTrx",
+      "withdrawTrc20",
+      "withdrawTrc10"
   };
 
   @BeforeClass

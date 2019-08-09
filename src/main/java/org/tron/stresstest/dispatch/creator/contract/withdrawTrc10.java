@@ -3,13 +3,7 @@ package org.tron.stresstest.dispatch.creator.contract;
 import static org.tron.core.Wallet.addressValid;
 
 import com.google.protobuf.ByteString;
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.InputStreamReader;
 import java.util.Arrays;
-import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicLong;
 import lombok.Setter;
 import org.apache.commons.lang3.StringUtils;
@@ -31,55 +25,25 @@ import org.tron.stresstest.dispatch.TransactionFactory;
 import org.tron.stresstest.dispatch.creator.CreatorCounter;
 import org.tron.stresstest.exception.EncodingException;
 
-
 @Setter
-public class WithdrawCreator extends AbstractTransactionCreator implements
+public class withdrawTrc10 extends AbstractTransactionCreator implements
     GoodCaseTransactonCreator {
 
-  private String ownerAddress = WithdrawToAddress;
+  private String ownerAddress = WithdrawTrc10ToAddress;
   private String contractAddress = SideGatewayContractAddress;
-  private long callValue = 1L;
-  private String methodSign = "withdrawTRX()";
+  private long callValue = 0L;
+  private String methodSign = "withdrawTRC10(uint256,uint256)";
   private boolean hex = false;
-  private String param = "";
+  private String param = "\"" + commontokenid + "\",1";
+  //private String param = "1";
   private long feeLimit = 1000000000L;
-  private String privateKey = WithdrawToPrivateKey;
+  private String privateKey = WithdrawTrc10ToPrivateKey;
   public static AtomicLong queryCount = new AtomicLong();
-  private List<String> ownerAddressList = new CopyOnWriteArrayList<>();
-
-
-  {
-    try {
-      File filename = new File("/Users/tron/git/java-tron/accounts.txt");
-      InputStreamReader reader = new InputStreamReader(
-          new FileInputStream(filename)); // 建立一个输入流对象reader
-      BufferedReader br = new BufferedReader(reader); // 建立一个对象，它把文件内容转成计算机能读懂的语言
-      String line = "";
-      line = br.readLine();
-      while (line != null) {
-        ownerAddressList.add(line);
-        line = br.readLine();
-      }
-      br.close();
-      reader.close();
-    } catch (Exception e) {
-
-    }
-
-  }
 
   @Override
   protected Protocol.Transaction create() {
-//    queryCount.incrementAndGet();
-
-    int id = Long.valueOf(queryCount.incrementAndGet()).intValue();
-    int index = id % ownerAddressList.size();
-    String[] addressAndPri = ownerAddressList.get(index).split(",");
-    if (addressAndPri == null || addressAndPri.length != 2) {
-      return null;
-    }
-    byte[] ownerAddressBytes = Wallet.decodeFromBase58Check(addressAndPri[0]);
-    //byte[] ownerAddressBytes = Wallet.decodeFromBase58Check(ownerAddress);
+    queryCount.incrementAndGet();
+    byte[] ownerAddressBytes = Wallet.decodeFromBase58Check(ownerAddress);
 
     TransactionFactory.context.getBean(CreatorCounter.class).put(this.getClass().getName());
 
@@ -104,10 +68,10 @@ public class WithdrawCreator extends AbstractTransactionCreator implements
 
     transaction = transaction.toBuilder()
         .setRawData(transaction.getRawData().toBuilder().setFeeLimit(feeLimit).build()).build();
-    String mainGateWay = "TUmGh8c2VcpfmJ7rBYq1FU9hneXhz3P8z3";
-    transaction = sign(transaction, ECKey.fromPrivate(ByteArray.fromHexString(privateKey)),
-        decodeFromBase58Check(mainGateWay), false);
-    //transaction = sign(transaction, ECKey.fromPrivate(ByteArray.fromHexString(privateKey)));
+    //String mainGateWay = "TUmGh8c2VcpfmJ7rBYq1FU9hneXhz3P8z3";
+    //transaction = sign(transaction, ECKey.fromPrivate(ByteArray.fromHexString(privateKey)),
+    //    decodeFromBase58Check(mainGateWay), false);
+    transaction = sign(transaction, ECKey.fromPrivate(ByteArray.fromHexString(privateKey)));
     return transaction;
   }
 

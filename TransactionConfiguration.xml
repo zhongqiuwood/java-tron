@@ -38,16 +38,16 @@
 <bean id="transferTRC20" class="org.tron.stresstest.dispatch.creator.contract.TransferTrc20Creator">
 <property name="name" value="transferTRC20"/>
 <property name="begin" value="0"/>
-<property name="end" value="4"/>
+<property name="end" value="24"/>
 </bean>
 <bean id="MultiSignTriggerContract" class="org.tron.stresstest.dispatch.creator.MultiSign.MultiSignTriggerContract">
 <property name="name" value="MultiSignTriggerContract"/>
-<property name="begin" value="5"/>
-<property name="end" value="14"/>
+<property name="begin" value="25"/>
+<property name="end" value="34"/>
 </bean>
 <bean id="transferToken" class="org.tron.stresstest.dispatch.creator.contract.TransferTokenCreator">
 <property name="name" value="transferToken"/>
-<property name="begin" value="15"/>
+<property name="begin" value="35"/>
 <property name="end" value="74"/>
 </bean>
 <bean id="freezeEnergy" class="org.tron.stresstest.dispatch.creator.freeze.FreezeEnergyCreator">

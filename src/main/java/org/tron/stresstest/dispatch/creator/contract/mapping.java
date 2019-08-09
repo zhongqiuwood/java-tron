@@ -31,17 +31,16 @@ import org.tron.stresstest.dispatch.TransactionFactory;
 import org.tron.stresstest.dispatch.creator.CreatorCounter;
 import org.tron.stresstest.exception.EncodingException;
 
-
 @Setter
-public class WithdrawCreator extends AbstractTransactionCreator implements
+public class mapping extends AbstractTransactionCreator implements
     GoodCaseTransactonCreator {
 
   private String ownerAddress = WithdrawToAddress;
   private String contractAddress = SideGatewayContractAddress;
-  private long callValue = 1L;
-  private String methodSign = "withdrawTRX()";
+  private long callValue = 0L;
+  private String methodSign = "mappingTRC20(bytes)";
   private boolean hex = false;
-  private String param = "";
+  private String param = null;
   private long feeLimit = 1000000000L;
   private String privateKey = WithdrawToPrivateKey;
   public static AtomicLong queryCount = new AtomicLong();
@@ -50,7 +49,7 @@ public class WithdrawCreator extends AbstractTransactionCreator implements
 
   {
     try {
-      File filename = new File("/Users/tron/git/java-tron/accounts.txt");
+      File filename = new File("/Users/tron/Desktop/accounts.txt");
       InputStreamReader reader = new InputStreamReader(
           new FileInputStream(filename)); // 建立一个输入流对象reader
       BufferedReader br = new BufferedReader(reader); // 建立一个对象，它把文件内容转成计算机能读懂的语言
@@ -70,19 +69,13 @@ public class WithdrawCreator extends AbstractTransactionCreator implements
 
   @Override
   protected Protocol.Transaction create() {
-//    queryCount.incrementAndGet();
+    //queryCount.incrementAndGet();
 
-    int id = Long.valueOf(queryCount.incrementAndGet()).intValue();
-    int index = id % ownerAddressList.size();
-    String[] addressAndPri = ownerAddressList.get(index).split(",");
-    if (addressAndPri == null || addressAndPri.length != 2) {
-      return null;
-    }
-    byte[] ownerAddressBytes = Wallet.decodeFromBase58Check(addressAndPri[0]);
-    //byte[] ownerAddressBytes = Wallet.decodeFromBase58Check(ownerAddress);
+    byte[] ownerAddressBytes = Wallet.decodeFromBase58Check(ownerAddress);
 
     TransactionFactory.context.getBean(CreatorCounter.class).put(this.getClass().getName());
 
+    param = ownerAddressList.get(Long.valueOf(queryCount.incrementAndGet()).intValue());
     TriggerSmartContract contract = null;
     try {
       contract = triggerCallContract(

@@ -310,37 +310,39 @@ public class StressPrecondition {
         .isEmpty()) {
       Long start = System.currentTimeMillis() + 20000;
       Long end = System.currentTimeMillis() + 1000000000;
-      PublicMethed.createAssetIssue(PublicMethed.getFinalAddress(assetIssueOwnerKey), "xxd",
+      /*PublicMethed.createAssetIssue(PublicMethed.getFinalAddress(assetIssueOwnerKey), "xxd",
           50000000000000L,
           1, 1, start, end, 1, "wwwwww", "wwwwwwww", 100000L,
           100000L, 1L, 1L, assetIssueOwnerKey, blockingStubFull);
-      logger.info("createAssetIssue");
-      PublicMethed.waitProduceNextBlock(blockingStubFull);
-      PublicMethed.waitProduceNextBlock(blockingStubFull);
+      logger.info("createAssetIssue");*/
+      //PublicMethed.waitProduceNextBlock(blockingStubFull);
+      //PublicMethed.waitProduceNextBlock(blockingStubFull);
     }
 
     assetIssueId = PublicMethed.queryAccount(assetIssueOwnerKey, blockingStubFull)
         .getAssetIssuedID();
     logger.info("AssetIssueId is " + ByteArray.toStr(assetIssueId.toByteArray()));
-
-    logger.info("commonContractAddress1 is " + Wallet.encode58Check(commonContractAddress1));
-    PublicMethed.transferAsset(commonContractAddress1, assetIssueId.toByteArray(), 300000000000L,
+    String tokenid = "1000001";
+    byte[] token = ByteArray.fromString(tokenid);
+    logger.info(ByteArray.toStr(token));
+//    logger.info("commonContractAddress1 is " + Wallet.encode58Check(commonContractAddress1));
+    PublicMethed.transferAsset(commonContractAddress1, token, 300000000000L,
         PublicMethed.getFinalAddress(assetIssueOwnerKey), assetIssueOwnerKey, blockingStubFull);
-    PublicMethed.transferAsset(commonContractAddress1, assetIssueId.toByteArray(), 300000000000L,
+    PublicMethed.transferAsset(commonContractAddress1, token, 300000000000L,
         PublicMethed.getFinalAddress(assetIssueOwnerKey), assetIssueOwnerKey, blockingStubFull);
-    PublicMethed.transferAsset(commonContractAddress1, assetIssueId.toByteArray(), 300000000000L,
+    PublicMethed.transferAsset(commonContractAddress1, token, 300000000000L,
         PublicMethed.getFinalAddress(assetIssueOwnerKey), assetIssueOwnerKey, blockingStubFull);
-    PublicMethed.transferAsset(commonContractAddress1, assetIssueId.toByteArray(), 300000000000L,
+    PublicMethed.transferAsset(commonContractAddress1, token, 300000000000L,
         PublicMethed.getFinalAddress(assetIssueOwnerKey), assetIssueOwnerKey, blockingStubFull);
 
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    PublicMethed.transferAsset(commonContractAddress2, assetIssueId.toByteArray(), 300000000000L,
+    PublicMethed.transferAsset(commonContractAddress2, token, 300000000000L,
         PublicMethed.getFinalAddress(assetIssueOwnerKey), assetIssueOwnerKey, blockingStubFull);
-    PublicMethed.transferAsset(commonContractAddress2, assetIssueId.toByteArray(), 300000000000L,
+    PublicMethed.transferAsset(commonContractAddress2, token, 300000000000L,
         PublicMethed.getFinalAddress(assetIssueOwnerKey), assetIssueOwnerKey, blockingStubFull);
-    PublicMethed.transferAsset(commonContractAddress2, assetIssueId.toByteArray(), 300000000000L,
+    PublicMethed.transferAsset(commonContractAddress2, token, 300000000000L,
         PublicMethed.getFinalAddress(assetIssueOwnerKey), assetIssueOwnerKey, blockingStubFull);
-    PublicMethed.transferAsset(commonContractAddress2, assetIssueId.toByteArray(), 300000000000L,
+    PublicMethed.transferAsset(commonContractAddress2, token, 300000000000L,
         PublicMethed.getFinalAddress(assetIssueOwnerKey), assetIssueOwnerKey, blockingStubFull);
 
     String newTokenId = ByteArray.toStr(assetIssueId.toByteArray());
