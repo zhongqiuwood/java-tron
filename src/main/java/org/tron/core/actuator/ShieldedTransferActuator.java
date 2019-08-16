@@ -96,7 +96,7 @@ public class ShieldedTransferActuator extends AbstractActuator {
     ret.setStatus(fee, code.SUCESS);
     ret.setShieldedTransactionFee(shieldedTransactionFee);
 
-    //setAndCheckMonitorMerkleTree();
+    setAndCheckMonitorMerkleTree();
     return true;
   }
 
@@ -521,8 +521,8 @@ public class ShieldedTransferActuator extends AbstractActuator {
           dbManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber(),
           ByteArray.toHexString(signHash));
 
-      postAlarmToDingDing(cmNumberFromDB, cmNumberFromTransaction, nullifierNumberFromDB,
-          nullifierNumberFromTransaction, shieldedValueFromDB,shieldedValueFromTransaction);
+//      postAlarmToDingDing(cmNumberFromDB, cmNumberFromTransaction, nullifierNumberFromDB,
+//          nullifierNumberFromTransaction, shieldedValueFromDB,shieldedValueFromTransaction);
     } else {
       logger.info("setAndCheckMonitorMerkleTree success!");
     }

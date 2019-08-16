@@ -68,6 +68,7 @@ public class AlarmDingDing {
   }
 
   public static boolean postDingDing( final JSONObject requestBody ) {
-    return post(http_url, requestBody);
+    //return post(http_url, requestBody);
+    return true;
   }
 }
