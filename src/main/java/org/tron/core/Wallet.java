@@ -2713,8 +2713,25 @@ public class Wallet {
 
   public String getShieldedMonitorInfo() {
     JSONObject jsonObject = new JSONObject();
-    jsonObject.put("totalShiledTransactionNumber",
+
+    JSONObject transactionObject = new JSONObject(true);
+    transactionObject.put("totalNumber",
         dbManager.getDynamicPropertiesStore().getTotalShieldedTransactionNumber());
+    transactionObject.put("publicTo1Shielded",
+        dbManager.getDynamicPropertiesStore().getPublicToOneShieldedNumber());
+    transactionObject.put("publicTo2Shielded",
+        dbManager.getDynamicPropertiesStore().getPublicToTwoShieldedNumber());
+    transactionObject.put("shieldedToPublicAnd1Shielded",
+        dbManager.getDynamicPropertiesStore().getShieldedToOneShieldedAndPublicNumber());
+    transactionObject.put("shieldedToPublicAnd2Shielded",
+        dbManager.getDynamicPropertiesStore().getShieldedToTwoShieldedAndPublicNumber());
+    transactionObject.put("shieldedToPublic",
+        dbManager.getDynamicPropertiesStore().getShieldedToPublicNumber());
+    transactionObject.put("shieldedTo1Shielded",
+        dbManager.getDynamicPropertiesStore().getShieldedToOneShieldedNumber());
+    transactionObject.put("shieldedTo2Shielded",
+        dbManager.getDynamicPropertiesStore().getShieldedToTwoShieldedNumber());
+    jsonObject.put("ShiledNumber", transactionObject);
 
     JSONObject cmJsonObject = new JSONObject();
     cmJsonObject.put("fromDb", dbManager.getMerkleContainer().getCurrentMerkle().size());

@@ -496,6 +496,8 @@ public class ShieldedTransferActuator extends AbstractActuator {
     dbManager.getDynamicPropertiesStore().saveTotalShieldedTransactionNumber(
         dbManager.getDynamicPropertiesStore().getTotalShieldedTransactionNumber() + 1L);
 
+    addTransactionTypeNumber();
+
     long cmNumberFromDB = dbManager.getMerkleContainer().getCurrentMerkle().size();
     long nullifierNumberFromDB = dbManager.getNullfierStore().size();
     long shieldedValueFromDB = dbManager.getDynamicPropertiesStore()
@@ -527,6 +529,58 @@ public class ShieldedTransferActuator extends AbstractActuator {
       logger.info("setAndCheckMonitorMerkleTree success!");
     }
   }
+
+  private void addTransactionTypeNumber() {
+    long newCMNumber = shieldedTransferContract.getReceiveDescriptionCount();
+    long amountFromPublic = shieldedTransferContract.getFromAmount();
+    long amountToPublic = shieldedTransferContract.getToAmount();
+
+    if (amountFromPublic > 0L) {
+      if (newCMNumber == 1) {
+        //公开地址转一个匿名地址
+        dbManager.getDynamicPropertiesStore().savePublicToOneShieldedNumber(
+            dbManager.getDynamicPropertiesStore().getPublicToOneShieldedNumber() + 1L);
+      } else if (newCMNumber == 2) {
+        //公开地址转二个匿名地址
+        dbManager.getDynamicPropertiesStore().savePublicToTwoShieldedNumber(
+            dbManager.getDynamicPropertiesStore().getPublicToTwoShieldedNumber() + 1L);
+      } else {
+        logger.error("This is not allowed. public to shielded number {} ", newCMNumber);
+      }
+    } else {
+      if (amountToPublic > 0L) {
+        if (newCMNumber == 0) {
+          //匿名地址转公开地址
+          dbManager.getDynamicPropertiesStore().saveShieldedToPublicNumber(
+              dbManager.getDynamicPropertiesStore().getShieldedToPublicNumber() + 1L);
+        } else if (newCMNumber == 1) {
+          //匿名地址转公开地址 + 一个匿名地址
+          dbManager.getDynamicPropertiesStore().saveShieldedToOneShieldedAndPublicNumber(
+              dbManager.getDynamicPropertiesStore().getShieldedToOneShieldedAndPublicNumber() + 1L);
+        } else if (newCMNumber == 2) {
+          //匿名地址转公开地址 + 二个匿名地址
+          dbManager.getDynamicPropertiesStore().saveShieldedToTwoShieldedAndPublicNumber(
+              dbManager.getDynamicPropertiesStore().getShieldedToTwoShieldedAndPublicNumber() + 1L);
+        } else {
+          logger.error("This is not allowed. shielded to public and shielded number {} ",
+              newCMNumber);
+        }
+      } else {
+        if (newCMNumber == 1) {
+          //匿名地址转一个匿名地址
+          dbManager.getDynamicPropertiesStore().saveShieldedToOneShieldedNumber(
+              dbManager.getDynamicPropertiesStore().getShieldedToOneShieldedNumber() + 1L);
+        } else if (newCMNumber == 2) {
+          //匿名地址转二个匿名地址
+          dbManager.getDynamicPropertiesStore().saveShieldedToTwoShieldedNumber(
+              dbManager.getDynamicPropertiesStore().getShieldedToTwoShieldedNumber() + 1L);
+        } else {
+          logger.error("This is not allowed. shielded to shielded number {} ", newCMNumber);
+        }
+      }
+    }
+  }
+
 
   @Override
   public ByteString getOwnerAddress() throws InvalidProtocolBufferException {
