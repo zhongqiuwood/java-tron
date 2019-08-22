@@ -478,6 +478,63 @@ public class ShieldedTransferActuator extends AbstractActuator {
   }
 
   private void setAndCheckMonitorMerkleTree() {
+    setShieldedTransactionParameter();
+
+    long cmNumberFromDB = dbManager.getMerkleContainer().getCurrentMerkle().size();
+    long nullifierNumberFromDB = dbManager.getNullfierStore().size();
+    long shieldedValueFromDB = dbManager.getDynamicPropertiesStore()
+        .getTotalShieldedPoolValue();
+    long cmNumberFromTransaction = dbManager.getDynamicPropertiesStore()
+        .getTotalCMNumberFromTransactions();
+    long nullifierNumberFromTransaction = dbManager.getDynamicPropertiesStore()
+        .getTotalNullifierNumber();
+    long shieldedValueFromTransaction = dbManager.getDynamicPropertiesStore()
+        .getShieldValueFromTransaction();
+
+    long publicToOneShielded = dbManager.getDynamicPropertiesStore().getPublicToOneShieldedNumber();
+    long publicToTwoSHielded = dbManager.getDynamicPropertiesStore().getPublicToTwoShieldedNumber();
+    long shieldedToOneShielded = dbManager.getDynamicPropertiesStore()
+        .getShieldedToOneShieldedNumber();
+    long shieldedToTwoShielded = dbManager.getDynamicPropertiesStore()
+        .getShieldedToTwoShieldedNumber();
+    long shieldedToPublicOneShielded = dbManager.getDynamicPropertiesStore()
+        .getShieldedToOneShieldedAndPublicNumber();
+    long shieldedToPublicTwoShielded = dbManager.getDynamicPropertiesStore()
+        .getShieldedToTwoShieldedAndPublicNumber();
+    long shieldedToPublic = dbManager.getDynamicPropertiesStore().getShieldedToPublicNumber();
+
+    long totalCmFromTransaction =
+        (publicToOneShielded + shieldedToOneShielded + shieldedToPublicOneShielded)
+            + (publicToTwoSHielded + shieldedToTwoShielded + shieldedToPublicTwoShielded) * 2;
+    long totalNullFromTransaction =
+        shieldedToOneShielded + shieldedToTwoShielded + shieldedToPublicOneShielded
+            + shieldedToPublicTwoShielded + shieldedToPublic;
+
+    logger.info("cmNumberFromDb {} cmNumberFromTransaction {} nullifierFromDb {} "
+            + "nullifierFromTransaction {} shieldValueFromDb {} shieldValueFromTransaction {} "
+            + "totalCmFromTransaction {} totalNullFromTransaction {}",
+        cmNumberFromDB, cmNumberFromTransaction, nullifierNumberFromDB,
+        nullifierNumberFromTransaction, shieldedValueFromDB, shieldedValueFromTransaction,
+        totalCmFromTransaction, totalNullFromTransaction);
+
+    if (cmNumberFromDB != cmNumberFromTransaction ||
+        nullifierNumberFromDB != nullifierNumberFromTransaction ||
+        shieldedValueFromDB != shieldedValueFromTransaction ||
+        cmNumberFromDB != totalCmFromTransaction ||
+        nullifierNumberFromDB != totalNullFromTransaction) {
+      byte[] signHash = TransactionCapsule.getShieldTransactionHashIgnoreTypeException(tx);
+      logger.error("Last BlockNum {} transaction {} shield transaction check failure.",
+          dbManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber(),
+          ByteArray.toHexString(signHash));
+
+//      postAlarmToDingDing(cmNumberFromDB, cmNumberFromTransaction, nullifierNumberFromDB,
+//          nullifierNumberFromTransaction, shieldedValueFromDB,shieldedValueFromTransaction);
+    } else {
+      logger.info("setAndCheckMonitorMerkleTree success!");
+    }
+  }
+
+  private void setShieldedTransactionParameter() {
     long newCMNumber = shieldedTransferContract.getReceiveDescriptionCount();
     long newNullifierNumber = shieldedTransferContract.getSpendDescriptionCount();
     long amountFromPublic = shieldedTransferContract.getFromAmount();
@@ -496,52 +553,12 @@ public class ShieldedTransferActuator extends AbstractActuator {
     dbManager.getDynamicPropertiesStore().saveTotalShieldedTransactionNumber(
         dbManager.getDynamicPropertiesStore().getTotalShieldedTransactionNumber() + 1L);
 
-    addTransactionTypeNumber();
-
-    long cmNumberFromDB = dbManager.getMerkleContainer().getCurrentMerkle().size();
-    long nullifierNumberFromDB = dbManager.getNullfierStore().size();
-    long shieldedValueFromDB = dbManager.getDynamicPropertiesStore()
-        .getTotalShieldedPoolValue();
-    long cmNumberFromTransaction = dbManager.getDynamicPropertiesStore()
-        .getTotalCMNumberFromTransactions();
-    long nullifierNumberFromTransaction = dbManager.getDynamicPropertiesStore()
-        .getTotalNullifierNumber();
-    long shieldedValueFromTransaction = dbManager.getDynamicPropertiesStore()
-        .getShieldValueFromTransaction();
-
-    logger.info(
-        "cmNumberFromDb {} cmNumberFromTransaction {} nullifierFromDb {} "
-            + "nullifierFromTransaction {} shieldValueFromDb {} shieldValueFromTransaction {}",
-        cmNumberFromDB, cmNumberFromTransaction, nullifierNumberFromDB,
-        nullifierNumberFromTransaction, shieldedValueFromDB, shieldedValueFromTransaction);
-
-    if (cmNumberFromDB != cmNumberFromTransaction ||
-        nullifierNumberFromDB != nullifierNumberFromTransaction ||
-        shieldedValueFromDB != shieldedValueFromTransaction) {
-      byte[] signHash = TransactionCapsule.getShieldTransactionHashIgnoreTypeException(tx);
-      logger.error("Last BlockNum {} transaction {} shield transaction check failure.",
-          dbManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber(),
-          ByteArray.toHexString(signHash));
-
-//      postAlarmToDingDing(cmNumberFromDB, cmNumberFromTransaction, nullifierNumberFromDB,
-//          nullifierNumberFromTransaction, shieldedValueFromDB,shieldedValueFromTransaction);
-    } else {
-      logger.info("setAndCheckMonitorMerkleTree success!");
-    }
-  }
-
-  private void addTransactionTypeNumber() {
-    long newCMNumber = shieldedTransferContract.getReceiveDescriptionCount();
-    long amountFromPublic = shieldedTransferContract.getFromAmount();
-    long amountToPublic = shieldedTransferContract.getToAmount();
-
+    //set transaction number
     if (amountFromPublic > 0L) {
       if (newCMNumber == 1) {
-        //公开地址转一个匿名地址
         dbManager.getDynamicPropertiesStore().savePublicToOneShieldedNumber(
             dbManager.getDynamicPropertiesStore().getPublicToOneShieldedNumber() + 1L);
       } else if (newCMNumber == 2) {
-        //公开地址转二个匿名地址
         dbManager.getDynamicPropertiesStore().savePublicToTwoShieldedNumber(
             dbManager.getDynamicPropertiesStore().getPublicToTwoShieldedNumber() + 1L);
       } else {
@@ -550,15 +567,12 @@ public class ShieldedTransferActuator extends AbstractActuator {
     } else {
       if (amountToPublic > 0L) {
         if (newCMNumber == 0) {
-          //匿名地址转公开地址
           dbManager.getDynamicPropertiesStore().saveShieldedToPublicNumber(
               dbManager.getDynamicPropertiesStore().getShieldedToPublicNumber() + 1L);
         } else if (newCMNumber == 1) {
-          //匿名地址转公开地址 + 一个匿名地址
           dbManager.getDynamicPropertiesStore().saveShieldedToOneShieldedAndPublicNumber(
               dbManager.getDynamicPropertiesStore().getShieldedToOneShieldedAndPublicNumber() + 1L);
         } else if (newCMNumber == 2) {
-          //匿名地址转公开地址 + 二个匿名地址
           dbManager.getDynamicPropertiesStore().saveShieldedToTwoShieldedAndPublicNumber(
               dbManager.getDynamicPropertiesStore().getShieldedToTwoShieldedAndPublicNumber() + 1L);
         } else {
@@ -567,11 +581,9 @@ public class ShieldedTransferActuator extends AbstractActuator {
         }
       } else {
         if (newCMNumber == 1) {
-          //匿名地址转一个匿名地址
           dbManager.getDynamicPropertiesStore().saveShieldedToOneShieldedNumber(
               dbManager.getDynamicPropertiesStore().getShieldedToOneShieldedNumber() + 1L);
         } else if (newCMNumber == 2) {
-          //匿名地址转二个匿名地址
           dbManager.getDynamicPropertiesStore().saveShieldedToTwoShieldedNumber(
               dbManager.getDynamicPropertiesStore().getShieldedToTwoShieldedNumber() + 1L);
         } else {
@@ -580,7 +592,6 @@ public class ShieldedTransferActuator extends AbstractActuator {
       }
     }
   }
-
 
   @Override
   public ByteString getOwnerAddress() throws InvalidProtocolBufferException {
