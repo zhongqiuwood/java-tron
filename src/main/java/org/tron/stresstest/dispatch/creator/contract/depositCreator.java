@@ -6,6 +6,7 @@ import com.google.protobuf.ByteString;
 import java.util.Arrays;
 import java.util.concurrent.atomic.AtomicLong;
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.spongycastle.util.encoders.Hex;
 import org.tron.common.crypto.ECKey;
@@ -25,24 +26,23 @@ import org.tron.stresstest.dispatch.TransactionFactory;
 import org.tron.stresstest.dispatch.creator.CreatorCounter;
 import org.tron.stresstest.exception.EncodingException;
 
+@Slf4j
 @Setter
-public class withdrawTrc20 extends AbstractTransactionCreator implements
+public class depositCreator extends AbstractTransactionCreator implements
     GoodCaseTransactonCreator {
 
-  private String ownerAddress = WithdrawTrc20ToAddress;
-  private String contractAddress = SideTRC20ContractContractAddress;
-  private long callValue = 0L;
-  private String methodSign = "withdrawal(uint256)";
+  private String ownerAddress = WithdrawToAddress;
+  private String contractAddress = MainGatewayContractAddress;
+  private long callValue = 1L;
+  private String methodSign = "depositTRX()";
   private boolean hex = false;
-  private String param = "1";
-  //private String param = "1";
+  private String param = "";
   private long feeLimit = 1000000000L;
-  private String privateKey = WithdrawTrc20ToPrivateKey;
+  private String privateKey = WithdrawToPrivateKey;
   public static AtomicLong queryCount = new AtomicLong();
 
   @Override
   protected Protocol.Transaction create() {
-    queryCount.incrementAndGet();
 
     byte[] ownerAddressBytes = Wallet.decodeFromBase58Check(ownerAddress);
 
@@ -69,10 +69,17 @@ public class withdrawTrc20 extends AbstractTransactionCreator implements
 
     transaction = transaction.toBuilder()
         .setRawData(transaction.getRawData().toBuilder().setFeeLimit(feeLimit).build()).build();
-    //String mainGateWay = "TYYrjz9W9ii98zMEF7KoL24KhGRXqWpjEJ";
+//    String mainGateWay = "TYYrjz9W9ii98zMEF7KoL24KhGRXqWpjEJ";
     //transaction = sign(transaction, ECKey.fromPrivate(ByteArray.fromHexString(privateKey)),
+    //transaction = sign(transaction, ECKey.fromPrivate(ByteArray.fromHexString(addressAndPri[1])),
     //    decodeFromBase58Check(mainGateWay), false);
     transaction = sign(transaction, ECKey.fromPrivate(ByteArray.fromHexString(privateKey)));
+//    String fullnode = "39.106.90.236:50151";
+//    Channel channelFull = ManagedChannelBuilder.forTarget(fullnode)
+//        .usePlaintext(true)
+//        .build();
+//    WalletGrpc.WalletBlockingStub blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
+//    GrpcAPI.Return response = blockingStubFull.broadcastTransaction(transaction);
     return transaction;
   }
 

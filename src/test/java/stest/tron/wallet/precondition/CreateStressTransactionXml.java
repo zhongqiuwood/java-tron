@@ -44,9 +44,16 @@ public class CreateStressTransactionXml {
       "SendCoin(Delay)",
       "transferTRC20",
       "ExtCodeHash",
+      "depositTrx",
+      "depositTrc10",
       "withdrawTrx",
       "withdrawTrc20",
-      "withdrawTrc10"
+      "withdrawTrc10",
+      "MultiValiSignPerformance",
+      "multiValidateSignContractCreator1",
+      "multiValidateSignContractCreator2",
+      "multiValidateSignContractCreator3",
+      "multiValidateSignContractCreator4"
   };
 
   @BeforeClass

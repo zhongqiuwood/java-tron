@@ -3,15 +3,10 @@ package org.tron.stresstest.dispatch.creator.contract;
 import static org.tron.core.Wallet.addressValid;
 
 import com.google.protobuf.ByteString;
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.InputStreamReader;
 import java.util.Arrays;
-import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicLong;
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.spongycastle.util.encoders.Hex;
 import org.tron.common.crypto.ECKey;
@@ -31,7 +26,7 @@ import org.tron.stresstest.dispatch.TransactionFactory;
 import org.tron.stresstest.dispatch.creator.CreatorCounter;
 import org.tron.stresstest.exception.EncodingException;
 
-
+@Slf4j
 @Setter
 public class WithdrawCreator extends AbstractTransactionCreator implements
     GoodCaseTransactonCreator {
@@ -45,41 +40,40 @@ public class WithdrawCreator extends AbstractTransactionCreator implements
   private long feeLimit = 1000000000L;
   private String privateKey = WithdrawToPrivateKey;
   public static AtomicLong queryCount = new AtomicLong();
-  private List<String> ownerAddressList = new CopyOnWriteArrayList<>();
+//  private List<String> ownerAddressList = new CopyOnWriteArrayList<>();
 
-
-  {
-    try {
-      File filename = new File("/Users/tron/git/java-tron/accounts.txt");
-      InputStreamReader reader = new InputStreamReader(
-          new FileInputStream(filename)); // 建立一个输入流对象reader
-      BufferedReader br = new BufferedReader(reader); // 建立一个对象，它把文件内容转成计算机能读懂的语言
-      String line = "";
-      line = br.readLine();
-      while (line != null) {
-        ownerAddressList.add(line);
-        line = br.readLine();
-      }
-      br.close();
-      reader.close();
-    } catch (Exception e) {
-
-    }
-
-  }
+//  {
+//    try {
+//      File filename = new File("/Users/tron/git/java-tron/accounts.txt");
+//      InputStreamReader reader = new InputStreamReader(
+//          new FileInputStream(filename)); // 建立一个输入流对象reader
+//      BufferedReader br = new BufferedReader(reader); // 建立一个对象，它把文件内容转成计算机能读懂的语言
+//      String line = "";
+//      line = br.readLine();
+//      while (line != null) {
+//        ownerAddressList.add(line);
+//        line = br.readLine();
+//      }
+//      br.close();
+//      reader.close();
+//    } catch (Exception e) {
+//
+//    }
+//
+//  }
 
   @Override
   protected Protocol.Transaction create() {
-//    queryCount.incrementAndGet();
+    //queryCount.incrementAndGet();
 
-    int id = Long.valueOf(queryCount.incrementAndGet()).intValue();
+    /*int id = Long.valueOf(queryCount.incrementAndGet()).intValue();
     int index = id % ownerAddressList.size();
     String[] addressAndPri = ownerAddressList.get(index).split(",");
     if (addressAndPri == null || addressAndPri.length != 2) {
       return null;
     }
-    byte[] ownerAddressBytes = Wallet.decodeFromBase58Check(addressAndPri[0]);
-    //byte[] ownerAddressBytes = Wallet.decodeFromBase58Check(ownerAddress);
+    byte[] ownerAddressBytes = Wallet.decodeFromBase58Check(addressAndPri[0]);*/
+    byte[] ownerAddressBytes = Wallet.decodeFromBase58Check(ownerAddress);
 
     TransactionFactory.context.getBean(CreatorCounter.class).put(this.getClass().getName());
 
@@ -104,10 +98,17 @@ public class WithdrawCreator extends AbstractTransactionCreator implements
 
     transaction = transaction.toBuilder()
         .setRawData(transaction.getRawData().toBuilder().setFeeLimit(feeLimit).build()).build();
-    String mainGateWay = "TUmGh8c2VcpfmJ7rBYq1FU9hneXhz3P8z3";
+    String mainGateWay = "TYYrjz9W9ii98zMEF7KoL24KhGRXqWpjEJ";
     transaction = sign(transaction, ECKey.fromPrivate(ByteArray.fromHexString(privateKey)),
+        //transaction = sign(transaction, ECKey.fromPrivate(ByteArray.fromHexString(addressAndPri[1])),
         decodeFromBase58Check(mainGateWay), false);
     //transaction = sign(transaction, ECKey.fromPrivate(ByteArray.fromHexString(privateKey)));
+//    String fullnode = "39.106.90.236:50151";
+//    Channel channelFull = ManagedChannelBuilder.forTarget(fullnode)
+//        .usePlaintext(true)
+//        .build();
+//    WalletGrpc.WalletBlockingStub blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
+//    GrpcAPI.Return response = blockingStubFull.broadcastTransaction(transaction);
     return transaction;
   }
 

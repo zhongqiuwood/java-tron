@@ -5,8 +5,8 @@ import static org.tron.core.Wallet.decodeFromBase58Check;
 import com.google.protobuf.Any;
 import com.google.protobuf.ByteString;
 import java.math.BigInteger;
+import java.util.Arrays;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicLong;
 import lombok.Getter;
@@ -23,7 +23,6 @@ import org.tron.common.utils.TransactionUtils;
 import org.tron.protos.Contract.FreezeBalanceContract;
 import org.tron.protos.Contract.UnfreezeBalanceContract;
 import org.tron.protos.Protocol.Transaction;
-import org.tron.protos.Protocol.Transaction.Contract;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
 import org.tron.stresstest.dispatch.strategy.Level2Strategy;
 
@@ -74,8 +73,20 @@ public abstract class AbstractTransactionCreator extends Level2Strategy {
       .getString("address.commonContractAddress5");
   protected String commonContractAddress6 = Configuration.getByPath("stress.conf")
       .getString("address.commonContractAddress6");
+  protected String commonContractAddress7 = Configuration.getByPath("stress.conf")
+      .getString("address.commonContractAddress7");
+  protected String commonContractAddress8 = Configuration.getByPath("stress.conf")
+      .getString("address.commonContractAddress8");
+  protected String commonContractAddress9 = Configuration.getByPath("stress.conf")
+      .getString("address.commonContractAddress9");
+  protected String commonContractAddress10 = Configuration.getByPath("stress.conf")
+      .getString("address.commonContractAddress10");
+  protected String commonContractAddress11 = Configuration.getByPath("stress.conf")
+      .getString("address.commonContractAddress11");
   protected String SideGatewayContractAddress = Configuration.getByPath("stress.conf")
       .getString("address.SideGatewayContractAddress");
+  protected String MainGatewayContractAddress = Configuration.getByPath("stress.conf")
+      .getString("address.MainGatewayContractAddress");
   protected String SideTRC20ContractContractAddress = Configuration.getByPath("stress.conf")
       .getString("address.SideTRC20ContractContractAddress");
 
@@ -93,7 +104,7 @@ public abstract class AbstractTransactionCreator extends Level2Strategy {
   long time = System.currentTimeMillis();
   AtomicLong count = new AtomicLong();
 
-  public Transaction createTransaction(com.google.protobuf.Message message,
+  public synchronized Transaction createTransaction(com.google.protobuf.Message message,
       ContractType contractType) {
     Transaction.raw.Builder transactionBuilder = Transaction.raw.newBuilder().addContract(
         Transaction.Contract.newBuilder().setType(contractType).setParameter(
@@ -253,36 +264,36 @@ public abstract class AbstractTransactionCreator extends Level2Strategy {
   }
 
   public static Transaction sign(Transaction transaction, ECKey myKey) {
-    Transaction.Builder transactionBuilderSigned = transaction.toBuilder();
-    byte[] hash = Sha256Hash.hash(transaction.getRawData().toByteArray());
-    List<Contract> listContract = transaction.getRawData().getContractList();
-    for (int i = 0; i < listContract.size(); i++) {
-      ECDSASignature signature = myKey.sign(hash);
-      ByteString bsSign = ByteString.copyFrom(signature.toByteArray());
-      transactionBuilderSigned.addSignature(
-          bsSign);
-    }
-
-    transaction = transactionBuilderSigned.build();
-    return transaction;
-//    byte[] chainId = decodeFromBase58Check("TUmGh8c2VcpfmJ7rBYq1FU9hneXhz3P8z3");
 //    Transaction.Builder transactionBuilderSigned = transaction.toBuilder();
 //    byte[] hash = Sha256Hash.hash(transaction.getRawData().toByteArray());
-//
-//    byte[] newHash;
-//    if (false) {
-//      newHash = hash;
-//    } else {
-//      byte[] hashWithChainId = Arrays.copyOf(hash, hash.length + chainId.length);
-//      System.arraycopy(chainId, 0, hashWithChainId, hash.length, chainId.length);
-//      newHash = Sha256Hash.hash(hashWithChainId);
+//    List<Contract> listContract = transaction.getRawData().getContractList();
+//    for (int i = 0; i < listContract.size(); i++) {
+//      ECDSASignature signature = myKey.sign(hash);
+//      ByteString bsSign = ByteString.copyFrom(signature.toByteArray());
+//      transactionBuilderSigned.addSignature(
+//          bsSign);
 //    }
 //
-//    ECDSASignature signature = myKey.sign(newHash);
-//    ByteString bsSign = ByteString.copyFrom(signature.toByteArray());
-//    transactionBuilderSigned.addSignature(bsSign);
 //    transaction = transactionBuilderSigned.build();
 //    return transaction;
+    byte[] chainId = decodeFromBase58Check("TYYrjz9W9ii98zMEF7KoL24KhGRXqWpjEJ");
+    Transaction.Builder transactionBuilderSigned = transaction.toBuilder();
+    byte[] hash = Sha256Hash.hash(transaction.getRawData().toByteArray());
+
+    byte[] newHash;
+    if (false) {
+      newHash = hash;
+    } else {
+      byte[] hashWithChainId = Arrays.copyOf(hash, hash.length + chainId.length);
+      System.arraycopy(chainId, 0, hashWithChainId, hash.length, chainId.length);
+      newHash = Sha256Hash.hash(hashWithChainId);
+    }
+
+    ECDSASignature signature = myKey.sign(newHash);
+    ByteString bsSign = ByteString.copyFrom(signature.toByteArray());
+    transactionBuilderSigned.addSignature(bsSign);
+    transaction = transactionBuilderSigned.build();
+    return transaction;
   }
 
   public static Transaction mutiSignNew(Transaction transaction, String[] permissionKeyString) {
@@ -446,7 +457,8 @@ public abstract class AbstractTransactionCreator extends Level2Strategy {
     return builder.build();
   }
 
-  public org.tron.protos.Contract.TriggerSmartContract triggerCallContract(byte[] address,
+  public org.tron.protos.Contract.TriggerSmartContract triggerCallContract(
+      byte[] address,
       byte[] contractAddress,
       long callValue, byte[] data) {
     org.tron.protos.Contract.TriggerSmartContract.Builder builder = org.tron.protos.Contract.TriggerSmartContract
@@ -457,6 +469,20 @@ public abstract class AbstractTransactionCreator extends Level2Strategy {
     builder.setCallValue(callValue);
     builder.setTokenId(Long.parseLong("0"));
     builder.setCallTokenValue(0L);
+    return builder.build();
+  }
+
+  public org.tron.protos.Contract.TriggerSmartContract triggerCallContract(byte[] address,
+      byte[] contractAddress,
+      long callValue, byte[] data, long tokenValue, String tokenId) {
+    org.tron.protos.Contract.TriggerSmartContract.Builder builder = org.tron.protos.Contract.TriggerSmartContract
+        .newBuilder();
+    builder.setOwnerAddress(ByteString.copyFrom(address));
+    builder.setContractAddress(ByteString.copyFrom(contractAddress));
+    builder.setData(ByteString.copyFrom(data));
+    builder.setCallValue(callValue);
+    builder.setCallTokenValue(tokenValue);
+    builder.setTokenId(Long.parseLong(tokenId));
     return builder.build();
   }
 

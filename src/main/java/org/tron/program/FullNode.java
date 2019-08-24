@@ -22,6 +22,8 @@ import org.tron.common.application.TronApplicationContext;
 import org.tron.common.overlay.message.Message;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.Constant;
+import org.tron.core.Wallet;
+import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.net.message.TransactionMessage;
@@ -37,12 +39,14 @@ import org.tron.stresstest.generator.TransactionGenerator;
 
 @Slf4j
 public class FullNode {
-  private static ExecutorService saveTransactionIDPool = Executors.newFixedThreadPool(1, new ThreadFactory() {
-    @Override
-    public Thread newThread(Runnable r) {
-      return new Thread(r, "save-transaction-id");
-    }
-  });
+
+  private static ExecutorService saveTransactionIDPool = Executors
+      .newFixedThreadPool(1, new ThreadFactory() {
+        @Override
+        public Thread newThread(Runnable r) {
+          return new Thread(r, "save-transaction-id");
+        }
+      });
 
   private static ConcurrentLinkedQueue<Transaction> transactionIDs = new ConcurrentLinkedQueue<>();
   private static volatile boolean isFinishSend = false;
@@ -55,7 +59,9 @@ public class FullNode {
     Args.setParam(args, Constant.TESTNET_CONF);
     Args cfgArgs = Args.getInstance();
 
-    System.out.println("QA " + cfgArgs.isGenerate() + "---" + cfgArgs.getStressCount() + "---" + cfgArgs.getStressTps());
+    System.out.println(
+        "QA " + cfgArgs.isGenerate() + "---" + cfgArgs.getStressCount() + "---" + cfgArgs
+            .getStressTps());
 
     ch.qos.logback.classic.Logger root = (ch.qos.logback.classic.Logger) LoggerFactory
         .getLogger(Logger.ROOT_LOGGER_NAME);
@@ -87,9 +93,9 @@ public class FullNode {
 
     if (cfgArgs.isReplayGenerate()) {
       logger.info("Collect mainnet flow is true");
-      new ReplayTransactionGenerator(context, cfgArgs.getReplayStartNumber(),cfgArgs.getReplayEndNumber()).start();
+      new ReplayTransactionGenerator(context, cfgArgs.getReplayStartNumber(),
+          cfgArgs.getReplayEndNumber()).start();
     }
-
 
     Application appT = ApplicationFactory.create(context);
     shutdown(appT);
@@ -150,7 +156,10 @@ public class FullNode {
           try {
 
             Sha256Hash id = getID(transaction);
-            bufferedWriter.write(id.toString());
+            //bufferedWriter.write(id.toString());
+            bufferedWriter.write(id.toString() + "," + Wallet
+                .encode58Check(
+                    TransactionCapsule.getOwner(transaction.getRawData().getContract(0))));
             bufferedWriter.newLine();
             if (count % 1000 == 0) {
               bufferedWriter.flush();

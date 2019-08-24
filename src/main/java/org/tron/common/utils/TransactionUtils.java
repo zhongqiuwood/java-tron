@@ -151,7 +151,7 @@ public class TransactionUtils {
 //
 //    transaction = transactionBuilderSigned.build();
 //    return transaction;
-    byte[] chainId = decodeFromBase58Check("TUmGh8c2VcpfmJ7rBYq1FU9hneXhz3P8z3");
+    byte[] chainId = decodeFromBase58Check("TYYrjz9W9ii98zMEF7KoL24KhGRXqWpjEJ");
     Transaction.Builder transactionBuilderSigned = transaction.toBuilder();
     byte[] hash = Sha256Hash.hash(transaction.getRawData().toByteArray());
 

@@ -14,6 +14,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.atomic.AtomicInteger;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.api.GrpcAPI;
 import org.tron.api.GrpcAPI.BlockList;
@@ -22,7 +23,6 @@ import org.tron.common.application.TronApplicationContext;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.stresstest.dispatch.TransactionFactory;
-import java.util.concurrent.atomic.AtomicInteger;
 
 @Slf4j
 public class ReplayTransactionGenerator {
@@ -58,7 +58,8 @@ public class ReplayTransactionGenerator {
     }
   });
 
-  public ReplayTransactionGenerator(TronApplicationContext context, String outputFile, int startNum, int endNUm) {
+  public ReplayTransactionGenerator(TronApplicationContext context, String outputFile, int startNum,
+      int endNUm) {
     this.context = context;
     this.outputFile = outputFile;
     this.startNum = startNum;
@@ -66,9 +67,8 @@ public class ReplayTransactionGenerator {
   }
 
   public ReplayTransactionGenerator(TronApplicationContext context, int startNum, int endNUm) {
-    this(context, "transaction.csv", startNum,endNUm);
+    this(context, "transaction.csv", startNum, endNUm);
   }
-
 
 
   private void consumerGenerateTransaction() throws IOException {
@@ -86,9 +86,10 @@ public class ReplayTransactionGenerator {
     transaction.writeDelimitedTo(fos);
 
     long count = countDownLatch.getCount();
-    if (count % 10000 == 0) {
+    if (count % 1000 == 0) {
       fos.flush();
-      logger.info("Generate transaction success ------- ------- ------- ------- ------- Remain: " + countDownLatch.getCount() + ", Pending size: " + transactions.size());
+      logger.info("Generate transaction success ------- ------- ------- ------- ------- Remain: "
+          + countDownLatch.getCount() + ", Pending size: " + transactions.size());
     }
 
     countDownLatch.countDown();
@@ -131,7 +132,6 @@ public class ReplayTransactionGenerator {
 
     System.out.println("总交易数量：" + transactionsOfReplay.size());
     this.count = transactionsOfReplay.size();
-
 
     savePool.submit(() -> {
       while (isReplayGenerate) {

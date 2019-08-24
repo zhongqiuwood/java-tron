@@ -58,7 +58,7 @@ public class withdrawTrc10 extends AbstractTransactionCreator implements
               methodSign,
               param,
               hex
-          )));
+          )), 1L, commontokenid);
     } catch (EncodingException e) {
       e.printStackTrace();
     }
@@ -68,7 +68,7 @@ public class withdrawTrc10 extends AbstractTransactionCreator implements
 
     transaction = transaction.toBuilder()
         .setRawData(transaction.getRawData().toBuilder().setFeeLimit(feeLimit).build()).build();
-    //String mainGateWay = "TUmGh8c2VcpfmJ7rBYq1FU9hneXhz3P8z3";
+    //String mainGateWay = "TYYrjz9W9ii98zMEF7KoL24KhGRXqWpjEJ";
     //transaction = sign(transaction, ECKey.fromPrivate(ByteArray.fromHexString(privateKey)),
     //    decodeFromBase58Check(mainGateWay), false);
     transaction = sign(transaction, ECKey.fromPrivate(ByteArray.fromHexString(privateKey)));

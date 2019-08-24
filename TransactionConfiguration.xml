@@ -23,6 +23,7 @@
     <property name="end" value="99"/>
     <property name="source">
   <list>
+<ref bean="multiValidateSignContractCreator3"/>
 <ref bean="transferTRC20"/>
 <ref bean="MultiSignTriggerContract"/>
 <ref bean="transferToken"/>
@@ -31,48 +32,59 @@
 <ref bean="freezeNet"/>
 <ref bean="niceTransferAssetTransaction"/>
 <ref bean="niceTransferTransaction"/>
+<ref bean="multiValidateSignContractCreator"/>
       </list>
     </property>
   </bean>
 
+<bean id="multiValidateSignContractCreator3" class="org.tron.stresstest.dispatch.creator.contract.multiValidateSignContractCreator3">
+<property name="name" value="multiValidateSignContractCreator3"/>
+<property name="begin" value="0"/>
+<property name="end" value="0"/>
+</bean>
 <bean id="transferTRC20" class="org.tron.stresstest.dispatch.creator.contract.TransferTrc20Creator">
 <property name="name" value="transferTRC20"/>
-<property name="begin" value="0"/>
-<property name="end" value="24"/>
+<property name="begin" value="1"/>
+<property name="end" value="25"/>
 </bean>
 <bean id="MultiSignTriggerContract" class="org.tron.stresstest.dispatch.creator.MultiSign.MultiSignTriggerContract">
 <property name="name" value="MultiSignTriggerContract"/>
-<property name="begin" value="25"/>
-<property name="end" value="34"/>
+<property name="begin" value="26"/>
+<property name="end" value="35"/>
 </bean>
 <bean id="transferToken" class="org.tron.stresstest.dispatch.creator.contract.TransferTokenCreator">
 <property name="name" value="transferToken"/>
-<property name="begin" value="35"/>
-<property name="end" value="74"/>
+<property name="begin" value="36"/>
+<property name="end" value="73"/>
 </bean>
 <bean id="freezeEnergy" class="org.tron.stresstest.dispatch.creator.freeze.FreezeEnergyCreator">
 <property name="name" value="freezeEnergy"/>
-<property name="begin" value="75"/>
-<property name="end" value="78"/>
+<property name="begin" value="74"/>
+<property name="end" value="77"/>
 </bean>
 <bean id="MultiSignSendCoin" class="org.tron.stresstest.dispatch.creator.MultiSign.MultiSignSendCoin">
 <property name="name" value="MultiSignSendCoin"/>
-<property name="begin" value="79"/>
-<property name="end" value="80"/>
+<property name="begin" value="78"/>
+<property name="end" value="79"/>
 </bean>
 <bean id="freezeNet" class="org.tron.stresstest.dispatch.creator.freeze.FreezeNetCreator">
 <property name="name" value="freezeNet"/>
-<property name="begin" value="81"/>
-<property name="end" value="84"/>
+<property name="begin" value="80"/>
+<property name="end" value="83"/>
 </bean>
 <bean id="niceTransferAssetTransaction" class="org.tron.stresstest.dispatch.creator.asset.NiceTransferAssetTransactionCreator">
 <property name="name" value="niceTransferAssetTransaction"/>
-<property name="begin" value="85"/>
-<property name="end" value="89"/>
+<property name="begin" value="84"/>
+<property name="end" value="88"/>
 </bean>
 <bean id="niceTransferTransaction" class="org.tron.stresstest.dispatch.creator.transfer.NiceTransferTransactionCreator">
 <property name="name" value="niceTransferTransaction"/>
-<property name="begin" value="90"/>
+<property name="begin" value="89"/>
+<property name="end" value="98"/>
+</bean>
+<bean id="multiValidateSignContractCreator" class="org.tron.stresstest.dispatch.creator.contract.multiValidateSignContractCreator">
+<property name="name" value="multiValidateSignContractCreator"/>
+<property name="begin" value="99"/>
 <property name="end" value="99"/>
 </bean>
 

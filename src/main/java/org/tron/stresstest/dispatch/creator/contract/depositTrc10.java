@@ -26,24 +26,23 @@ import org.tron.stresstest.dispatch.creator.CreatorCounter;
 import org.tron.stresstest.exception.EncodingException;
 
 @Setter
-public class withdrawTrc20 extends AbstractTransactionCreator implements
+public class depositTrc10 extends AbstractTransactionCreator implements
     GoodCaseTransactonCreator {
 
-  private String ownerAddress = WithdrawTrc20ToAddress;
-  private String contractAddress = SideTRC20ContractContractAddress;
+  private String ownerAddress = WithdrawTrc10ToAddress;
+  private String contractAddress = MainGatewayContractAddress;
   private long callValue = 0L;
-  private String methodSign = "withdrawal(uint256)";
+  private String methodSign = "depositTRC10(uint64,uint64)";
   private boolean hex = false;
-  private String param = "1";
+  private String param = "\"" + commontokenid + "\",1";
   //private String param = "1";
   private long feeLimit = 1000000000L;
-  private String privateKey = WithdrawTrc20ToPrivateKey;
+  private String privateKey = WithdrawTrc10ToPrivateKey;
   public static AtomicLong queryCount = new AtomicLong();
 
   @Override
   protected Protocol.Transaction create() {
     queryCount.incrementAndGet();
-
     byte[] ownerAddressBytes = Wallet.decodeFromBase58Check(ownerAddress);
 
     TransactionFactory.context.getBean(CreatorCounter.class).put(this.getClass().getName());
@@ -59,7 +58,7 @@ public class withdrawTrc20 extends AbstractTransactionCreator implements
               methodSign,
               param,
               hex
-          )));
+          )), 1L, commontokenid);
     } catch (EncodingException e) {
       e.printStackTrace();
     }

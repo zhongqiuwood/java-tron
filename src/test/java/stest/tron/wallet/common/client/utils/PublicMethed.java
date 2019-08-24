@@ -408,7 +408,7 @@ public class PublicMethed {
     }
     transaction = TransactionUtils.setTimestamp(transaction);
     //return TransactionUtils.sign(transaction, ecKey);
-    String mainGateWay = "TUmGh8c2VcpfmJ7rBYq1FU9hneXhz3P8z3";
+    String mainGateWay = "TYYrjz9W9ii98zMEF7KoL24KhGRXqWpjEJ";
     return TransactionUtils
         .sign(transaction, ecKey, WalletClient.decodeFromBase58Check(mainGateWay), false);
 
@@ -1824,7 +1824,7 @@ public class PublicMethed {
       return null;
     }
     //transaction = signTransaction(ecKey, transaction);
-    String mainGatewayAddress = "TUmGh8c2VcpfmJ7rBYq1FU9hneXhz3P8z3";
+    String mainGatewayAddress = "TYYrjz9W9ii98zMEF7KoL24KhGRXqWpjEJ";
     transaction = signTransaction(ecKey, transaction,
         WalletClient.decodeFromBase58Check(mainGatewayAddress), false);
     System.out.println(

@@ -10,8 +10,6 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
-import io.grpc.ManagedChannel;
-import io.grpc.ManagedChannelBuilder;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.Deque;
@@ -38,8 +36,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.tron.api.GrpcAPI;
-import org.tron.api.WalletGrpc;
 import org.tron.common.overlay.discover.node.statistics.MessageCount;
 import org.tron.common.overlay.message.Message;
 import org.tron.common.overlay.server.Channel.TronState;
@@ -78,7 +74,6 @@ import org.tron.core.net.peer.PeerConnection;
 import org.tron.core.net.peer.PeerConnectionDelegate;
 import org.tron.core.services.WitnessProductBlockService;
 import org.tron.protos.Protocol;
-import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Inventory.InventoryType;
 import org.tron.protos.Protocol.ReasonCode;
 
@@ -532,7 +527,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
     }
     logger.info("SPREAD advObjToSpread :{} , peer size: {}", advObjToSpread.size(),
         getActivePeer().size());
-    if (counter1 == 0) {
+    /*if (counter1 == 0) {
       counter1 = 1;
       ManagedChannel channelFull = null;
       WalletGrpc.WalletBlockingStub blockingStubFull = null;
@@ -550,7 +545,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
       if (channelFull != null) {
         channelFull.shutdown();
       }
-    }
+    }*/
     ConcurrentHashMap<Sha256Hash, InventoryType> spread = new ConcurrentHashMap<>();
     AtomicInteger invCount = new AtomicInteger(0);
     synchronized (advObjToSpread) {
@@ -569,7 +564,7 @@ public class NodeImpl extends PeerConnectionDelegate implements Node {
 
       if (advObjToSpread.size() < spread.size()) {
         logger.info("Stress task end.");
-        System.exit(0);
+        //System.exit(0);
 
 /*          ManagedChannel channelFull = null;
           WalletGrpc.WalletBlockingStub blockingStubFull = null;
