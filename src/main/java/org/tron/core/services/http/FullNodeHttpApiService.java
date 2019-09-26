@@ -213,6 +213,13 @@ public class FullNodeHttpApiService implements Service {
   private BroadcastHexServlet broadcastHexServlet;
   @Autowired
   private ShieldedMonitorInfoServlet shieldedMonitorInfoServlet;
+  @Autowired
+  private GetBrokerageServlet getBrokerageServlet;
+  @Autowired
+  private GetRewardServlet getRewardServlet;
+  @Autowired
+  private UpdateBrokerageServlet updateBrokerageServlet;
+
 
   @Override
   public void init() {
@@ -345,6 +352,11 @@ public class FullNodeHttpApiService implements Service {
           "/getshieldtransactionhash");
       context.addServlet(new ServletHolder(broadcastHexServlet), "/broadcasthex");
       context.addServlet(new ServletHolder(shieldedMonitorInfoServlet), "/shieldedmonitorinfo");
+
+      context.addServlet(new ServletHolder(getBrokerageServlet), "/getBrokerage");
+      context.addServlet(new ServletHolder(getRewardServlet), "/getReward");
+      context.addServlet(new ServletHolder(updateBrokerageServlet), "/updateBrokerage");
+
       int maxHttpConnectNumber = Args.getInstance().getMaxHttpConnectNumber();
       if (maxHttpConnectNumber > 0) {
         server.addBean(new ConnectionLimit(maxHttpConnectNumber, server));

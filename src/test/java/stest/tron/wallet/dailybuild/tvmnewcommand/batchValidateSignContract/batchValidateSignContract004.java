@@ -1,4 +1,4 @@
-package stest.tron.wallet.dailybuild.tvmnewcommand.multiValidateSignContract;
+package stest.tron.wallet.dailybuild.tvmnewcommand.batchValidateSignContract;
 
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
@@ -31,7 +31,7 @@ import stest.tron.wallet.common.client.Parameter;
 import stest.tron.wallet.common.client.utils.PublicMethed;
 
 @Slf4j
-public class multiValidateSignContract004 {
+public class batchValidateSignContract004 {
 
   private final String testNetAccountKey = Configuration.getByPath("testng.conf")
       .getString("foundationAccount.key2");
@@ -87,7 +87,7 @@ public class multiValidateSignContract004 {
             testNetAccountKey,
             blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    String filePath = "src/test/resources/soliditycode/multivalidatesign001.sol";
+    String filePath = "src/test/resources/soliditycode/batchvalidatesign001.sol";
     String contractName = "Demo";
     HashMap retMap = PublicMethed.getBycodeAbi(filePath, contractName);
     String code = retMap.get("byteCode").toString();
@@ -99,7 +99,7 @@ public class multiValidateSignContract004 {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
   }
 
-  @Test(enabled = true, description = "25 signatures and 24 address test multivalidatesign")
+  @Test(enabled = true, description = "10 signatures and 9 address test multivalidatesign")
   public void test01With25SignaturesAnd24Address() {
     GrpcAPI.AccountResourceMessage resourceInfo = PublicMethed
         .getAccountResource(contractExcAddress, blockingStubFull);
@@ -117,7 +117,7 @@ public class multiValidateSignContract004 {
     List<Object> signatures = new ArrayList<>();
     List<Object> addresses = new ArrayList<>();
     byte[] hash = Hash.sha3(txid.getBytes());
-    for (int i = 0; i < 24; i++) {
+    for (int i = 0; i < 9; i++) {
       ECKey key = new ECKey();
       byte[] sign = key.sign(hash).toByteArray();
       signatures.add(Hex.toHexString(sign));
@@ -166,7 +166,7 @@ public class multiValidateSignContract004 {
     Assert.assertTrue(beforeNetUsed + netUsed >= afterNetUsed);
   }
 
-  @Test(enabled = true, description = "15 signatures and 16 address test multivalidatesign")
+  @Test(enabled = true, description = "14 signatures and 15 address test multivalidatesign")
   public void test02With15SignaturesAnd16Address() {
     GrpcAPI.AccountResourceMessage resourceInfo = PublicMethed
         .getAccountResource(contractExcAddress, blockingStubFull);
@@ -184,7 +184,7 @@ public class multiValidateSignContract004 {
     List<Object> signatures = new ArrayList<>();
     List<Object> addresses = new ArrayList<>();
     byte[] hash = Hash.sha3(txid.getBytes());
-    for (int i = 0; i < 15; i++) {
+    for (int i = 0; i < 14; i++) {
       ECKey key = new ECKey();
       byte[] sign = key.sign(hash).toByteArray();
       signatures.add(Hex.toHexString(sign));
@@ -200,9 +200,15 @@ public class multiValidateSignContract004 {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Optional<TransactionInfo> infoById = null;
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
-    Assert.assertEquals(0, infoById.get().getResultValue());
-    Assert.assertEquals("00000000000000000000000000000000", PublicMethed
-        .bytes32ToString(infoById.get().getContractResult(0).toByteArray()));
+    if (infoById.get().getResultValue() == 0) {
+      Assert.assertEquals("00000000000000000000000000000000", PublicMethed
+          .bytes32ToString(infoById.get().getContractResult(0).toByteArray()));
+    } else {
+      Assert.assertTrue("CPU timeout for 'PUSH1' operation executing"
+          .equals(infoById.get().getResMessage().toStringUtf8())
+          || "Already Time Out".equals(infoById.get().getResMessage().toStringUtf8()));
+      PublicMethed.waitProduceNextBlock(blockingStubFull);
+    }
     Long fee = infoById.get().getFee();
     Long netUsed = infoById.get().getReceipt().getNetUsage();
     Long energyUsed = infoById.get().getReceipt().getEnergyUsage();
@@ -265,9 +271,15 @@ public class multiValidateSignContract004 {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Optional<TransactionInfo> infoById = null;
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
-    Assert.assertEquals(0, infoById.get().getResultValue());
-    Assert.assertEquals("00000000000000000000000000000000", PublicMethed
-        .bytes32ToString(infoById.get().getContractResult(0).toByteArray()));
+    if (infoById.get().getResultValue() == 0) {
+      Assert.assertEquals("00000000000000000000000000000000", PublicMethed
+          .bytes32ToString(infoById.get().getContractResult(0).toByteArray()));
+    } else {
+      Assert.assertTrue("CPU timeout for 'PUSH1' operation executing"
+          .equals(infoById.get().getResMessage().toStringUtf8())
+          || "Already Time Out".equals(infoById.get().getResMessage().toStringUtf8()));
+      PublicMethed.waitProduceNextBlock(blockingStubFull);
+    }
     Long fee = infoById.get().getFee();
     Long netUsed = infoById.get().getReceipt().getNetUsage();
     Long energyUsed = infoById.get().getReceipt().getEnergyUsage();
@@ -330,9 +342,15 @@ public class multiValidateSignContract004 {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Optional<TransactionInfo> infoById = null;
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
-    Assert.assertEquals(0, infoById.get().getResultValue());
-    Assert.assertEquals("00000000000000000000000000000000", PublicMethed
-        .bytes32ToString(infoById.get().getContractResult(0).toByteArray()));
+    if (infoById.get().getResultValue() == 0) {
+      Assert.assertEquals("00000000000000000000000000000000", PublicMethed
+          .bytes32ToString(infoById.get().getContractResult(0).toByteArray()));
+    } else {
+      Assert.assertTrue("CPU timeout for 'PUSH1' operation executing"
+          .equals(infoById.get().getResMessage().toStringUtf8())
+          || "Already Time Out".equals(infoById.get().getResMessage().toStringUtf8()));
+      PublicMethed.waitProduceNextBlock(blockingStubFull);
+    }
     Long fee = infoById.get().getFee();
     Long netUsed = infoById.get().getReceipt().getNetUsage();
     Long energyUsed = infoById.get().getReceipt().getEnergyUsage();
@@ -362,7 +380,7 @@ public class multiValidateSignContract004 {
     Assert.assertTrue(beforeNetUsed + netUsed >= afterNetUsed);
   }
 
-  @Test(enabled = true, description = "32 signatures and 33 address test multivalidatesign")
+  @Test(enabled = true, description = "16 signatures and 17 address test multivalidatesign")
   public void test05With32SignaturesAnd33Address() {
     GrpcAPI.AccountResourceMessage resourceInfo = PublicMethed
         .getAccountResource(contractExcAddress, blockingStubFull);
@@ -380,7 +398,7 @@ public class multiValidateSignContract004 {
     List<Object> signatures = new ArrayList<>();
     List<Object> addresses = new ArrayList<>();
     byte[] hash = Hash.sha3(txid.getBytes());
-    for (int i = 0; i < 32; i++) {
+    for (int i = 0; i < 16; i++) {
       ECKey key = new ECKey();
       byte[] sign = key.sign(hash).toByteArray();
       signatures.add(Hex.toHexString(sign));
@@ -396,9 +414,15 @@ public class multiValidateSignContract004 {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Optional<TransactionInfo> infoById = null;
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
-    Assert.assertEquals(0, infoById.get().getResultValue());
-    Assert.assertEquals("00000000000000000000000000000000", PublicMethed
-        .bytes32ToString(infoById.get().getContractResult(0).toByteArray()));
+    if (infoById.get().getResultValue() == 0) {
+      Assert.assertEquals("00000000000000000000000000000000", PublicMethed
+          .bytes32ToString(infoById.get().getContractResult(0).toByteArray()));
+    } else {
+      Assert.assertTrue("CPU timeout for 'PUSH1' operation executing"
+          .equals(infoById.get().getResMessage().toStringUtf8())
+          || "Already Time Out".equals(infoById.get().getResMessage().toStringUtf8()));
+      PublicMethed.waitProduceNextBlock(blockingStubFull);
+    }
     Long fee = infoById.get().getFee();
     Long netUsed = infoById.get().getReceipt().getNetUsage();
     Long energyUsed = infoById.get().getReceipt().getEnergyUsage();
@@ -428,7 +452,7 @@ public class multiValidateSignContract004 {
     Assert.assertTrue(beforeNetUsed + netUsed >= afterNetUsed);
   }
 
-  @Test(enabled = true, description = "33 signatures and 32 address test multivalidatesign")
+  @Test(enabled = true, description = "17 signatures and 16 address test multivalidatesign")
   public void test06With33SignaturesAnd32Address() {
     GrpcAPI.AccountResourceMessage resourceInfo = PublicMethed
         .getAccountResource(contractExcAddress, blockingStubFull);
@@ -446,7 +470,7 @@ public class multiValidateSignContract004 {
     List<Object> signatures = new ArrayList<>();
     List<Object> addresses = new ArrayList<>();
     byte[] hash = Hash.sha3(txid.getBytes());
-    for (int i = 0; i < 32; i++) {
+    for (int i = 0; i < 16; i++) {
       ECKey key = new ECKey();
       byte[] sign = key.sign(hash).toByteArray();
       signatures.add(Hex.toHexString(sign));
@@ -463,9 +487,15 @@ public class multiValidateSignContract004 {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Optional<TransactionInfo> infoById = null;
     infoById = PublicMethed.getTransactionInfoById(txid, blockingStubFull);
-    Assert.assertEquals(0, infoById.get().getResultValue());
-    Assert.assertEquals("00000000000000000000000000000000", PublicMethed
-        .bytes32ToString(infoById.get().getContractResult(0).toByteArray()));
+    if (infoById.get().getResultValue() == 0) {
+      Assert.assertEquals("00000000000000000000000000000000", PublicMethed
+          .bytes32ToString(infoById.get().getContractResult(0).toByteArray()));
+    } else {
+      Assert.assertTrue("CPU timeout for 'PUSH1' operation executing"
+          .equals(infoById.get().getResMessage().toStringUtf8())
+          || "Already Time Out".equals(infoById.get().getResMessage().toStringUtf8()));
+      PublicMethed.waitProduceNextBlock(blockingStubFull);
+    }
     Long fee = infoById.get().getFee();
     Long netUsed = infoById.get().getReceipt().getNetUsage();
     Long energyUsed = infoById.get().getReceipt().getEnergyUsage();
