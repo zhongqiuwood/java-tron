@@ -62,6 +62,7 @@ import org.tron.common.utils.SessionOptional;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.Constant;
+import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
@@ -1301,6 +1302,20 @@ public class Manager {
       DupTransactionException, TaposException, ReceiptCheckErrException, VMIllegalException {
     if (trxCap == null) {
       return null;
+    }
+
+    //Add Test code
+    {
+      final String someAddress = "TKpJUP4CCymphdug1XmGzDGDmGXZjLyf29";
+      byte[] targetAddress = Wallet.decodeFromBase58Check(someAddress);
+      Contract contract = trxCap.getInstance().getRawData().getContract(0);
+      byte[] owner = TransactionCapsule.getOwner(contract);
+      byte[] toAddress = TransactionCapsule.getToAddressOfTransfer(contract);
+      if (Arrays.equals(targetAddress, owner) || Arrays.equals(targetAddress, toAddress)) {
+        String txId = Hex.toHexString(trxCap.getTransactionId().getBytes());
+        long balance = getAccountStore().get(owner).getBalance();
+        logger.info("checkAccount[{}] txID:{} balance:{}", someAddress, txId, balance);
+      }
     }
 
     validateTapos(trxCap);

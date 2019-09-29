@@ -621,6 +621,25 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     }
   }
 
+  //TODO Just for Test
+  public static byte[] getToAddressOfTransfer(Transaction.Contract contract) {
+    ByteString to;
+    try {
+      Any contractParameter = contract.getParameter();
+      switch (contract.getType()) {
+        case TransferContract:
+          to = contractParameter.unpack(TransferContract.class).getToAddress();
+          break;
+        default:
+          return null;
+      }
+      return to.toByteArray();
+    } catch (Exception ex) {
+      logger.error(ex.getMessage());
+      return null;
+    }
+  }
+
   // todo mv this static function to capsule util
   public static long getCallValue(Transaction.Contract contract) {
     int energyForTrx;
