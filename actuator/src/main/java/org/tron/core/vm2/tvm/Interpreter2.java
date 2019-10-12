@@ -1,19 +1,11 @@
-package org.tron.common.runtime2.tvm;
-
-import lombok.extern.slf4j.Slf4j;
-import org.spongycastle.util.encoders.Hex;
-import org.tron.common.runtime.vm.*;
-import org.tron.common.runtime.vm.program.Stack;
-import org.tron.common.runtime2.tvm.interpretor.Op;
-
-import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.List;
+package org.tron.core.vm2.tvm;
 
 import static org.apache.commons.lang3.ArrayUtils.isNotEmpty;
-import static org.tron.common.crypto.Hash.sha3;
-import static org.tron.common.runtime.vm.OpCode.*;
-import static org.tron.common.utils.ByteUtil.EMPTY_BYTE_ARRAY;
+
+import java.math.BigInteger;
+import lombok.extern.slf4j.Slf4j;
+import org.tron.core.vm.program.Program;
+import org.tron.core.vm2.tvm.interpretor.Op;
 
 
 @Slf4j(topic = "VM2")
@@ -32,8 +24,8 @@ public class Interpreter2 {
   }
 
 
-  public void play(ContractExecutor env) {
-    if (isNotEmpty(env.getContractContext().getOps())) {
+  public void play(ContractContext env) {
+    if (isNotEmpty(env.getContractBase().getOps())) {
       while (!env.isStopped()) {
         this.step(env);
       }
@@ -41,11 +33,11 @@ public class Interpreter2 {
   }
 
 
-  public void step(ContractExecutor env) {
+  public void step(ContractContext env) {
     try {
       Op op = Op.code(env.getCurrentOp());
       if (op == null) {
-        throw org.tron.common.runtime.vm.program.Program.Exception
+        throw Program.Exception
             .invalidOpCode(env.getCurrentOp());
       }
       env.setLastOp(op.val());
@@ -58,12 +50,15 @@ public class Interpreter2 {
       //step
       op.getOpExecutor().exec(op,env);
       env.setPreviouslyExecutedOp(op.val());
-      String hint = "exec:"+op.name()+" stack:"+env.getStack().size()+" mem:"+env.getMemory().size()+" pc:"+env.getPC()+" stacktop:"+env.getStack().safepeek()+" ene:"+env.getContractContext().getProgramResult().getEnergyUsed();
-      env.getContractContext().addOpHistory(hint);
+      String hint =
+          "exec:" + op.name() + " stack:" + env.getStack().size() + " mem:" + env.getMemory().size()
+              + " pc:" + env.getPC() + " stacktop:" + env.getStack().safepeek() + " ene:" + env
+              .getContractBase().getProgramResult().getEnergyUsed();
+      env.getContractBase().addOpHistory(hint);
 
     } catch (RuntimeException e) {
       logger.info("VM halted: [{}]", e.getMessage());
-      if (!(e instanceof org.tron.common.runtime.vm.program.Program.TransferException)) {
+      if (!(e instanceof Program.TransferException)) {
         env.spendAllEnergy();
       }
       env.resetFutureRefund();

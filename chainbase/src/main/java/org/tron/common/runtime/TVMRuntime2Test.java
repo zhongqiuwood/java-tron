@@ -11,8 +11,6 @@ import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
 import org.tron.common.runtime.vm.OpCode;
-import org.tron.common.runtime2.TxRunner;
-import org.tron.common.runtime2.tvm.interpretor.Op;
 import org.tron.common.storage.DepositImpl;
 import org.tron.common.utils.FileUtil;
 import org.tron.core.Constant;
@@ -20,10 +18,8 @@ import org.tron.core.Wallet;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
-import org.tron.core.exception.ContractExeException;
-import org.tron.core.exception.ContractValidateException;
-import org.tron.core.exception.ReceiptCheckErrException;
-import org.tron.core.exception.VMIllegalException;
+import org.tron.core.vm2.TxRunner;
+import org.tron.core.vm2.tvm.interpretor.Op;
 import org.tron.protos.Protocol.AccountType;
 
 @Slf4j

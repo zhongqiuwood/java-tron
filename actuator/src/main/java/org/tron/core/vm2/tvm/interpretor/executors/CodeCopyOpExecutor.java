@@ -1,10 +1,10 @@
-package org.tron.common.runtime2.tvm.interpretor.executors;
+package org.tron.core.vm2.tvm.interpretor.executors;
 
 import static org.tron.common.utils.ByteUtil.EMPTY_BYTE_ARRAY;
 
 import org.tron.common.runtime.vm.DataWord;
-import org.tron.common.runtime2.tvm.ContractExecutor;
-import org.tron.common.runtime2.tvm.interpretor.Op;
+import org.tron.core.vm2.tvm.ContractContext;
+import org.tron.core.vm2.tvm.interpretor.Op;
 
 public class CodeCopyOpExecutor extends OpExecutor {
 
@@ -19,22 +19,22 @@ public class CodeCopyOpExecutor extends OpExecutor {
 
 
   @Override
-  public void exec(Op op, ContractExecutor executor) {
+  public void exec(Op op, ContractContext context) {
 
     byte[] fullCode = EMPTY_BYTE_ARRAY;
     if (op == Op.CODECOPY) {
-      fullCode = executor.getContractContext().getCode();
+      fullCode = context.getContractBase().getCode();
     } else {
-      DataWord address = executor.stackPop();
-      fullCode = executor.getCodeAt(address);
+      DataWord address = context.stackPop();
+      fullCode = context.getCodeAt(address);
     }
 
-    DataWord memOffsetd = executor.stackPop();
-    DataWord codeOffsetd = executor.stackPop();
-    DataWord lengthDatad = executor.stackPop();
+    DataWord memOffsetd = context.stackPop();
+    DataWord codeOffsetd = context.stackPop();
+    DataWord lengthDatad = context.stackPop();
 
-    executor.spendEnergy(
-        calcMemEnergy(executor.getMemory().size(),
+    context.spendEnergy(
+        calcMemEnergy(context.getMemory().size(),
             memNeeded(memOffsetd, lengthDatad),
             lengthDatad.longValueSafe(), op),
         op.name()
@@ -54,8 +54,8 @@ public class CodeCopyOpExecutor extends OpExecutor {
       System.arraycopy(fullCode, codeOffset, codeCopy, 0, sizeToBeCopied);
     }
 
-    executor.memorySave(memOffset, codeCopy);
-    executor.step();
+    context.memorySave(memOffset, codeCopy);
+    context.step();
 
   }
 }

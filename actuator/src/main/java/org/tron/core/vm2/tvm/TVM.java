@@ -1,8 +1,7 @@
-package org.tron.common.runtime2.tvm;
+package org.tron.core.vm2.tvm;
 
 import static java.lang.Math.max;
 import static java.lang.Math.min;
-import static org.tron.common.runtime.utils.MUtil.convertToTronAddress;
 
 import java.math.BigInteger;
 import java.util.Arrays;
@@ -11,36 +10,35 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
-import org.tron.common.logsfilter.EventPluginLoader;
 import org.tron.common.logsfilter.trigger.ContractTrigger;
-import org.tron.common.runtime.vm.DataWord;
-import org.tron.common.runtime.vm.LogInfoTriggerParser;
-import org.tron.common.runtime.vm.program.InternalTransaction;
-import org.tron.common.runtime.vm.program.Program.BytecodeExecutionException;
-import org.tron.common.runtime.vm.program.Program.OutOfTimeException;
-import org.tron.common.runtime.vm.program.ProgramResult;
-import org.tron.common.runtime2.IVM;
-import org.tron.common.runtime2.config.VMConfig;
-import org.tron.common.storage.Deposit;
-import org.tron.common.storage.DepositImpl;
+import org.tron.common.runtime.InternalTransaction;
+import org.tron.common.runtime.ProgramResult;
 import org.tron.common.utils.ByteUtil;
 import org.tron.core.Constant;
+import org.tron.core.actuator.Actuator2;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.ContractCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.db.EnergyProcessor;
+import org.tron.core.db.TransactionContext;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.core.exception.TypeMismatchNamingException;
 import org.tron.core.exception.VMIllegalException;
-import org.tron.protos.Contract;
+import org.tron.core.store.AccountStore;
+import org.tron.core.store.DynamicPropertiesStore;
+import org.tron.core.store.StoreFactory;
+import org.tron.core.vm.LogInfoTriggerParser;
+import org.tron.core.vm.repository.Repository;
+import org.tron.core.vm.repository.RepositoryImpl;
 import org.tron.protos.Protocol;
+import org.tron.protos.contract.SmartContractOuterClass.CreateSmartContract;
+import org.tron.protos.contract.SmartContractOuterClass.SmartContract;
+import org.tron.protos.contract.SmartContractOuterClass.TriggerSmartContract;
 
 @Slf4j(topic = "VM2")
-public class TVM implements IVM {
+public class TVM implements Actuator2 {
 
-  @Setter
-  private VMConfig vmConfig;
 
   private EnergyProcessor energyProcessor;
 
@@ -50,7 +48,7 @@ public class TVM implements IVM {
 
   private InternalTransaction.TrxType trxType;
 
-  private Deposit deposit;
+  private Repository repository;
 
   private LogInfoTriggerParser logInfoTriggerParser;
 
@@ -61,13 +59,30 @@ public class TVM implements IVM {
   @Setter
   private InternalTransaction.ExecutorType executorType;
 
+  public TVM(boolean isStatic) {
+    this.isStatic = isStatic;
+    this.repository = RepositoryImpl.createRoot(StoreFactory.getInstance());
+  }
 
-  public TVM(TransactionCapsule trx, BlockCapsule block, Deposit deposit) {
-    this.trx = trx;
-    this.energyProcessor = new EnergyProcessor(deposit.getDbManager());
-    this.deposit = deposit;
-    if (Objects.nonNull(block)) {
-      this.blockCap = block;
+  private EnergyProcessor initEnergyProcessor() throws ContractValidateException {
+    StoreFactory storeFactory = StoreFactory.getInstance();
+    try {
+      return new EnergyProcessor(storeFactory.getStore(DynamicPropertiesStore.class),
+          storeFactory.getStore(
+              AccountStore.class));
+    } catch (TypeMismatchNamingException e) {
+      throw new ContractValidateException("initEnergyProcessor error");
+    }
+  }
+
+  @Override
+  public void validate(TransactionContext context) throws ContractValidateException {
+
+    this.trx = context.getTrxCap();
+    this.blockCap = context.getBlockCap();
+    this.energyProcessor = initEnergyProcessor();
+
+    if (Objects.nonNull(blockCap)) {
       this.executorType = InternalTransaction.ExecutorType.ET_NORMAL_TYPE;
     } else {
       this.blockCap = new BlockCapsule(Protocol.Block.newBuilder().build());
@@ -88,18 +103,18 @@ public class TVM implements IVM {
 
 
   @Override
-  public void execute() throws ContractValidateException, VMIllegalException {
+  public void execute(TransactionContext context) {
     //Validate and getBaseProgram
-    ContractContext program = preValidateAndGetBaseProgram(isStatic);
-    ContractContext program_2 = preValidateAndGetBaseProgram(isStatic);
+    ContractBase program = preValidateAndGetBaseProgram(isStatic);
+    ContractBase program_2 = preValidateAndGetBaseProgram(isStatic);
     Deposit childDepo =  DepositImpl.createRoot(deposit.getDbManager());
 
     //setup program environment and play
-    ContractExecutor env = ContractExecutor
+    ContractContext env = ContractContext
         .createEnvironment(deposit, program, vmConfig).setEnableInterpreter2(true)
         .execute();
     //only for debug use
-    ContractExecutor env_v2 = ContractExecutor
+    ContractContext env_v2 = ContractContext
         .createEnvironment(childDepo, program_2, vmConfig).setEnableInterpreter2(false)
         .execute();
 
@@ -133,8 +148,8 @@ public class TVM implements IVM {
     processResult(env, isStatic);
   }
 
-  private void processResult(ContractExecutor env, boolean isStatic) {
-    ContractContext program = env.getContractContext();
+  private void processResult(ContractContext env, boolean isStatic) {
+    ContractBase program = env.getContractBase();
     result =  program.getProgramResult();
     // for static call don't processResult
     if (isStatic) {
@@ -170,7 +185,7 @@ public class TVM implements IVM {
 
   }
 
-  private void loadEventPlugin(ContractContext program) {
+  private void loadEventPlugin(ContractBase program) {
     if (vmConfig.isEventPluginLoaded()
         && (EventPluginLoader.getInstance().isContractEventTriggerEnable()
                     || EventPluginLoader.getInstance().isContractLogTriggerEnable())
@@ -181,18 +196,18 @@ public class TVM implements IVM {
   }
 
 
-  ContractContext preValidateAndGetBaseProgram(boolean isStatic)
+  ContractBase preValidateAndGetBaseProgram(boolean isStatic)
       throws ContractValidateException, VMIllegalException {
-    ContractContext program = new ContractContext();
+    ContractBase program = new ContractBase();
     program.setTrxType(trxType);
     if (trxType == InternalTransaction.TrxType.TRX_CONTRACT_CREATION_TYPE) {
-      Contract.CreateSmartContract contract =
+      CreateSmartContract contract =
           ContractCapsule.getSmartContractFromTransaction(trx.getInstance());
       if (contract == null) {
         throw new ContractValidateException("Cannot get CreateSmartContract from transaction");
       }
 
-      Protocol.SmartContract newSmartContract = contract.getNewContract();
+      SmartContract newSmartContract = contract.getNewContract();
       if (!contract.getOwnerAddress().equals(newSmartContract.getOriginAddress())) {
         logger.info("OwnerAddress not equals OriginAddress");
         throw new VMIllegalException("OwnerAddress is not equals OriginAddress");
@@ -209,7 +224,7 @@ public class TVM implements IVM {
         throw new ContractValidateException("percent must be >= 0 and <= 100");
       }
       AccountCapsule creator =
-          this.deposit.getAccount(newSmartContract.getOriginAddress().toByteArray());
+          this.repository.getAccount(newSmartContract.getOriginAddress().toByteArray());
       byte[] callerAddress = contract.getOwnerAddress().toByteArray();
 
 
@@ -224,22 +239,22 @@ public class TVM implements IVM {
 
 
     } else { // TRX_CONTRACT_CALL_TYPE
-      Contract.TriggerSmartContract contract =
+      TriggerSmartContract contract =
           ContractCapsule.getTriggerContractFromTransaction(trx.getInstance());
       if (contract.getContractAddress() == null) {
         throw new ContractValidateException("Cannot get contract address from TriggerContract");
       }
       byte[] contractAddress = contract.getContractAddress().toByteArray();
 
-      ContractCapsule deployedContract = this.deposit.getContract(contractAddress);
+      ContractCapsule deployedContract = this.repository.getContract(contractAddress);
       if (null == deployedContract) {
         logger.info("No contract or not a smart contract");
         throw new ContractValidateException("No contract or not a smart contract");
       }
-      AccountCapsule creator = this.deposit
+      AccountCapsule creator = this.repository
               .getAccount(deployedContract.getInstance().getOriginAddress().toByteArray());
       byte[] callerAddress = contract.getOwnerAddress().toByteArray();
-      AccountCapsule caller = this.deposit.getAccount(callerAddress);
+      AccountCapsule caller = this.repository.getAccount(callerAddress);
 
 
       program.setCallValue(contract.getCallValue());
@@ -249,7 +264,7 @@ public class TVM implements IVM {
       program.setCallerAddress(callerAddress);
       program.setCaller(caller);
       program.setContractAddress(contractAddress);
-      program.setOps(deposit.getCode(contractAddress));
+      program.setOps(repository.getCode(contractAddress));
       program.setOrigin(contract.getOwnerAddress().toByteArray());
       program.setMsgData(contract.getData().toByteArray());
 
@@ -287,7 +302,7 @@ public class TVM implements IVM {
     return program;
   }
 
-  private void setBlockInfo(ContractContext program) {
+  private void setBlockInfo(ContractBase program) {
     Protocol.Block block = blockCap.getInstance();
     byte[] lastHash = block.getBlockHeader().getRawDataOrBuilder().getParentHash().toByteArray();
     byte[] coinbase = block.getBlockHeader().getRawDataOrBuilder().getWitnessAddress()
@@ -330,8 +345,8 @@ public class TVM implements IVM {
                                                  long callValue) {
 
     long sunPerEnergy = Constant.SUN_PER_ENERGY;
-    if (deposit.getDbManager().getDynamicPropertiesStore().getEnergyFee() > 0) {
-      sunPerEnergy = deposit.getDbManager().getDynamicPropertiesStore().getEnergyFee();
+    if (repository.getDynamicPropertiesStore().getEnergyFee() > 0) {
+      sunPerEnergy = repository.getDynamicPropertiesStore().getEnergyFee();
     }
 
     long leftFrozenEnergy = energyProcessor.getAccountLeftEnergyFromFreeze(account);
@@ -358,7 +373,7 @@ public class TVM implements IVM {
     }
 
     long creatorEnergyLimit = 0;
-    ContractCapsule contractCapsule = this.deposit
+    ContractCapsule contractCapsule = this.repository
             .getContract(contractAddress);
     long consumeUserResourcePercent = contractCapsule.getConsumeUserResourcePercent();
 
@@ -424,17 +439,11 @@ public class TVM implements IVM {
     return result;
   }
 
-  @Override
-  public void finalization() {
-    if (StringUtils.isEmpty(result.getRuntimeError())) {
-      for (DataWord contract : result.getDeleteAccounts()) {
-        deposit.deleteContract(convertToTronAddress((contract.getLast20Bytes())));
-      }
-    }
-  }
 
   private boolean isCheckTransaction() {
     return this.blockCap != null && !this.blockCap.getInstance().getBlockHeader()
             .getWitnessSignature().isEmpty();
   }
+
+
 }

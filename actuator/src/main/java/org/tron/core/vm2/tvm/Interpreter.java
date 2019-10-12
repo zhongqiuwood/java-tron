@@ -1,12 +1,12 @@
-package org.tron.common.runtime2.tvm;
+package org.tron.core.vm2.tvm;
 
 import static org.apache.commons.lang3.ArrayUtils.isNotEmpty;
-import static org.tron.common.crypto.Hash.sha3;
-import static org.tron.common.runtime.vm.OpCode.CALL;
-import static org.tron.common.runtime.vm.OpCode.CALLTOKEN;
-import static org.tron.common.runtime.vm.OpCode.PUSH1;
-import static org.tron.common.runtime.vm.OpCode.REVERT;
 import static org.tron.common.utils.ByteUtil.EMPTY_BYTE_ARRAY;
+import static org.tron.common.utils.Hash.sha3;
+import static org.tron.core.vm.OpCode.CALL;
+import static org.tron.core.vm.OpCode.CALLTOKEN;
+import static org.tron.core.vm.OpCode.REVERT;
+import static org.tron.core.vm2.tvm.interpretor.Op.PUSH1;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -14,13 +14,13 @@ import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.spongycastle.util.encoders.Hex;
 import org.tron.common.runtime.vm.DataWord;
-import org.tron.common.runtime.vm.EnergyCost;
 import org.tron.common.runtime.vm.LogInfo;
-import org.tron.common.runtime.vm.MessageCall;
-import org.tron.common.runtime.vm.OpCode;
-import org.tron.common.runtime.vm.PrecompiledContracts;
-import org.tron.common.runtime.vm.program.Stack;
-import org.tron.common.runtime2.tvm.interpretor.Op;
+import org.tron.core.vm.EnergyCost;
+import org.tron.core.vm.MessageCall;
+import org.tron.core.vm.OpCode;
+import org.tron.core.vm.PrecompiledContracts;
+import org.tron.core.vm.program.Program;
+import org.tron.core.vm.program.Stack;
 
 
 @Slf4j(topic = "VM2")
@@ -39,8 +39,8 @@ public class Interpreter {
   }
 
 
-  public void play(ContractExecutor env) {
-    if (isNotEmpty(env.getContractContext().getOps())) {
+  public void play(ContractContext env) {
+    if (isNotEmpty(env.getContractBase().getOps())) {
       while (!env.isStopped()) {
         this.step(env);
       }
@@ -48,11 +48,11 @@ public class Interpreter {
   }
 
 
-  public void step(ContractExecutor env) {
+  public void step(ContractContext env) {
     try {
       OpCode op = OpCode.code(env.getCurrentOp());
       if (op == null) {
-        throw org.tron.common.runtime.vm.program.Program.Exception
+        throw Program.Exception
             .invalidOpCode(env.getCurrentOp());
       }
       env.setLastOp(op.val());
@@ -66,11 +66,14 @@ public class Interpreter {
       //step
       exec(env, op, callEnergy);
       env.setPreviouslyExecutedOp(op.val());
-      String hint = "exec:"+op.name()+" stack:"+env.getStack().size()+" mem:"+env.getMemory().size()+" pc:"+env.getPC()+" stacktop:"+env.getStack().safepeek()+" ene:"+env.getContractContext().getProgramResult().getEnergyUsed();
-      env.getContractContext().addOpHistory(hint);
+      String hint =
+          "exec:" + op.name() + " stack:" + env.getStack().size() + " mem:" + env.getMemory().size()
+              + " pc:" + env.getPC() + " stacktop:" + env.getStack().safepeek() + " ene:" + env
+              .getContractBase().getProgramResult().getEnergyUsed();
+      env.getContractBase().addOpHistory(hint);
     } catch (RuntimeException e) {
       logger.info("VM halted: [{}]", e.getMessage());
-      if (!(e instanceof org.tron.common.runtime.vm.program.Program.TransferException)) {
+      if (!(e instanceof Program.TransferException)) {
         env.spendAllEnergy();
       }
       env.resetFutureRefund();
@@ -79,9 +82,9 @@ public class Interpreter {
     }
   }
 
-  private void exec(ContractExecutor env, OpCode op, DataWord adjustedCallEnergy) {
+  private void exec(ContractContext env, OpCode op, DataWord adjustedCallEnergy) {
     EnergyCost energyCosts = EnergyCost.getInstance();
-    ContractContext program = env.getContractContext();
+    ContractBase program = env.getContractBase();
     String hint = "";
     Stack stack = env.getStack();
     // Execute operation
@@ -847,7 +850,7 @@ public class Interpreter {
       case LOG4: {
 
         if (program.isStatic()) {
-          throw new org.tron.common.runtime.vm.program.Program.StaticCallModificationException();
+          throw new Program.StaticCallModificationException();
         }
         DataWord address = env.getContractAddress();
 
@@ -929,7 +932,7 @@ public class Interpreter {
       break;
       case SSTORE: {
         if (program.isStatic()) {
-          throw new org.tron.common.runtime.vm.program.Program.StaticCallModificationException();
+          throw new Program.StaticCallModificationException();
         }
 
         DataWord addr = env.stackPop();
@@ -1060,7 +1063,7 @@ public class Interpreter {
       break;
       case CREATE: {
         if (program.isStatic()) {
-          throw new org.tron.common.runtime.vm.program.Program.StaticCallModificationException();
+          throw new Program.StaticCallModificationException();
         }
         DataWord value = env.stackPop();
         DataWord inOffset = env.stackPop();
@@ -1072,7 +1075,7 @@ public class Interpreter {
       break;
       case CREATE2: {
         if (program.isStatic()) {
-          throw new org.tron.common.runtime.vm.program.Program.StaticCallModificationException();
+          throw new Program.StaticCallModificationException();
         }
         DataWord value = env.stackPop();
         DataWord inOffset = env.stackPop();
@@ -1107,7 +1110,7 @@ public class Interpreter {
         }
 
         if (program.isStatic() && (op == CALL || op == CALLTOKEN) && !value.isZero()) {
-          throw new org.tron.common.runtime.vm.program.Program.StaticCallModificationException();
+          throw new Program.StaticCallModificationException();
         }
 
         if (!value.isZero()) {
@@ -1184,7 +1187,7 @@ public class Interpreter {
       }
       case SUICIDE: {
         if (program.isStatic()) {
-          throw new org.tron.common.runtime.vm.program.Program.StaticCallModificationException();
+          throw new Program.StaticCallModificationException();
         }
 
         DataWord address = env.stackPop();
@@ -1242,18 +1245,18 @@ public class Interpreter {
 
   private static void checkMemorySize(OpCode op, BigInteger newMemSize) {
     if (newMemSize.compareTo(VMConstant.MEM_LIMIT) > 0) {
-      throw org.tron.common.runtime.vm.program.Program.Exception.memoryOverflow(op);
+      throw Program.Exception.memoryOverflow(op);
     }
   }
 
 
-  private DataWord spendEnergyAndGetCallEnergy(OpCode op, ContractExecutor env) {
+  private DataWord spendEnergyAndGetCallEnergy(OpCode op, ContractContext env) {
     DataWord adjustedCallEnergy = null;
     long oldMemSize = env.getMemory().size();
     long energyCost = op.getTier().asInt();
     EnergyCost energyCosts = EnergyCost.getInstance();
     Stack stack = env.getStack();
-    ContractContext program = env.getContractContext();
+    ContractBase program = env.getContractBase();
 
     // Calculate fees and spend energy
     switch (op) {
@@ -1380,7 +1383,7 @@ public class Interpreter {
         checkMemorySize(op, in.max(out));
 
         if (energyCost > program.getEnergyLimitLeft().longValueSafe()) {
-          throw new org.tron.common.runtime.vm.program.Program.OutOfEnergyException(
+          throw new Program.OutOfEnergyException(
                   "Not enough energy for '%s' operation executing: opEnergy[%d], programEnergy[%d]",
                   op.name(),
                   energyCost, program.getEnergyLimitLeft().longValueSafe());
@@ -1413,7 +1416,7 @@ public class Interpreter {
         BigInteger dataCost = dataSize
                 .multiply(BigInteger.valueOf(energyCosts.getLOG_DATA_ENERGY()));
         if (program.getEnergyLimitLeft().value().compareTo(dataCost) < 0) {
-          throw new org.tron.common.runtime.vm.program.Program.OutOfEnergyException(
+          throw new Program.OutOfEnergyException(
                   "Not enough energy for '%s' operation executing: opEnergy[%d], programEnergy[%d]",
                   op.name(),
                   dataCost.longValueExact(), program.getEnergyLimitLeft().longValueSafe());

@@ -1773,7 +1773,7 @@ public class Program {
   }
 
   @SuppressWarnings("serial")
-  public class StackTooLargeException extends BytecodeExecutionException {
+  public static class StackTooLargeException extends BytecodeExecutionException {
 
     public StackTooLargeException(String message) {
       super(message);

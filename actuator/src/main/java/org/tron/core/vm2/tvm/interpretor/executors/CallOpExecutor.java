@@ -1,13 +1,14 @@
-package org.tron.common.runtime2.tvm.interpretor.executors;
+package org.tron.core.vm2.tvm.interpretor.executors;
 
 
 import java.math.BigInteger;
 import org.tron.common.runtime.vm.DataWord;
-import org.tron.common.runtime.vm.MessageCall;
-import org.tron.common.runtime.vm.PrecompiledContracts;
-import org.tron.common.runtime2.tvm.ContractExecutor;
-import org.tron.common.runtime2.tvm.interpretor.Costs;
-import org.tron.common.runtime2.tvm.interpretor.Op;
+import org.tron.core.vm.MessageCall;
+import org.tron.core.vm.PrecompiledContracts;
+import org.tron.core.vm.program.Program;
+import org.tron.core.vm2.tvm.ContractContext;
+import org.tron.core.vm2.tvm.interpretor.Costs;
+import org.tron.core.vm2.tvm.interpretor.Op;
 
 public class CallOpExecutor extends OpExecutor {
 
@@ -22,19 +23,19 @@ public class CallOpExecutor extends OpExecutor {
 
 
   @Override
-  public void exec(Op op, ContractExecutor executor) {
-    long oldMemSize = executor.getMemory().size();
+  public void exec(Op op, ContractContext context) {
+    long oldMemSize = context.getMemory().size();
     long energyCost = Costs.CALL;
-    DataWord callEnergyWord = executor.stackPop();
-    DataWord codeAddress = executor.stackPop();
+    DataWord callEnergyWord = context.stackPop();
+    DataWord codeAddress = context.stackPop();
     DataWord value;
     if (op == Op.CALL || op == Op.CALLCODE || op == Op.CALLTOKEN) {
-      value = executor.stackPop();
+      value = context.stackPop();
     } else {
       value = DataWord.ZERO.clone();
     }
     if (op == Op.CALL || op == Op.CALLTOKEN) {
-      if (executor.isDeadAccount(codeAddress) && !value.isZero()) {
+      if (context.isDeadAccount(codeAddress) && !value.isZero()) {
         energyCost += Costs.NEW_ACCT_CALL;
       }
     }
@@ -45,34 +46,32 @@ public class CallOpExecutor extends OpExecutor {
 
     boolean isTokenTransferMsg = false;
     if (op == Op.CALLTOKEN) {
-      tokenId = executor.stackPop();
+      tokenId = context.stackPop();
       isTokenTransferMsg = true;
     }
 
-    DataWord inDataOffs = executor.stackPop();
-    DataWord inDataSize = executor.stackPop();
-    DataWord outDataOffs = executor.stackPop();
-    DataWord outDataSize = executor.stackPop();
+    DataWord inDataOffs = context.stackPop();
+    DataWord inDataSize = context.stackPop();
+    DataWord outDataOffs = context.stackPop();
+    DataWord outDataSize = context.stackPop();
 
     BigInteger in = memNeeded(inDataOffs, inDataSize); // in offset+size
     BigInteger out = memNeeded(outDataOffs, outDataSize);// out offset+size
 
     energyCost += calcMemEnergy(oldMemSize, in.max(out), 0, op);
 
-
-    executor.memoryExpand(outDataOffs, outDataSize);
-    DataWord getEnergyLimitLeft = executor.getContractContext().getEnergyLimitLeft().clone();
+    context.memoryExpand(outDataOffs, outDataSize);
+    DataWord getEnergyLimitLeft = context.getContractBase().getEnergyLimitLeft().clone();
     getEnergyLimitLeft.sub(new DataWord(energyCost));
 
-    DataWord adjustedCallEnergy = executor.getCallEnergy(callEnergyWord, getEnergyLimitLeft);
+    DataWord adjustedCallEnergy = context.getCallEnergy(callEnergyWord, getEnergyLimitLeft);
 
     energyCost += adjustedCallEnergy.longValueSafe();
-    executor.spendEnergy(energyCost, op.name());
+    context.spendEnergy(energyCost, op.name());
 
-
-    if (executor.getContractContext().isStatic()
+    if (context.getContractBase().isStatic()
         && (op == Op.CALL || op == Op.CALLTOKEN) && !value.isZero()) {
-      throw new org.tron.common.runtime.vm.program.Program.StaticCallModificationException();
+      throw new Program.StaticCallModificationException();
     }
 
     if (!value.isZero()) {
@@ -87,17 +86,17 @@ public class CallOpExecutor extends OpExecutor {
         PrecompiledContracts.getContractForAddress(codeAddress);
 
     if (op != Op.CALLCODE && op != Op.DELEGATECALL) {
-      executor.getContractContext().getProgramResult()
+      context.getContractBase().getProgramResult()
           .addTouchAccount(codeAddress.getLast20Bytes());
     }
 
     if (contract != null) {
-      executor.callToPrecompiledAddress(msg, contract);
+      context.callToPrecompiledAddress(msg, contract);
     } else {
-      executor.callToAddress(msg);
+      context.callToAddress(msg);
     }
 
-    executor.step();
+    context.step();
 
 
   }

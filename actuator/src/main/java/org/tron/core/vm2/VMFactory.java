@@ -1,11 +1,11 @@
-package org.tron.common.runtime2;
+package org.tron.core.vm2;
 
 import org.tron.common.runtime.vm.program.InternalTransaction;
-import org.tron.common.runtime2.config.VMConfig;
-import org.tron.common.runtime2.tvm.TVM;
 import org.tron.common.storage.Deposit;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
+import org.tron.core.vm2.config.VMConfig;
+import org.tron.core.vm2.tvm.TVM;
 
 public class VMFactory {
 

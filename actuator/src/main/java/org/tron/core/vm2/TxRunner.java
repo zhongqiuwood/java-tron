@@ -1,4 +1,4 @@
-package org.tron.common.runtime2;
+package org.tron.core.vm2;
 
 import org.tron.common.runtime.vm.program.ProgramResult;
 import org.tron.core.exception.ContractExeException;

@@ -1,17 +1,15 @@
-package org.tron.common.runtime2.tvm.interpretor.executors;
+package org.tron.core.vm2.tvm.interpretor.executors;
 
 
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
-import org.spongycastle.util.encoders.Hex;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.runtime.vm.LogInfo;
-import org.tron.common.runtime.vm.OpCode;
-import org.tron.common.runtime.vm.program.Stack;
-import org.tron.common.runtime2.tvm.ContractExecutor;
-import org.tron.common.runtime2.tvm.interpretor.Costs;
-import org.tron.common.runtime2.tvm.interpretor.Op;
+import org.tron.core.vm.program.Stack;
+import org.tron.core.vm2.tvm.ContractContext;
+import org.tron.core.vm2.tvm.interpretor.Costs;
+import org.tron.core.vm2.tvm.interpretor.Op;
 
 public class LogOpExecutor extends OpExecutor {
 
@@ -26,31 +24,31 @@ public class LogOpExecutor extends OpExecutor {
 
 
   @Override
-  public void exec(Op op, ContractExecutor executor) {
-    int nTopics = op.val() - OpCode.LOG0.val();
-    Stack stack = executor.getStack();
-    DataWord address = executor.getContractAddress();
+  public void exec(Op op, ContractContext context) {
+    int nTopics = op.val() - Op.LOG0.val();
+    Stack stack = context.getStack();
+    DataWord address = context.getContractAddress();
     DataWord memStart = stack.pop();
     DataWord dataSize = stack.pop();
     //is it nessary?
 /*    BigInteger dataCost = dataSize.value()
         .multiply(BigInteger.valueOf(Costs.LOG_DATA_ENERGY));
 
-    if (executor.getContractContext().getEnergyLimitLeft().value().compareTo(dataCost) < 0) {
+    if (context.getContractBase().getEnergyLimitLeft().value().compareTo(dataCost) < 0) {
       throw new org.tron.common.runtime.vm.program.Program.OutOfEnergyException(
           "Not enough energy for '%s' operation executing: opEnergy[%d], programEnergy[%d]",
           op.name(),
           dataCost.longValueExact(),
-          executor.getContractContext().getEnergyLimitLeft().longValueSafe());
+          context.getContractBase().getEnergyLimitLeft().longValueSafe());
     }*/
     BigInteger memNeeded = memNeeded(memStart, dataSize);
     long energyCost = Costs.LOG_ENERGY
         + Costs.LOG_TOPIC_ENERGY * nTopics
         + Costs.LOG_DATA_ENERGY * dataSize.longValue()
-        + calcMemEnergy(executor.getMemory().size(),
+        + calcMemEnergy(context.getMemory().size(),
         memNeeded, 0, op);
 
-    executor.spendEnergy(energyCost, op.name());
+    context.spendEnergy(energyCost, op.name());
     checkMemorySize(op, memNeeded);
 
     List<DataWord> topics = new ArrayList<>();
@@ -59,13 +57,13 @@ public class LogOpExecutor extends OpExecutor {
       topics.add(topic);
     }
 
-    byte[] data = executor.memoryChunk(memStart.intValueSafe(), dataSize.intValueSafe());
+    byte[] data = context.memoryChunk(memStart.intValueSafe(), dataSize.intValueSafe());
 
     LogInfo logInfo =
         new LogInfo(address.getLast20Bytes(), topics, data);
 
-    executor.getContractContext().getProgramResult().addLogInfo(logInfo);
-    executor.step();
+    context.getContractBase().getProgramResult().addLogInfo(logInfo);
+    context.step();
 
   }
 }

@@ -18,6 +18,7 @@
 package org.tron.core.vm;
 
 import org.tron.common.runtime.vm.DataWord;
+import org.tron.core.vm2.tvm.interpretor.Op;
 
 /**
  * A wrapper for a message call from a contract to another account. This can either be a normal
@@ -83,6 +84,15 @@ public class MessageCall {
     this.outDataOffs = outDataOffs;
     this.outDataSize = outDataSize;
   }
+
+  public MessageCall(Op type, DataWord energy, DataWord codeAddress,
+      DataWord endowment, DataWord inDataOffs, DataWord inDataSize,
+      DataWord outDataOffs, DataWord outDataSize, DataWord tokenId, boolean isTokenTransferMsg) {
+    this(OpCode.code(type.val()), energy, codeAddress,
+        endowment, inDataOffs, inDataSize,
+        outDataOffs, outDataSize, tokenId, isTokenTransferMsg);
+  }
+
 
   public OpCode getType() {
     return type;

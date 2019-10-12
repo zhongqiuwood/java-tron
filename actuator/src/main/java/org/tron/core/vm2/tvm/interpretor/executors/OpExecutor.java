@@ -1,20 +1,20 @@
-package org.tron.common.runtime2.tvm.interpretor.executors;
+package org.tron.core.vm2.tvm.interpretor.executors;
 
 import java.math.BigInteger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.tron.common.runtime.vm.DataWord;
-import org.tron.common.runtime.vm.program.Program.OutOfMemoryException;
-import org.tron.common.runtime2.tvm.ContractExecutor;
-import org.tron.common.runtime2.tvm.VMConstant;
-import org.tron.common.runtime2.tvm.interpretor.Costs;
-import org.tron.common.runtime2.tvm.interpretor.Op;
+import org.tron.core.vm.program.Program.OutOfMemoryException;
+import org.tron.core.vm2.tvm.ContractContext;
+import org.tron.core.vm2.tvm.VMConstant;
+import org.tron.core.vm2.tvm.interpretor.Costs;
+import org.tron.core.vm2.tvm.interpretor.Op;
 
 public abstract class OpExecutor {
 
   protected static final Logger logger = LoggerFactory.getLogger("VM2");
 
-  public void exec(Op op, ContractExecutor executor) {
+  public void exec(Op op, ContractContext context) {
   }
 
   ;

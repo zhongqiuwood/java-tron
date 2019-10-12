@@ -1,8 +1,9 @@
-package org.tron.common.runtime2.tvm;
+package org.tron.core.vm2.tvm;
 
 import static java.lang.String.format;
 
-import org.tron.common.runtime.vm.program.Program;
+import org.tron.core.vm.program.Program;
+
 
 public class ExceptionFactory {
 
