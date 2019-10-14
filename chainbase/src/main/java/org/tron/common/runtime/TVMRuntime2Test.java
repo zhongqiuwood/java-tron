@@ -18,8 +18,8 @@ import org.tron.core.Wallet;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
+import org.tron.core.tvm.interpretor.Op;
 import org.tron.core.vm2.TxRunner;
-import org.tron.core.vm2.tvm.interpretor.Op;
 import org.tron.protos.Protocol.AccountType;
 
 @Slf4j

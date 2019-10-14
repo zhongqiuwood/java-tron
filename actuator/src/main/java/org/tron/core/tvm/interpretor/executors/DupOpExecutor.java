@@ -1,12 +1,12 @@
-package org.tron.core.vm2.tvm.interpretor.executors;
+package org.tron.core.tvm.interpretor.executors;
 
 
-import static org.tron.core.vm2.tvm.interpretor.Op.DUP1;
+import static org.tron.core.tvm.interpretor.Op.DUP1;
 
 import org.tron.common.runtime.vm.DataWord;
-import org.tron.core.vm2.tvm.ContractContext;
-import org.tron.core.vm2.tvm.interpretor.Op;
-import org.tron.core.vm2.tvm.interpretor.Op.Tier;
+import org.tron.core.tvm.ContractContext;
+import org.tron.core.tvm.interpretor.Op;
+import org.tron.core.tvm.interpretor.Op.Tier;
 
 public class DupOpExecutor extends OpExecutor {
 

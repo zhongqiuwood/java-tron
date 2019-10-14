@@ -105,6 +105,8 @@ public class VMActuator implements Actuator2 {
   public void validate(TransactionContext context) throws ContractValidateException {
     //Load Config
     ConfigLoader.load(context.getStoreFactory());
+    enableEventLinstener = context.isEventPluginLoaded();
+
     trx = context.getTrxCap().getInstance();
     blockCap = context.getBlockCap();
     //Route Type

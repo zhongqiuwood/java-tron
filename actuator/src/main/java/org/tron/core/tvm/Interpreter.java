@@ -1,12 +1,11 @@
-package org.tron.core.vm2.tvm;
+package org.tron.core.tvm;
 
-import static org.apache.commons.lang3.ArrayUtils.isNotEmpty;
 import static org.tron.common.utils.ByteUtil.EMPTY_BYTE_ARRAY;
 import static org.tron.common.utils.Hash.sha3;
+import static org.tron.core.tvm.interpretor.Op.PUSH1;
 import static org.tron.core.vm.OpCode.CALL;
 import static org.tron.core.vm.OpCode.CALLTOKEN;
 import static org.tron.core.vm.OpCode.REVERT;
-import static org.tron.core.vm2.tvm.interpretor.Op.PUSH1;
 
 import java.math.BigInteger;
 import java.util.ArrayList;

@@ -1,4 +1,4 @@
-package org.tron.core.vm2.tvm;
+package org.tron.core.tvm;
 
 import static java.lang.Math.max;
 import static java.lang.Math.min;
@@ -7,13 +7,13 @@ import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
-import java.util.stream.Collectors;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.logsfilter.trigger.ContractTrigger;
 import org.tron.common.runtime.InternalTransaction;
 import org.tron.common.runtime.ProgramResult;
 import org.tron.common.utils.ByteUtil;
+import org.tron.common.utils.DBConfig;
 import org.tron.core.Constant;
 import org.tron.core.actuator.Actuator2;
 import org.tron.core.capsule.AccountCapsule;
@@ -29,6 +29,8 @@ import org.tron.core.store.AccountStore;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.store.StoreFactory;
 import org.tron.core.vm.LogInfoTriggerParser;
+import org.tron.core.vm.config.VMConfig;
+import org.tron.core.vm.program.Program;
 import org.tron.core.vm.repository.Repository;
 import org.tron.core.vm.repository.RepositoryImpl;
 import org.tron.protos.Protocol;
@@ -57,6 +59,9 @@ public class TVM implements Actuator2 {
   private boolean isStatic;
 
   @Setter
+  private boolean enableEventLinstener;
+
+  @Setter
   private InternalTransaction.ExecutorType executorType;
 
   public TVM(boolean isStatic) {
@@ -77,6 +82,8 @@ public class TVM implements Actuator2 {
 
   @Override
   public void validate(TransactionContext context) throws ContractValidateException {
+
+    enableEventLinstener = context.isEventPluginLoaded();
 
     this.trx = context.getTrxCap();
     this.blockCap = context.getBlockCap();
@@ -105,47 +112,23 @@ public class TVM implements Actuator2 {
   @Override
   public void execute(TransactionContext context) {
     //Validate and getBaseProgram
-    ContractBase program = preValidateAndGetBaseProgram(isStatic);
-    ContractBase program_2 = preValidateAndGetBaseProgram(isStatic);
-    Deposit childDepo =  DepositImpl.createRoot(deposit.getDbManager());
+    ContractBase program = null;
+    try {
+      program = preValidateAndGetBaseProgram(isStatic);
+      //setup program environment and play
+      ContractContext env = ContractContext
+          .createEnvironment(repository, program).setEnableInterpreter2(true)
+          .execute();
+      //process result
+      processResult(env, isStatic);
+      context.setProgramResult(env.getContractBase().getProgramResult());
 
-    //setup program environment and play
-    ContractContext env = ContractContext
-        .createEnvironment(deposit, program, vmConfig).setEnableInterpreter2(true)
-        .execute();
-    //only for debug use
-    ContractContext env_v2 = ContractContext
-        .createEnvironment(childDepo, program_2, vmConfig).setEnableInterpreter2(false)
-        .execute();
-
-    //compare these
-    if(program.getProgramResult().isRevert() == program_2.getProgramResult().isRevert()
-    &&program.getProgramResult().getEnergyUsed() == program_2.getProgramResult().getEnergyUsed()){
-      //do nothing for now
-    }else {
-      logger.info("v1:");
-      logger.info(program.getOpHistory().stream().collect(Collectors.joining("\n")));
-
-      logger.info("v2:");
-      logger.info(program_2.getOpHistory().stream().collect(Collectors.joining("\n")));
-
-      logger.info("attention v1 res:{},v2 res:{}",program.getProgramResult().getRuntimeError(),program_2.getProgramResult().getRuntimeError());
-
-      if(
-          (program.getProgramResult().getException()!=null && program.getProgramResult().getException() instanceof OutOfTimeException)
-          ||
-              (program_2.getProgramResult().getException()!=null && program_2.getProgramResult().getException() instanceof OutOfTimeException)
-      ){
-        logger.info("v1 v2 not same but is out of time ");
-
-      }else {
-        throw new BytecodeExecutionException("Interpretor v1 v2 NOT SAME ! ");
-      }
-
+    } catch (ContractValidateException e) {
+      e.printStackTrace();
+    } catch (VMIllegalException e) {
+      e.printStackTrace();
     }
 
-    //process result
-    processResult(env, isStatic);
   }
 
   private void processResult(ContractContext env, boolean isStatic) {
@@ -164,32 +147,27 @@ public class TVM implements Actuator2 {
 
       if (result.getException() != null) {
         if (!(result.getException()
-            instanceof org.tron.common.runtime.vm.program.Program.TransferException)) {
+            instanceof Program.TransferException)) {
           env.spendAllEnergy();
         }
       } else {
         result.setRuntimeError("REVERT opcode executed");
       }
     } else {
-      deposit.commit();
+      repository.commit();
 
       if (logInfoTriggerParser != null) {
         List<ContractTrigger> triggers = logInfoTriggerParser
-                .parseLogInfos(program.getProgramResult().getLogInfoList(), this.deposit);
+            .parseLogInfos(program.getProgramResult().getLogInfoList(), this.repository);
         program.getProgramResult().setTriggerList(triggers);
       }
-
-
     }
     //trace.setBill(result.getEnergyUsed());
 
   }
 
   private void loadEventPlugin(ContractBase program) {
-    if (vmConfig.isEventPluginLoaded()
-        && (EventPluginLoader.getInstance().isContractEventTriggerEnable()
-                    || EventPluginLoader.getInstance().isContractLogTriggerEnable())
-            && isCheckTransaction()) {
+    if (enableEventLinstener && isCheckTransaction()) {
       logInfoTriggerParser = new LogInfoTriggerParser(blockCap.getNum(), blockCap.getTimeStamp(),
               program.getRootTransactionId(), program.getCallerAddress());
     }
@@ -279,7 +257,8 @@ public class TVM implements Actuator2 {
         program.getCallValue());
     program.setEnergyLimit(energylimt);
     //maxCpuTime
-    long maxCpuTimeOfOneTx = vmConfig.getMaxCpuTimeOfOneTx()
+    long maxCpuTimeOfOneTx = repository.getDynamicPropertiesStore()
+        .getMaxCpuTimeOfOneTx()
             * VMConstant.ONE_THOUSAND;
     long thisTxCPULimitInUs = (long) (maxCpuTimeOfOneTx * getCpuLimitInUsRatio());
     long vmStartInUs = System.nanoTime() / VMConstant.ONE_THOUSAND;
@@ -323,10 +302,10 @@ public class TVM implements Actuator2 {
       throws ContractValidateException {
     long energyLimit = 0;
     long rawfeeLimit = trx.getInstance().getRawData().getFeeLimit();
-    if (rawfeeLimit < 0 || rawfeeLimit > vmConfig.getMaxFeeLimit()) {
+    if (rawfeeLimit < 0 || rawfeeLimit > VMConfig.MAX_FEE_LIMIT) {
       logger.info("invalid feeLimit {}", rawfeeLimit);
       throw new ContractValidateException(
-              "feeLimit must be >= 0 and <= " + vmConfig.getMaxFeeLimit());
+          "feeLimit must be >= 0 and <= " + VMConfig.MAX_FEE_LIMIT);
     }
     if (trxType == InternalTransaction.TrxType.TRX_CONTRACT_CREATION_TYPE) {
       energyLimit = getAccountEnergyLimitWithFixRatio(creator, rawfeeLimit, callValue);
@@ -426,19 +405,13 @@ public class TVM implements Actuator2 {
       // self witness or other witness or fullnode verifies block
       if (trx.getInstance().getRet(0).getContractRet()
           == Protocol.Transaction.Result.contractResult.OUT_OF_TIME) {
-        cpuLimitRatio = vmConfig.getMinTimeRatio();
+        cpuLimitRatio = DBConfig.getMinTimeRatio();
       } else {
-        cpuLimitRatio = vmConfig.getMaxTimeRatio();
+        cpuLimitRatio = DBConfig.getMaxTimeRatio();
       }
     }
     return cpuLimitRatio;
   }
-
-  @Override
-  public ProgramResult getResult() {
-    return result;
-  }
-
 
   private boolean isCheckTransaction() {
     return this.blockCap != null && !this.blockCap.getInstance().getBlockHeader()
