@@ -1,4 +1,4 @@
-package org.tron.core.tvm.interpretor;
+package org.tron.core.vm2.interpretor;
 
 public class Costs {
 

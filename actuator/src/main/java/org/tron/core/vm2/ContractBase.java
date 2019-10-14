@@ -1,4 +1,4 @@
-package org.tron.core.tvm;
+package org.tron.core.vm2;
 
 import static org.apache.commons.lang3.ArrayUtils.nullToEmpty;
 
@@ -12,7 +12,7 @@ import org.tron.common.runtime.InternalTransaction;
 import org.tron.common.runtime.ProgramResult;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.core.capsule.AccountCapsule;
-import org.tron.core.tvm.interpretor.Op;
+import org.tron.core.vm2.interpretor.Op;
 
 @Slf4j(topic = "VM2")
 @Data

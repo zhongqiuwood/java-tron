@@ -1,4 +1,4 @@
-package org.tron.core.tvm;
+package org.tron.core.vm2;
 
 import static org.apache.commons.lang3.ArrayUtils.EMPTY_BYTE_ARRAY;
 import static org.apache.commons.lang3.ArrayUtils.getLength;
@@ -35,7 +35,6 @@ import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.ContractCapsule;
 import org.tron.core.exception.ContractValidateException;
-import org.tron.core.tvm.VMConstant.RefundReasonConstant;
 import org.tron.core.vm.EnergyCost;
 import org.tron.core.vm.MessageCall;
 import org.tron.core.vm.PrecompiledContracts;
@@ -46,6 +45,7 @@ import org.tron.core.vm.program.Program.JVMStackOverFlowException;
 import org.tron.core.vm.program.Program.OutOfTimeException;
 import org.tron.core.vm.program.Stack;
 import org.tron.core.vm.repository.Repository;
+import org.tron.core.vm2.VMConstant.RefundReasonConstant;
 import org.tron.protos.Protocol;
 import org.tron.protos.contract.SmartContractOuterClass.CreateSmartContract;
 import org.tron.protos.contract.SmartContractOuterClass.SmartContract;

@@ -18,7 +18,7 @@
 package org.tron.core.vm;
 
 import org.tron.common.runtime.vm.DataWord;
-import org.tron.core.tvm.interpretor.Op;
+import org.tron.core.vm2.interpretor.Op;
 
 /**
  * A wrapper for a message call from a contract to another account. This can either be a normal

@@ -1,8 +1,8 @@
-package org.tron.core.tvm.interpretor.executors;
+package org.tron.core.vm2.interpretor.executors;
 
 import org.tron.common.runtime.vm.DataWord;
-import org.tron.core.tvm.ContractContext;
-import org.tron.core.tvm.interpretor.Op;
+import org.tron.core.vm2.ContractContext;
+import org.tron.core.vm2.interpretor.Op;
 
 public class CodeSizeOpExecutor extends OpExecutor {
 

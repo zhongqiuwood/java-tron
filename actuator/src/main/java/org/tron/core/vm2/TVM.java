@@ -1,4 +1,4 @@
-package org.tron.core.tvm;
+package org.tron.core.vm2;
 
 import static java.lang.Math.max;
 import static java.lang.Math.min;
@@ -281,17 +281,17 @@ public class TVM implements Actuator2 {
     return program;
   }
 
-  private void setBlockInfo(ContractBase program) {
+  private void setBlockInfo(ContractBase contractBase) {
     Protocol.Block block = blockCap.getInstance();
     byte[] lastHash = block.getBlockHeader().getRawDataOrBuilder().getParentHash().toByteArray();
     byte[] coinbase = block.getBlockHeader().getRawDataOrBuilder().getWitnessAddress()
             .toByteArray();
     long timestamp = block.getBlockHeader().getRawDataOrBuilder().getTimestamp() / 1000;
     long number = block.getBlockHeader().getRawDataOrBuilder().getNumber();
-    program.getBlockInfo().setCoinbase(coinbase);
-    program.getBlockInfo().setLastHash(lastHash);
-    program.getBlockInfo().setNumber(number);
-    program.getBlockInfo().setTimestamp(timestamp);
+    contractBase.getBlockInfo().setCoinbase(coinbase);
+    contractBase.getBlockInfo().setLastHash(lastHash);
+    contractBase.getBlockInfo().setNumber(number);
+    contractBase.getBlockInfo().setTimestamp(timestamp);
 
 
   }
