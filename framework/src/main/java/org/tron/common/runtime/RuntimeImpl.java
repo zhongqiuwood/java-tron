@@ -5,9 +5,9 @@ import java.util.Objects;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.tron.core.actuator.Actuator;
-import org.tron.core.actuator.Actuator2;
 import org.tron.core.actuator.ActuatorCreator;
 import org.tron.core.actuator.VMActuator;
+import org.tron.core.actuator.VMFactory;
 import org.tron.core.db.Manager;
 import org.tron.core.db.TransactionContext;
 import org.tron.core.exception.ContractExeException;
@@ -34,7 +34,7 @@ public class RuntimeImpl implements Runtime {
 
   List<Actuator> actuatorList = null;
 
-  Actuator2 actuator2 = null;
+  VMActuator vmActuator = null;
 
   public RuntimeImpl(Manager manager) {
     this.dbManger = manager;
@@ -50,15 +50,14 @@ public class RuntimeImpl implements Runtime {
     switch (contractType.getNumber()) {
       case ContractType.TriggerSmartContract_VALUE:
       case ContractType.CreateSmartContract_VALUE:
-        actuator2 = new VMActuator(context.isStatic());
+        vmActuator = VMFactory.getInstance().loadVM(context.isConstant(), false);
         break;
       default:
-//      actuatorList = ActuatorFactory.createActuator(context.getTrxCap(), dbManger);
         actuatorList = ActuatorCreator.getINSTANCE().createActuator(context.getTrxCap());
     }
-    if (actuator2 != null) {
-      actuator2.validate(context);
-      actuator2.execute(context);
+    if (vmActuator != null) {
+      vmActuator.validate(context);
+      vmActuator.execute(context);
     } else {
       for (Actuator act : actuatorList) {
         act.validate();

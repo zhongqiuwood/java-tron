@@ -21,6 +21,7 @@ import org.tron.common.utils.Utils;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.actuator.VMActuator;
+import org.tron.core.actuator.VMFactory;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.BlockCapsule;
@@ -278,7 +279,7 @@ public class TransferToAccountTest {
         StoreFactory.getInstance(), true,
         false);
 
-    VMActuator vmActuator = new VMActuator(true);
+    VMActuator vmActuator = VMFactory.getInstance().loadVM(true, false);
 
     vmActuator.validate(context);
     vmActuator.execute(context);

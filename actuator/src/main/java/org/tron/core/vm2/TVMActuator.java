@@ -15,7 +15,7 @@ import org.tron.common.runtime.ProgramResult;
 import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.DBConfig;
 import org.tron.core.Constant;
-import org.tron.core.actuator.Actuator2;
+import org.tron.core.actuator.VMActuator;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.ContractCapsule;
@@ -39,7 +39,7 @@ import org.tron.protos.contract.SmartContractOuterClass.SmartContract;
 import org.tron.protos.contract.SmartContractOuterClass.TriggerSmartContract;
 
 @Slf4j(topic = "VM2")
-public class TVM implements Actuator2 {
+public class TVMActuator implements VMActuator {
 
 
   private EnergyProcessor energyProcessor;
@@ -64,7 +64,7 @@ public class TVM implements Actuator2 {
   @Setter
   private InternalTransaction.ExecutorType executorType;
 
-  public TVM(boolean isStatic) {
+  public TVMActuator(boolean isStatic) {
     this.isStatic = isStatic;
     this.repository = RepositoryImpl.createRoot(StoreFactory.getInstance());
   }

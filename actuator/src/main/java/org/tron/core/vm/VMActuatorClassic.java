@@ -1,4 +1,4 @@
-package org.tron.core.actuator;
+package org.tron.core.vm;
 
 import static java.lang.Math.max;
 import static java.lang.Math.min;
@@ -24,6 +24,7 @@ import org.tron.common.runtime.InternalTransaction.TrxType;
 import org.tron.common.runtime.ProgramResult;
 import org.tron.common.utils.DBConfig;
 import org.tron.common.utils.WalletUtil;
+import org.tron.core.actuator.VMActuator;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.ContractCapsule;
@@ -31,12 +32,6 @@ import org.tron.core.db.TransactionContext;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.utils.TransactionUtil;
-import org.tron.core.vm.EnergyCost;
-import org.tron.core.vm.LogInfoTriggerParser;
-import org.tron.core.vm.VM;
-import org.tron.core.vm.VMConstant;
-import org.tron.core.vm.VMUtils;
-import org.tron.core.vm.config.ConfigLoader;
 import org.tron.core.vm.config.VMConfig;
 import org.tron.core.vm.program.Program;
 import org.tron.core.vm.program.Program.JVMStackOverFlowException;
@@ -59,7 +54,7 @@ import org.tron.protos.contract.SmartContractOuterClass.SmartContract;
 import org.tron.protos.contract.SmartContractOuterClass.TriggerSmartContract;
 
 @Slf4j(topic = "VM")
-public class VMActuator implements Actuator2 {
+public class VMActuatorClassic implements VMActuator {
 
   private Transaction trx;
   private BlockCapsule blockCap;
@@ -87,7 +82,7 @@ public class VMActuator implements Actuator2 {
   private LogInfoTriggerParser logInfoTriggerParser;
 
 
-  public VMActuator(boolean isConstanCall) {
+  public VMActuatorClassic(boolean isConstanCall) {
     this.isConstanCall = isConstanCall;
     programInvokeFactory = new ProgramInvokeFactoryImpl();
   }
@@ -103,8 +98,7 @@ public class VMActuator implements Actuator2 {
 
   @Override
   public void validate(TransactionContext context) throws ContractValidateException {
-    //Load Config
-    ConfigLoader.load(context.getStoreFactory());
+
     enableEventLinstener = context.isEventPluginLoaded();
 
     trx = context.getTrxCap().getInstance();
@@ -141,6 +135,7 @@ public class VMActuator implements Actuator2 {
   @Override
   public void execute(TransactionContext context) throws ContractExeException {
     ProgramResult result = context.getProgramResult();
+
     try {
       if (vm != null) {
         if (null != blockCap && blockCap.generatedByMyself && null != TransactionUtil
@@ -152,6 +147,7 @@ public class VMActuator implements Actuator2 {
           OutOfTimeException e = Program.Exception.alreadyTimeOut();
           result.setRuntimeError(e.getMessage());
           result.setException(e);
+          context.setProgramResult(result);
           throw e;
         }
 
@@ -170,7 +166,6 @@ public class VMActuator implements Actuator2 {
             result.setRuntimeError(result.getException().getMessage());
             result.rejectInternalTransactions();
           }
-          context.setProgramResult(result);
           return;
         }
 
@@ -248,9 +243,9 @@ public class VMActuator implements Actuator2 {
         result.setRuntimeError(result.getException().getMessage());
       }
       logger.info("runtime result is :{}", result.getException().getMessage());
+    } finally {
+      context.setProgramResult(result);
     }
-    //use program returned fill context
-    context.setProgramResult(result);
 
     if (VMConfig.vmTrace() && program != null) {
       String traceContent = program.getTrace()

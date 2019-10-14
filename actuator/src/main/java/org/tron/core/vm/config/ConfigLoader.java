@@ -13,7 +13,8 @@ public class ConfigLoader {
   //only for unit test
   public static boolean disable = false;
 
-  public static void load(StoreFactory storeFactory) {
+  public static void load() {
+    StoreFactory storeFactory = StoreFactory.getInstance();
     if (!disable) {
       DynamicPropertiesStore ds = null;
       try {

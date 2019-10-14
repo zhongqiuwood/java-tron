@@ -4,7 +4,7 @@ import org.tron.core.db.TransactionContext;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 
-public interface Actuator2 {
+public interface VMActuator {
 
   void execute(TransactionContext context) throws ContractExeException;
 

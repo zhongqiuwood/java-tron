@@ -53,7 +53,7 @@ public class VMConfig {
   }
 
   public static VMConfig getInstance() {
-    return SystemPropertiesInstance.INSTANCE;
+    return VMConfigInstance.INSTANCE;
   }
 
   public static boolean vmTrace() {
@@ -104,7 +104,7 @@ public class VMConfig {
     return ALLOW_TVM_SOLIDITY_059;
   }
 
-  private static class SystemPropertiesInstance {
+  private static class VMConfigInstance {
 
     private static final VMConfig INSTANCE = new VMConfig();
   }

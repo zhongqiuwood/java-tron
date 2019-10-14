@@ -106,6 +106,7 @@ import org.tron.common.zksnark.LibrustzcashParam.SpendSigParams;
 import org.tron.core.actuator.Actuator;
 import org.tron.core.actuator.ActuatorFactory;
 import org.tron.core.actuator.VMActuator;
+import org.tron.core.actuator.VMFactory;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.BlockCapsule;
@@ -2392,7 +2393,7 @@ public class Wallet {
         dbManager.getDynamicPropertiesStore().getAllowTvmConstantinople());
     VMConfig
         .initAllowTvmSolidity059(dbManager.getDynamicPropertiesStore().getAllowTvmSolidity059());*/
-    VMActuator vmActuator = new VMActuator(true);
+    VMActuator vmActuator = VMFactory.getInstance().loadVM(true, false);
 
     vmActuator.validate(context);
     vmActuator.execute(context);
