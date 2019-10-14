@@ -22,6 +22,7 @@ import org.tron.core.capsule.ContractCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.db.EnergyProcessor;
 import org.tron.core.db.TransactionContext;
+import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.TypeMismatchNamingException;
 import org.tron.core.exception.VMIllegalException;
@@ -110,23 +111,21 @@ public class TVMActuator implements VMActuator {
 
 
   @Override
-  public void execute(TransactionContext context) {
+  public void execute(TransactionContext context) throws ContractExeException {
     //Validate and getBaseProgram
     ContractBase program = null;
     try {
       program = preValidateAndGetBaseProgram(isStatic);
       //setup program environment and play
-      ContractContext env = ContractContext
-          .createEnvironment(repository, program).setEnableInterpreter2(true)
+      ContractContext contractContext = ContractContext
+          .createContext(repository, program).setEnableInterpreter2(true)
           .execute();
       //process result
-      processResult(env, isStatic);
-      context.setProgramResult(env.getContractBase().getProgramResult());
+      processResult(contractContext, isStatic);
+      context.setProgramResult(contractContext.getContractBase().getProgramResult());
 
-    } catch (ContractValidateException e) {
-      e.printStackTrace();
-    } catch (VMIllegalException e) {
-      e.printStackTrace();
+    } catch (Throwable e) {
+      throw new ContractExeException(e.getMessage());
     }
 
   }

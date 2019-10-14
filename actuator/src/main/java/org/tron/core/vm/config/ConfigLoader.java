@@ -34,6 +34,15 @@ public class ConfigLoader {
     }
   }
 
+  public static void resetToDefault() {
+    VMConfig.setVmTrace(false);
+    VMConfig.initVmHardFork(false);
+    VMConfig.initAllowMultiSign(0);
+    VMConfig.initAllowTvmTransferTrc10(0);
+    VMConfig.initAllowTvmConstantinople(0);
+    VMConfig.initAllowTvmSolidity059(0);
+  }
+
   private static boolean checkForEnergyLimit(DynamicPropertiesStore ds) {
     long blockNum = ds.getLatestBlockHeaderNumber();
     return blockNum >= DBConfig.getBlockNumForEneryLimit();

@@ -16,15 +16,16 @@ public class VMFactory {
   }
 
 
-  public VMActuator loadVM(boolean isConstantCall, boolean forceNewVm) {
+  public VMActuator loadVM(boolean isConstantCall, boolean useOldVm) {
     //Load Config
     ConfigLoader.load();
     //If all config is on ,use new VMActuator
-    if (forceNewVm || (
-        VMConfig.getEnergyLimitHardFork() && VMConfig.allowMultiSign()
-            && VMConfig.allowTvmConstantinople() && VMConfig.allowTvmTransferTrc10()
-            && VMConfig.allowTvmSolidity059()
-    )
+    if (!useOldVm && VMConfig.getEnergyLimitHardFork()
+        && VMConfig.allowMultiSign()
+        && VMConfig.allowTvmConstantinople()
+        && VMConfig.allowTvmTransferTrc10()
+        && VMConfig.allowTvmSolidity059()
+
     ) {
       return new TVMActuator(isConstantCall);
     } else {

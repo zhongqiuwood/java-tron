@@ -139,14 +139,14 @@ public class ContractContext {
     this.nonce = contractBase.getInternalTransaction().getNonce();
   }
 
-  public static ContractContext createEnvironment(Repository repository,
+  public static ContractContext createContext(Repository repository,
       ContractBase contractBase) {
-    ContractContext env = new ContractContext(repository, contractBase);
-    return env;
+    ContractContext context = new ContractContext(repository, contractBase);
+    return context;
   }
 
 
-  public static ContractContext createEnvironment(Repository repository,
+  public static ContractContext createContext(Repository repository,
       ContractBase contractBase,
       ContractContext pre) {
     ContractContext env = new ContractContext(repository, contractBase);
@@ -211,12 +211,11 @@ public class ContractContext {
     byte[] contractAddress = fetchAddress();
     long tokenId = contractBase.getTokenId();
     long tokenValue = contractBase.getTokenValue();
-    long callValue = 0;
-    if (contractBase.getCallInfo().isFromVM()
-        && contractBase.getCallInfo().isDelegate()) {
-      callValue = contractBase.getCallInfo().getEndowment();
+    long sendValue = 0;
+    if (contractBase.getCallInfo().isFromVM() && !contractBase.getCallInfo().isTokenTransfer) {
+      sendValue = contractBase.getCallInfo().getEndowment();
     } else {
-      callValue = contractBase.getCallValue();
+      sendValue = contractBase.getCallValue();
     }
 
     // tokenid can only be 0
@@ -232,12 +231,19 @@ public class ContractContext {
           + ", tokenId = " + tokenId);
     }
 
+    //CALL CALLTOKEN createAccount
+    if (contractBase.getCallInfo().isFromVM() && contractBase.getCallInfo().getEndowment() > 0) {
+      createAccountIfNotExist(getStorage(), contractAddress);
+    }
+
     //transefer Trx and trc10
     // transfer from callerAddress to contractAddress according to callValue
-    if (contractBase.getCallValue() > 0) {
-      ContractContext
-          .transfer(this.getStorage(), contractBase.getCallerAddress(), contractAddress,
-              callValue);
+    {
+      if (sendValue > 0) {
+        ContractContext
+            .transfer(this.getStorage(), contractBase.getCallerAddress(), contractAddress,
+                sendValue);
+      }
     }
     if (contractBase.getTokenValue() > 0) {
       ContractContext
@@ -782,6 +788,7 @@ public class ContractContext {
       storage.addBalance(blackHoleAddress, balance);
       transferAllToken(storage, owner, blackHoleAddress);
     } else {
+      createAccountIfNotExist(getStorage(), obtainer);
       try {
         transfer(storage, owner, obtainer, balance);
         transferAllToken(storage, owner, obtainer);
@@ -868,7 +875,7 @@ public class ContractContext {
 
     //setup program environment
     ContractContext cenv = ContractContext
-        .createEnvironment(this.getStorage().newRepositoryChild(), create, this);
+        .createContext(this.getStorage().newRepositoryChild(), create, this);
     //play program
     try {
       cenv.execute();
@@ -1107,10 +1114,11 @@ public class ContractContext {
     call.getCallInfo().setFromVM(true);
     call.getCallInfo().setDelegate(msg.getType().callIsDelegate());
     call.getCallInfo().setEndowment(endowment);
+    call.getCallInfo().setTokenTransfer(isTokenTransfer);
     call.setBlockInfo(contractBase.getBlockInfo());
     call.setRootTransactionId(contractBase.getRootTransactionId());
 
-    ContractContext cenv = createEnvironment(childStroage, call, this);
+    ContractContext cenv = createContext(childStroage, call, this);
     try {
       cenv.execute();
     } catch (ContractValidateException e) {
@@ -1241,5 +1249,15 @@ public class ContractContext {
     }
 
   }
+
+
+  private void createAccountIfNotExist(Repository deposit, byte[] contextAddress) {
+    //after solidity059 proposal,allow contract transfer trc10 or trx to non-exist address(would create one)
+    AccountCapsule sender = deposit.getAccount(contextAddress);
+    if (sender == null) {
+      deposit.createNormalAccount(contextAddress);
+    }
+  }
+
 
 }

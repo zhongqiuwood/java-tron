@@ -16,6 +16,7 @@ import org.tron.core.Wallet;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.Manager;
+import org.tron.core.vm.config.ConfigLoader;
 import org.tron.protos.Protocol.AccountType;
 
 @Slf4j
@@ -30,6 +31,7 @@ public class VMTestBase {
 
   @Before
   public void init() {
+    ConfigLoader.resetToDefault();
     dbPath = "output_" + this.getClass().getName();
     Args.setParam(new String[]{"--output-directory", dbPath, "--debug"}, Constant.TEST_CONF);
     context = new TronApplicationContext(DefaultConfig.class);

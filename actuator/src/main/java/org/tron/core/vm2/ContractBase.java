@@ -34,6 +34,7 @@ public class ContractBase {
   class CallInfo {
     boolean fromVM = false;
     boolean delegate = false;
+    boolean isTokenTransfer = false;
     long endowment = 0;
     byte[] newAddress;//for create and create2 op
     boolean isCreate2;
