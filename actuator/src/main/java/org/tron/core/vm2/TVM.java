@@ -131,8 +131,8 @@ public class TVM implements Actuator2 {
 
   }
 
-  private void processResult(ContractContext env, boolean isStatic) {
-    ContractBase program = env.getContractBase();
+  private void processResult(ContractContext context, boolean isStatic) {
+    ContractBase program = context.getContractBase();
     result =  program.getProgramResult();
     // for static call don't processResult
     if (isStatic) {
@@ -148,7 +148,7 @@ public class TVM implements Actuator2 {
       if (result.getException() != null) {
         if (!(result.getException()
             instanceof Program.TransferException)) {
-          env.spendAllEnergy();
+          context.spendAllEnergy();
         }
       } else {
         result.setRuntimeError("REVERT opcode executed");

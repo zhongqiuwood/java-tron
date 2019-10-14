@@ -129,27 +129,27 @@ public class ContractContext {
   }
 
 
-  public ContractContext(Repository repository, ContractBase contractContext) {
+  public ContractContext(Repository repository, ContractBase contractBase) {
     stopped = false;
     stack = new Stack();
     memory = new Memory();
     storage = repository;
-    ops = contractContext.getOps();
-    this.contractBase = contractContext;
-    this.nonce = contractContext.getInternalTransaction().getNonce();
+    ops = contractBase.getOps();
+    this.contractBase = contractBase;
+    this.nonce = contractBase.getInternalTransaction().getNonce();
   }
 
   public static ContractContext createEnvironment(Repository repository,
-      ContractBase contractContext) {
-    ContractContext env = new ContractContext(repository, contractContext);
+      ContractBase contractBase) {
+    ContractContext env = new ContractContext(repository, contractBase);
     return env;
   }
 
 
   public static ContractContext createEnvironment(Repository repository,
-      ContractBase contractContext,
+      ContractBase contractBase,
       ContractContext pre) {
-    ContractContext env = new ContractContext(repository, contractContext);
+    ContractContext env = new ContractContext(repository, contractBase);
     if (pre != null) {
       env.callDeep = pre.getCallDeep() + 1;
     }
