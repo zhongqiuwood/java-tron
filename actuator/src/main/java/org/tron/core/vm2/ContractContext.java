@@ -569,6 +569,10 @@ public class ContractContext {
   }
 
   public void spendEnergy(long energyValue, String opName) {
+    spendEnergy(contractBase, energyValue, opName);
+  }
+
+  public static void spendEnergy(ContractBase contractBase, long energyValue, String opName) {
     if (contractBase.getEnergylimitLeftLong() < energyValue) {
       throw new Program.OutOfEnergyException(
           "Not enough energy for '%s' operation executing: curInvokeEnergyLimit[%d],"
@@ -578,6 +582,7 @@ public class ContractContext {
     }
     contractBase.getProgramResult().spendEnergy(energyValue);
   }
+
 
   public void checkCPUTimeLimit(String opName) {
     if (DBConfig.isDebug()) {
@@ -604,7 +609,12 @@ public class ContractContext {
   }
 
   public void spendAllEnergy() {
-    spendEnergy(contractBase.getEnergylimitLeftLong(), "Spending all remaining");
+    spendAllEnergy(contractBase);
+  }
+
+
+  public static void spendAllEnergy(ContractBase contractBase) {
+    spendEnergy(contractBase, contractBase.getEnergylimitLeftLong(), "Spending all remaining");
   }
 
 

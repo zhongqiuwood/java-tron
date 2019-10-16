@@ -25,16 +25,18 @@ import org.tron.core.db.TransactionContext;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.TypeMismatchNamingException;
-import org.tron.core.exception.VMIllegalException;
 import org.tron.core.store.AccountStore;
 import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.store.StoreFactory;
+import org.tron.core.utils.TransactionUtil;
 import org.tron.core.vm.LogInfoTriggerParser;
 import org.tron.core.vm.config.VMConfig;
 import org.tron.core.vm.program.Program;
+import org.tron.core.vm.program.Program.OutOfTimeException;
 import org.tron.core.vm.repository.Repository;
 import org.tron.core.vm.repository.RepositoryImpl;
 import org.tron.protos.Protocol;
+import org.tron.protos.Protocol.Transaction.Result.contractResult;
 import org.tron.protos.contract.SmartContractOuterClass.CreateSmartContract;
 import org.tron.protos.contract.SmartContractOuterClass.SmartContract;
 import org.tron.protos.contract.SmartContractOuterClass.TriggerSmartContract;
@@ -56,6 +58,11 @@ public class TVMActuator implements VMActuator {
   private LogInfoTriggerParser logInfoTriggerParser;
 
   private ProgramResult result;
+
+  private boolean alreadyTimeOut = false;
+
+  private ContractBase contractBase;
+
   @Setter
   private boolean isStatic;
 
@@ -107,32 +114,49 @@ public class TVMActuator implements VMActuator {
       default:
         trxType = InternalTransaction.TrxType.TRX_CONTRACT_CREATION_TYPE;
     }
+
+    //validate and get contractBase
+    contractBase = preValidateAndGetBaseProgram(isStatic);
+
+    //judge if already timeout
+    if (null != blockCap && blockCap.generatedByMyself && null != TransactionUtil
+        .getContractRet(trx.getInstance())
+        && contractResult.OUT_OF_TIME == TransactionUtil.getContractRet(trx.getInstance())) {
+      //if already timeout set result directly
+      result = contractBase.getProgramResult();
+      ContractContext.spendAllEnergy(contractBase);
+      OutOfTimeException e = Program.Exception.alreadyTimeOut();
+      result.setRuntimeError(e.getMessage());
+      result.setException(e);
+
+      alreadyTimeOut = true;
+
+      context.setProgramResult(result);
+    }
   }
 
 
   @Override
   public void execute(TransactionContext context) throws ContractExeException {
-    //Validate and getBaseProgram
-    ContractBase program = null;
-    try {
-      program = preValidateAndGetBaseProgram(isStatic);
-      //setup program environment and play
-      ContractContext contractContext = ContractContext
-          .createContext(repository, program).setEnableInterpreter2(true)
-          .execute();
-      //process result
-      processResult(contractContext, isStatic);
-      context.setProgramResult(contractContext.getContractBase().getProgramResult());
+    if (!alreadyTimeOut) {
+      try {
+        //setup program environment and play
+        ContractContext contractContext = ContractContext
+            .createContext(repository, contractBase).setEnableInterpreter2(true)
+            .execute();
+        //process result
+        processResult(contractContext, isStatic);
+        context.setProgramResult(contractContext.getContractBase().getProgramResult());
 
-    } catch (Throwable e) {
-      throw new ContractExeException(e.getMessage());
+      } catch (Throwable e) {
+        throw new ContractExeException(e.getMessage());
+      }
     }
-
   }
 
   private void processResult(ContractContext context, boolean isStatic) {
-    ContractBase program = context.getContractBase();
-    result =  program.getProgramResult();
+    ContractBase contractBase = context.getContractBase();
+    result = contractBase.getProgramResult();
     // for static call don't processResult
     if (isStatic) {
       return;
@@ -157,11 +181,10 @@ public class TVMActuator implements VMActuator {
 
       if (logInfoTriggerParser != null) {
         List<ContractTrigger> triggers = logInfoTriggerParser
-            .parseLogInfos(program.getProgramResult().getLogInfoList(), this.repository);
-        program.getProgramResult().setTriggerList(triggers);
+            .parseLogInfos(contractBase.getProgramResult().getLogInfoList(), this.repository);
+        contractBase.getProgramResult().setTriggerList(triggers);
       }
     }
-    //trace.setBill(result.getEnergyUsed());
 
   }
 
@@ -174,7 +197,7 @@ public class TVMActuator implements VMActuator {
 
 
   ContractBase preValidateAndGetBaseProgram(boolean isStatic)
-      throws ContractValidateException, VMIllegalException {
+      throws ContractValidateException {
     ContractBase program = new ContractBase();
     program.setTrxType(trxType);
     if (trxType == InternalTransaction.TrxType.TRX_CONTRACT_CREATION_TYPE) {
@@ -187,7 +210,7 @@ public class TVMActuator implements VMActuator {
       SmartContract newSmartContract = contract.getNewContract();
       if (!contract.getOwnerAddress().equals(newSmartContract.getOriginAddress())) {
         logger.info("OwnerAddress not equals OriginAddress");
-        throw new VMIllegalException("OwnerAddress is not equals OriginAddress");
+        throw new ContractValidateException("OwnerAddress is not equals OriginAddress");
       }
 
       byte[] contractName = newSmartContract.getName().getBytes();
