@@ -107,6 +107,9 @@ public class VMActuatorClassic implements VMActuator {
     ContractType contractType = this.trx.getRawData().getContract(0).getType();
     //Prepare Repository
     repository = RepositoryImpl.createRoot(context.getStoreFactory());
+
+    enableEventLinstener = context.isEventPluginLoaded();
+
     //set executorType type
     if (Objects.nonNull(blockCap)) {
       this.executorType = ExecutorType.ET_NORMAL_TYPE;
