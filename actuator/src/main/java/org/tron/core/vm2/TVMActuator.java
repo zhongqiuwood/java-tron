@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Objects;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.spongycastle.util.encoders.Hex;
 import org.tron.common.logsfilter.trigger.ContractTrigger;
 import org.tron.common.runtime.InternalTransaction;
 import org.tron.common.runtime.ProgramResult;
@@ -30,6 +31,7 @@ import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.store.StoreFactory;
 import org.tron.core.utils.TransactionUtil;
 import org.tron.core.vm.LogInfoTriggerParser;
+import org.tron.core.vm.VMUtils;
 import org.tron.core.vm.config.VMConfig;
 import org.tron.core.vm.program.Program;
 import org.tron.core.vm.program.Program.OutOfTimeException;
@@ -138,12 +140,13 @@ public class TVMActuator implements VMActuator {
 
   @Override
   public void execute(TransactionContext context) throws ContractExeException {
-    if (!alreadyTimeOut) {
+    if (!alreadyTimeOut && contractBase != null) {
       try {
         //setup program environment and play
         ContractContext contractContext = ContractContext
             .createContext(repository, contractBase).setEnableInterpreter2(true)
             .execute();
+
         //process result
         processResult(contractContext, isStatic);
         context.setProgramResult(contractContext.getContractBase().getProgramResult());
@@ -157,6 +160,21 @@ public class TVMActuator implements VMActuator {
   private void processResult(ContractContext context, boolean isStatic) {
     ContractBase contractBase = context.getContractBase();
     result = contractBase.getProgramResult();
+
+    //saveTrace
+    if (VMConfig.vmTrace()) {
+      String traceContent = context.getTrace()
+          .result(result.getHReturn())
+          .error(result.getException())
+          .toString();
+
+      if (VMConfig.vmTraceCompressed()) {
+        traceContent = VMUtils.zipAndEncode(traceContent);
+      }
+      String txHash = Hex.toHexString(contractBase.getInternalTransaction().getHash());
+      VMUtils.saveProgramTraceFile(txHash, traceContent);
+    }
+
     // for static call don't processResult
     if (isStatic) {
       return;

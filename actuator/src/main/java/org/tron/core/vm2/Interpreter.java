@@ -19,6 +19,7 @@ import org.tron.core.vm.EnergyCost;
 import org.tron.core.vm.MessageCall;
 import org.tron.core.vm.OpCode;
 import org.tron.core.vm.PrecompiledContracts;
+import org.tron.core.vm.config.VMConfig;
 import org.tron.core.vm.program.Program;
 import org.tron.core.vm.program.Stack;
 
@@ -48,36 +49,44 @@ public class Interpreter {
   }
 
 
-  public void step(ContractContext env) {
+  public void step(ContractContext context) {
+
+    if (VMConfig.vmTrace()) {
+      context.saveOpTrace();
+    }
+
     try {
-      OpCode op = OpCode.code(env.getCurrentOp());
+      OpCode op = OpCode.code(context.getCurrentOp());
       if (op == null) {
         throw Program.Exception
-            .invalidOpCode(env.getCurrentOp());
+            .invalidOpCode(context.getCurrentOp());
       }
-      env.setLastOp(op.val());
-      env.verifyStackSize(op.require());
+      context.setLastOp(op.val());
+      context.verifyStackSize(op.require());
       //check not exceeding stack limits
-      env.verifyStackOverflow(op.require(), op.ret());
+      context.verifyStackOverflow(op.require(), op.ret());
       //spend energy
-      DataWord callEnergy = spendEnergyAndGetCallEnergy(op, env);
+      DataWord callEnergy = spendEnergyAndGetCallEnergy(op, context);
       //checkcpu limit
-      env.checkCPUTimeLimit(op.name());
+      context.checkCPUTimeLimit(op.name());
       //step
-      exec(env, op, callEnergy);
-      env.setPreviouslyExecutedOp(op.val());
+      exec(context, op, callEnergy);
+      context.setPreviouslyExecutedOp(op.val());
       String hint =
-          "exec:" + op.name() + " stack:" + env.getStack().size() + " mem:" + env.getMemory().size()
-              + " pc:" + env.getPC() + " stacktop:" + env.getStack().safepeek() + " ene:" + env
+          "exec:" + op.name() + " stack:" + context.getStack().size() + " mem:" + context
+              .getMemory().size()
+              + " pc:" + context.getPC() + " stacktop:" + context.getStack().safepeek() + " ene:"
+              + context
               .getContractBase().getProgramResult().getEnergyUsed();
-      env.getContractBase().addOpHistory(hint);
+      context.getContractBase().addOpHistory(hint);
+
     } catch (RuntimeException e) {
       logger.info("VM halted: [{}]", e.getMessage());
       if (!(e instanceof Program.TransferException)) {
-        env.spendAllEnergy();
+        context.spendAllEnergy();
       }
-      env.resetFutureRefund();
-      env.stop();
+      context.resetFutureRefund();
+      context.stop();
       throw e;
     }
   }

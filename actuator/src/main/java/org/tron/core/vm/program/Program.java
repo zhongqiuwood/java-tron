@@ -134,7 +134,7 @@ public class Program {
     this.memory = setupProgramListener(new Memory());
     this.stack = setupProgramListener(new Stack());
     this.contractState = setupProgramListener(new ContractState(programInvoke));
-    this.trace = new ProgramTrace(config, programInvoke);
+    this.trace = new ProgramTrace(programInvoke);
     this.nonce = internalTransaction.getNonce();
   }
 

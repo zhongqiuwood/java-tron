@@ -38,13 +38,22 @@ import org.tron.protos.Protocol.AccountType;
 public class ContractState implements Repository, ProgramListenerAware {
 
   // contract address
-  private final DataWord address;
+  private DataWord address;
   private Repository repository;
   private ProgramListener programListener;
 
   ContractState(ProgramInvoke programInvoke) {
     this.address = programInvoke.getContractAddress();
     this.repository = programInvoke.getDeposit();
+  }
+
+  public void setAddress(DataWord address) {
+    this.address = address;
+  }
+
+
+  public ContractState(Repository repository) {
+    this.repository = repository;
   }
 
   @Override

@@ -39,12 +39,19 @@ import org.tron.core.vm.EnergyCost;
 import org.tron.core.vm.MessageCall;
 import org.tron.core.vm.PrecompiledContracts;
 import org.tron.core.vm.VMUtils;
+import org.tron.core.vm.config.VMConfig;
+import org.tron.core.vm.program.ContractState;
 import org.tron.core.vm.program.Memory;
 import org.tron.core.vm.program.Program;
 import org.tron.core.vm.program.Program.JVMStackOverFlowException;
 import org.tron.core.vm.program.Program.OutOfTimeException;
 import org.tron.core.vm.program.Stack;
+import org.tron.core.vm.program.listener.CompositeProgramListener;
+import org.tron.core.vm.program.listener.ProgramListenerAware;
+import org.tron.core.vm.program.listener.ProgramStorageChangeListener;
 import org.tron.core.vm.repository.Repository;
+import org.tron.core.vm.trace.ProgramTrace;
+import org.tron.core.vm.trace.ProgramTraceListener;
 import org.tron.core.vm2.VMConstant.RefundReasonConstant;
 import org.tron.protos.Protocol;
 import org.tron.protos.contract.SmartContractOuterClass.CreateSmartContract;
@@ -60,6 +67,12 @@ public class ContractContext {
   private static final BigInteger MAX_MSG_DATA = BigInteger.valueOf(Integer.MAX_VALUE);
 
 
+  //listeners
+  private ProgramTraceListener traceListener;
+  private ProgramStorageChangeListener storageDiffListener = new ProgramStorageChangeListener();
+  private CompositeProgramListener compositeProgramListener = new CompositeProgramListener();
+  private ProgramTrace trace;
+
   private byte[] ops;
   private int pc;
   private byte lastOp;
@@ -67,7 +80,7 @@ public class ContractContext {
   private boolean stopped;
   private Stack stack;
   private Memory memory;
-  private Repository storage;
+  private ContractState storage;
   private ContractBase contractBase;
   private int callDeep = 0;
   private long nonce;
@@ -130,13 +143,22 @@ public class ContractContext {
 
 
   public ContractContext(Repository repository, ContractBase contractBase) {
-    stopped = false;
-    stack = new Stack();
-    memory = new Memory();
-    storage = repository;
-    ops = contractBase.getOps();
+
     this.contractBase = contractBase;
+
+    traceListener = new ProgramTraceListener(VMConfig.vmTrace());
+    trace = new ProgramTrace();
+
+    stopped = false;
+    stack = setupListener(new Stack());
+    memory = setupListener(new Memory());
+    storage = setupListener(
+        new ContractState(repository));
+
+    ops = contractBase.getOps();
     this.nonce = contractBase.getInternalTransaction().getNonce();
+
+
   }
 
   public static ContractContext createContext(Repository repository,
@@ -320,6 +342,9 @@ public class ContractContext {
       contractAddress = contractBase.getContractAddress();
     }
     contractBase.getProgramResult().setContractAddress(contractAddress);
+    //set up listeners
+    this.storage.setAddress(new DataWord(contractAddress));
+    trace.setContractAddress(contractAddress);
 
     return contractAddress;
   }
@@ -1266,6 +1291,24 @@ public class ContractContext {
     AccountCapsule sender = deposit.getAccount(contextAddress);
     if (sender == null) {
       deposit.createNormalAccount(contextAddress);
+    }
+  }
+
+  private <T extends ProgramListenerAware> T setupListener(T programListenerAware) {
+    if (VMConfig.vmTrace()) {
+      if (compositeProgramListener.isEmpty()) {
+        compositeProgramListener.addListener(traceListener);
+        compositeProgramListener.addListener(storageDiffListener);
+      }
+      programListenerAware.setProgramListener(compositeProgramListener);
+    }
+    return programListenerAware;
+  }
+
+  public void saveOpTrace() {
+    if (this.pc < ops.length) {
+      trace.addOp(ops[pc], pc, getCallDeep(), contractBase.getEnergyLimitLeft(),
+          traceListener.resetActions());
     }
   }
 

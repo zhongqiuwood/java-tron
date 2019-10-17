@@ -26,7 +26,6 @@ import java.util.ArrayList;
 import java.util.List;
 import org.spongycastle.util.encoders.Hex;
 import org.tron.common.runtime.vm.DataWord;
-import org.tron.core.vm.OpCode;
 import org.tron.core.vm.config.VMConfig;
 import org.tron.core.vm.program.invoke.ProgramInvoke;
 
@@ -38,15 +37,16 @@ public class ProgramTrace {
   private String contractAddress;
 
   public ProgramTrace() {
-    this(null, null);
+
   }
 
-  public ProgramTrace(VMConfig config, ProgramInvoke programInvoke) {
-    if (programInvoke != null && config.vmTrace()) {
+  public ProgramTrace(ProgramInvoke programInvoke) {
+    if (programInvoke != null && VMConfig.vmTrace()) {
       contractAddress = Hex
           .toHexString(convertToTronAddress(programInvoke.getContractAddress().getLast20Bytes()));
     }
   }
+
 
   public List<Op> getOps() {
     return ops;
@@ -80,6 +80,15 @@ public class ProgramTrace {
     this.contractAddress = contractAddress;
   }
 
+
+  public void setContractAddress(byte[] contractAddress) {
+    if (VMConfig.vmTrace()) {
+      this.contractAddress = Hex
+          .toHexString(convertToTronAddress(contractAddress));
+    }
+  }
+
+
   public ProgramTrace result(byte[] result) {
     setResult(toHexString(result));
     return this;
@@ -93,7 +102,7 @@ public class ProgramTrace {
   public Op addOp(byte code, int pc, int deep, DataWord energy, OpActions actions) {
     Op op = new Op();
     op.setActions(actions);
-    op.setCode(OpCode.code(code));
+    op.setCode(org.tron.core.vm2.interpretor.Op.code(code));
     op.setDeep(deep);
     op.setEnergy(energy.value());
     op.setPc(pc);
