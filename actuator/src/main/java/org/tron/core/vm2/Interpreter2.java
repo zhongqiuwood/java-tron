@@ -38,6 +38,15 @@ public class Interpreter2 {
 
     if (VMConfig.vmTrace()) {
       context.saveOpTrace();
+      String hint = new StringBuilder().append("exec:")
+          .append(Op.code(context.getCurrentOp()).name())
+          .append(" stack:").append(context.getStack().size())
+          .append(" mem:").append(context.getMemory().size())
+          .append(" pc:").append(context.getPC())
+          .append(" stacktop:").append(context.getStack().safepeek())
+          .append(" energy:")
+          .append(context.getContractBase().getProgramResult().getEnergyUsed()).toString();
+      context.getContractBase().addOpHistory(hint);
     }
 
     try {
@@ -56,13 +65,7 @@ public class Interpreter2 {
       //step
       op.getOpExecutor().exec(op, context);
       context.setPreviouslyExecutedOp(op.val());
-      String hint =
-          "exec:" + op.name() + " stack:" + context.getStack().size() + " mem:" + context
-              .getMemory().size()
-              + " pc:" + context.getPC() + " stacktop:" + context.getStack().safepeek() + " ene:"
-              + context
-              .getContractBase().getProgramResult().getEnergyUsed();
-      context.getContractBase().addOpHistory(hint);
+
 
     } catch (RuntimeException e) {
       logger.info("VM halted: [{}]", e.getMessage());

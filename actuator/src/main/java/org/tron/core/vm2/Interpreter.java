@@ -22,6 +22,7 @@ import org.tron.core.vm.PrecompiledContracts;
 import org.tron.core.vm.config.VMConfig;
 import org.tron.core.vm.program.Program;
 import org.tron.core.vm.program.Stack;
+import org.tron.core.vm2.interpretor.Op;
 
 
 @Slf4j(topic = "VM2")
@@ -53,6 +54,15 @@ public class Interpreter {
 
     if (VMConfig.vmTrace()) {
       context.saveOpTrace();
+      String hint = new StringBuilder().append("exec:")
+          .append(Op.code(context.getCurrentOp()).name())
+          .append(" stack:").append(context.getStack().size())
+          .append(" mem:").append(context.getMemory().size())
+          .append(" pc:").append(context.getPC())
+          .append(" stacktop:").append(context.getStack().safepeek())
+          .append(" energy:")
+          .append(context.getContractBase().getProgramResult().getEnergyUsed()).toString();
+      context.getContractBase().addOpHistory(hint);
     }
 
     try {
@@ -72,13 +82,7 @@ public class Interpreter {
       //step
       exec(context, op, callEnergy);
       context.setPreviouslyExecutedOp(op.val());
-      String hint =
-          "exec:" + op.name() + " stack:" + context.getStack().size() + " mem:" + context
-              .getMemory().size()
-              + " pc:" + context.getPC() + " stacktop:" + context.getStack().safepeek() + " ene:"
-              + context
-              .getContractBase().getProgramResult().getEnergyUsed();
-      context.getContractBase().addOpHistory(hint);
+
 
     } catch (RuntimeException e) {
       logger.info("VM halted: [{}]", e.getMessage());
