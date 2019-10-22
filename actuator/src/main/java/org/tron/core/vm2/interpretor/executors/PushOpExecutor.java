@@ -5,7 +5,7 @@ import org.tron.core.vm2.ContractContext;
 import org.tron.core.vm2.interpretor.Op;
 import org.tron.core.vm2.interpretor.Op.Tier;
 
-public class PushOpExecutor extends OpExecutor {
+public class PushOpExecutor implements OpExecutor {
 
   private static PushOpExecutor INSTANCE = new PushOpExecutor();
 

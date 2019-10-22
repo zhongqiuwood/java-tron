@@ -1,12 +1,15 @@
 package org.tron.core.vm2.interpretor.executors;
 
 
+import static org.tron.core.vm2.interpretor.MemUtils.calcMemEnergy;
+import static org.tron.core.vm2.interpretor.MemUtils.memNeeded;
+
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.core.vm2.ContractContext;
 import org.tron.core.vm2.interpretor.Costs;
 import org.tron.core.vm2.interpretor.Op;
 
-public class CreateOpExecutor extends OpExecutor {
+public class CreateOpExecutor implements OpExecutor {
 
   private static CreateOpExecutor INSTANCE = new CreateOpExecutor();
 

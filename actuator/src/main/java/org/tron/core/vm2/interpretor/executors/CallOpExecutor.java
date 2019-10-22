@@ -1,6 +1,9 @@
 package org.tron.core.vm2.interpretor.executors;
 
 
+import static org.tron.core.vm2.interpretor.MemUtils.calcMemEnergy;
+import static org.tron.core.vm2.interpretor.MemUtils.memNeeded;
+
 import java.math.BigInteger;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.core.vm.MessageCall;
@@ -10,7 +13,7 @@ import org.tron.core.vm2.ContractContext;
 import org.tron.core.vm2.interpretor.Costs;
 import org.tron.core.vm2.interpretor.Op;
 
-public class CallOpExecutor extends OpExecutor {
+public class CallOpExecutor implements OpExecutor {
 
   private static CallOpExecutor INSTANCE = new CallOpExecutor();
 

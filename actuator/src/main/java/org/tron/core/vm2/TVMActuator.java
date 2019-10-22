@@ -25,9 +25,6 @@ import org.tron.core.db.EnergyProcessor;
 import org.tron.core.db.TransactionContext;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
-import org.tron.core.exception.TypeMismatchNamingException;
-import org.tron.core.store.AccountStore;
-import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.store.StoreFactory;
 import org.tron.core.utils.TransactionUtil;
 import org.tron.core.vm.LogInfoTriggerParser;
@@ -79,15 +76,11 @@ public class TVMActuator implements VMActuator {
     this.repository = RepositoryImpl.createRoot(StoreFactory.getInstance());
   }
 
-  private EnergyProcessor initEnergyProcessor() throws ContractValidateException {
+  private EnergyProcessor initEnergyProcessor() {
     StoreFactory storeFactory = StoreFactory.getInstance();
-    try {
-      return new EnergyProcessor(storeFactory.getStore(DynamicPropertiesStore.class),
-          storeFactory.getStore(
-              AccountStore.class));
-    } catch (TypeMismatchNamingException e) {
-      throw new ContractValidateException("initEnergyProcessor error");
-    }
+
+    return new EnergyProcessor(storeFactory.getChainBaseManager().getDynamicPropertiesStore(),
+        storeFactory.getChainBaseManager().getAccountStore());
   }
 
   @Override
@@ -118,7 +111,10 @@ public class TVMActuator implements VMActuator {
     }
 
     //validate and get contractBase
-    contractBase = preValidateAndGetBaseProgram(isStatic);
+    contractBase = getContractBase(isStatic);
+
+    //load eventPlugin
+    loadEventPlugin(contractBase);
 
     //judge if already timeout
     if (null != blockCap && blockCap.generatedByMyself && null != TransactionUtil
@@ -214,10 +210,10 @@ public class TVMActuator implements VMActuator {
   }
 
 
-  ContractBase preValidateAndGetBaseProgram(boolean isStatic)
+  ContractBase getContractBase(boolean isStatic)
       throws ContractValidateException {
-    ContractBase program = new ContractBase();
-    program.setTrxType(trxType);
+    ContractBase contractBase = new ContractBase();
+    contractBase.setTrxType(trxType);
     if (trxType == InternalTransaction.TrxType.TRX_CONTRACT_CREATION_TYPE) {
       CreateSmartContract contract =
           ContractCapsule.getSmartContractFromTransaction(trx.getInstance());
@@ -245,15 +241,14 @@ public class TVMActuator implements VMActuator {
           this.repository.getAccount(newSmartContract.getOriginAddress().toByteArray());
       byte[] callerAddress = contract.getOwnerAddress().toByteArray();
 
-
-      program.setCallValue(newSmartContract.getCallValue());
-      program.setTokenId(contract.getTokenId());
-      program.setTokenValue(contract.getCallTokenValue());
-      program.setCreator(creator);
-      program.setCallerAddress(callerAddress);
-      program.setOps(newSmartContract.getBytecode().toByteArray());
-      program.setOrigin(contract.getOwnerAddress().toByteArray());
-      program.setMsgData(ByteUtil.EMPTY_BYTE_ARRAY);
+      contractBase.setCallValue(newSmartContract.getCallValue());
+      contractBase.setTokenId(contract.getTokenId());
+      contractBase.setTokenValue(contract.getCallTokenValue());
+      contractBase.setCreator(creator);
+      contractBase.setCallerAddress(callerAddress);
+      contractBase.setOps(newSmartContract.getBytecode().toByteArray());
+      contractBase.setOrigin(contract.getOwnerAddress().toByteArray());
+      contractBase.setMsgData(ByteUtil.EMPTY_BYTE_ARRAY);
 
 
     } else { // TRX_CONTRACT_CALL_TYPE
@@ -274,28 +269,28 @@ public class TVMActuator implements VMActuator {
       byte[] callerAddress = contract.getOwnerAddress().toByteArray();
       AccountCapsule caller = this.repository.getAccount(callerAddress);
 
-
-      program.setCallValue(contract.getCallValue());
-      program.setTokenId(contract.getTokenId());
-      program.setTokenValue(contract.getCallTokenValue());
-      program.setCreator(creator);
-      program.setCallerAddress(callerAddress);
-      program.setCaller(caller);
-      program.setContractAddress(contractAddress);
-      program.setOps(repository.getCode(contractAddress));
-      program.setOrigin(contract.getOwnerAddress().toByteArray());
-      program.setMsgData(contract.getData().toByteArray());
+      contractBase.setCallValue(contract.getCallValue());
+      contractBase.setTokenId(contract.getTokenId());
+      contractBase.setTokenValue(contract.getCallTokenValue());
+      contractBase.setCreator(creator);
+      contractBase.setCallerAddress(callerAddress);
+      contractBase.setCaller(caller);
+      contractBase.setContractAddress(contractAddress);
+      contractBase.setOps(repository.getCode(contractAddress));
+      contractBase.setOrigin(contract.getOwnerAddress().toByteArray());
+      contractBase.setMsgData(contract.getData().toByteArray());
 
 
     }
     //setBlockInfo
-    setBlockInfo(program);
+    setBlockInfo(contractBase);
 
     //calculateEnergyLimit
     long energylimt = calculateEnergyLimit(
-        program.getCreator(), program.getCaller(), program.getContractAddress(), isStatic,
-        program.getCallValue());
-    program.setEnergyLimit(energylimt);
+        contractBase.getCreator(), contractBase.getCaller(), contractBase.getContractAddress(),
+        isStatic,
+        contractBase.getCallValue());
+    contractBase.setEnergyLimit(energylimt);
     //maxCpuTime
     long maxCpuTimeOfOneTx = repository.getDynamicPropertiesStore()
         .getMaxCpuTimeOfOneTx()
@@ -303,22 +298,17 @@ public class TVMActuator implements VMActuator {
     long thisTxCPULimitInUs = (long) (maxCpuTimeOfOneTx * getCpuLimitInUsRatio());
     long vmStartInUs = System.nanoTime() / VMConstant.ONE_THOUSAND;
     long vmShouldEndInUs = vmStartInUs + thisTxCPULimitInUs;
-    program.setVmStartInUs(vmStartInUs);
-    program.setVmShouldEndInUs(vmShouldEndInUs);
-    program.setStatic(isStatic);
+    contractBase.setVmStartInUs(vmStartInUs);
+    contractBase.setVmShouldEndInUs(vmShouldEndInUs);
+    contractBase.setStatic(isStatic);
 
     //set rootTransaction
 
     byte[] txId = new TransactionCapsule(trx.getInstance()).getTransactionId().getBytes();
-    program.setRootTransactionId(txId);
-    program.setInternalTransaction(new InternalTransaction(trx.getInstance(), trxType));
+    contractBase.setRootTransactionId(txId);
+    contractBase.setInternalTransaction(new InternalTransaction(trx.getInstance(), trxType));
 
-    //load eventPlugin
-    loadEventPlugin(program);
-
-
-
-    return program;
+    return contractBase;
   }
 
   private void setBlockInfo(ContractBase contractBase) {

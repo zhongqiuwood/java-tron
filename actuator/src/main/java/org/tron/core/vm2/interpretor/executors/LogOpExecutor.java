@@ -1,5 +1,8 @@
 package org.tron.core.vm2.interpretor.executors;
 
+import static org.tron.core.vm2.interpretor.MemUtils.calcMemEnergy;
+import static org.tron.core.vm2.interpretor.MemUtils.checkMemorySize;
+import static org.tron.core.vm2.interpretor.MemUtils.memNeeded;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -11,7 +14,7 @@ import org.tron.core.vm2.ContractContext;
 import org.tron.core.vm2.interpretor.Costs;
 import org.tron.core.vm2.interpretor.Op;
 
-public class LogOpExecutor extends OpExecutor {
+public class LogOpExecutor implements OpExecutor {
 
   private static LogOpExecutor INSTANCE = new LogOpExecutor();
 

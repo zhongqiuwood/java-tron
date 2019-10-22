@@ -3,6 +3,7 @@ package org.tron.core.vm2;
 import static java.lang.String.format;
 
 import org.tron.core.vm.program.Program;
+import org.tron.core.vm.program.Program.OutOfMemoryException;
 
 
 public class ExceptionFactory {
@@ -62,6 +63,9 @@ public class ExceptionFactory {
 
   }
 
+  public static OutOfMemoryException memoryOverflow(String op) {
+    return new OutOfMemoryException("Out of Memory when '%s' operation executing", op);
+  }
 
 
   public static class StaticCallTransferException extends Program.BytecodeExecutionException {

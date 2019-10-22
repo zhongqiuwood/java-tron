@@ -1,12 +1,11 @@
 package org.tron.core.vm2.interpretor.executors;
 
-
 import org.tron.core.vm.program.Stack;
 import org.tron.core.vm2.ContractContext;
 import org.tron.core.vm2.interpretor.Op;
 import org.tron.core.vm2.interpretor.Op.Tier;
 
-public class SwapOpExecutor extends OpExecutor {
+public class SwapOpExecutor implements OpExecutor {
 
   private static SwapOpExecutor INSTANCE = new SwapOpExecutor();
 

@@ -8,7 +8,7 @@ import org.tron.core.vm2.ContractContext;
 import org.tron.core.vm2.interpretor.Op;
 import org.tron.core.vm2.interpretor.Op.Tier;
 
-public class DupOpExecutor extends OpExecutor {
+public class DupOpExecutor implements OpExecutor {
 
   private static DupOpExecutor INSTANCE = new DupOpExecutor();
 

@@ -4,7 +4,7 @@ import org.tron.common.runtime.vm.DataWord;
 import org.tron.core.vm2.ContractContext;
 import org.tron.core.vm2.interpretor.Op;
 
-public class CodeSizeOpExecutor extends OpExecutor {
+public class CodeSizeOpExecutor implements OpExecutor {
 
   private static CodeSizeOpExecutor INSTANCE = new CodeSizeOpExecutor();
 

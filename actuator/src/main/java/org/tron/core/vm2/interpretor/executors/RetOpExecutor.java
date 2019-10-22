@@ -1,12 +1,14 @@
 package org.tron.core.vm2.interpretor.executors;
 
+import static org.tron.core.vm2.interpretor.MemUtils.calcMemEnergy;
+import static org.tron.core.vm2.interpretor.MemUtils.memNeeded;
 
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.core.vm2.ContractContext;
 import org.tron.core.vm2.interpretor.Costs;
 import org.tron.core.vm2.interpretor.Op;
 
-public class RetOpExecutor extends OpExecutor {
+public class RetOpExecutor implements OpExecutor {
 
   private static RetOpExecutor INSTANCE = new RetOpExecutor();
 

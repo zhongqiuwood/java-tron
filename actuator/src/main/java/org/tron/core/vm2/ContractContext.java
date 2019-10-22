@@ -187,7 +187,7 @@ public class ContractContext {
   public ContractContext execute() throws ContractValidateException {
     try {
       //check static call
-      preStaticCheck();
+      checkStatic();
       //transfer assets
       transferAssets();
       if(enableInterpreter2){
@@ -196,7 +196,6 @@ public class ContractContext {
       }else {
         Interpreter.getInstance().play(this);
       }
-
       //save code for create
       postProcess();
     } catch (StackOverflowError soe) {
@@ -214,7 +213,7 @@ public class ContractContext {
   }
 
 
-  private void preStaticCheck() {
+  private void checkStatic() {
     long tokenValue = contractBase.getTokenValue();
     long callValue = contractBase.getCallValue();
     //checkStaticCall
@@ -1153,9 +1152,9 @@ public class ContractContext {
     call.setBlockInfo(contractBase.getBlockInfo());
     call.setRootTransactionId(contractBase.getRootTransactionId());
 
-    ContractContext cenv = createContext(childStroage, call, this);
+    ContractContext context = createContext(childStroage, call, this);
     try {
-      cenv.execute();
+      context.execute();
     } catch (ContractValidateException e) {
       refundEnergy(msg.getEnergy().longValue(), RefundReasonConstant.FROM_MSG_CALL);
       throw ExceptionFactory.transferException(e.getMessage());
@@ -1165,7 +1164,7 @@ public class ContractContext {
 
       contractBase.getProgramResult().merge(callResult);
       // always commit nonce
-      this.nonce = cenv.nonce;
+      this.nonce = context.nonce;
 
       if (callResult.getException() != null || callResult.isRevert()) {
         logger.debug("contract run halted by Exception: contract: [{}], exception: [{}]",

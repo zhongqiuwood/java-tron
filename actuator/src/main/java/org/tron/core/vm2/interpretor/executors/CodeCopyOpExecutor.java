@@ -1,12 +1,14 @@
 package org.tron.core.vm2.interpretor.executors;
 
 import static org.tron.common.utils.ByteUtil.EMPTY_BYTE_ARRAY;
+import static org.tron.core.vm2.interpretor.MemUtils.calcMemEnergy;
+import static org.tron.core.vm2.interpretor.MemUtils.memNeeded;
 
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.core.vm2.ContractContext;
 import org.tron.core.vm2.interpretor.Op;
 
-public class CodeCopyOpExecutor extends OpExecutor {
+public class CodeCopyOpExecutor implements OpExecutor {
 
   private static CodeCopyOpExecutor INSTANCE = new CodeCopyOpExecutor();
 
