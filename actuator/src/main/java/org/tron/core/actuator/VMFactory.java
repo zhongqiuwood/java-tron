@@ -16,11 +16,11 @@ public class VMFactory {
   }
 
 
-  public VMActuator loadVM(boolean isConstantCall, boolean useOldVm) {
+  public VMActuator loadVM(boolean isConstantCall, boolean foreceUseOldVm) {
     //Load Config
     ConfigLoader.load();
     //If all config is on ,use new VMActuator
-    if (!useOldVm && VMConfig.getEnergyLimitHardFork()
+    if (!foreceUseOldVm && VMConfig.getEnergyLimitHardFork()
         && VMConfig.allowMultiSign()
         && VMConfig.allowTvmConstantinople()
         && VMConfig.allowTvmTransferTrc10()
