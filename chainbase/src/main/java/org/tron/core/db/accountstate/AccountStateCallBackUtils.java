@@ -21,6 +21,19 @@ public class AccountStateCallBackUtils {
         .add(TrieEntry.build(key, new AccountStateEntity(item.getInstance()).toByteArrays()));
   }
 
+
+  public void storageCallBack(byte[] key, byte[] value) {
+    if (!exe()) {
+      return;
+    }
+    if (value == null) {
+      return;
+    }
+    trieEntryList
+        .add(TrieEntry.build(key, value));
+  }
+
+
   protected boolean exe() {
     if (!execute || !allowGenerateRoot) {
       //Agreement same block high to generate account state root

@@ -1130,6 +1130,15 @@ public class Manager {
 
           return;
         }
+
+        //only for test
+        try (ISession tmpSession = revokingStore.buildSession()) {
+
+          applyBlock(newBlock);
+          tmpSession.revoke();
+
+        }
+
         try (ISession tmpSession = revokingStore.buildSession()) {
 
           applyBlock(newBlock);

@@ -24,7 +24,7 @@ public class VMFactory {
         && VMConfig.allowMultiSign()
         && VMConfig.allowTvmConstantinople()
         && VMConfig.allowTvmTransferTrc10()
-        && VMConfig.allowTvmSolidity059()
+      /*        && VMConfig.allowTvmSolidity059()*/
 
     ) {
       return new TVMActuator(isConstantCall);

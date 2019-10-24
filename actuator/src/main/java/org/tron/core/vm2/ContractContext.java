@@ -1286,6 +1286,9 @@ public class ContractContext {
 
 
   private void createAccountIfNotExist(Repository deposit, byte[] contextAddress) {
+    if (!VMConfig.allowTvmSolidity059()) {
+      return;
+    }
     //after solidity059 proposal,allow contract transfer trc10 or trx to non-exist address(would create one)
     AccountCapsule sender = deposit.getAccount(contextAddress);
     if (sender == null) {

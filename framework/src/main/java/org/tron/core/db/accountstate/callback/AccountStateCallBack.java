@@ -8,7 +8,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.Hash;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.utils.RLP;
@@ -53,7 +52,7 @@ public class AccountStateCallBack extends AccountStateCallBackUtils {
   public void preExecute(BlockCapsule blockCapsule) {
     this.blockCapsule = blockCapsule;
     this.execute = true;
-    this.allowGenerateRoot = manager.getDynamicPropertiesStore().allowAccountStateRoot();
+    this.allowGenerateRoot = true;
     if (!exe()) {
       return;
     }
@@ -83,12 +82,15 @@ public class AccountStateCallBack extends AccountStateCallBackUtils {
     if (ArrayUtils.isEmpty(newRoot)) {
       newRoot = Hash.EMPTY_TRIE_HASH;
     }
-    if (!oldRoot.isEmpty() && !Arrays.equals(oldRoot.toByteArray(), newRoot)) {
+/*    if (!oldRoot.isEmpty() && !Arrays.equals(oldRoot.toByteArray(), newRoot)) {
       logger.error("the accountStateRoot hash is error. {}, oldRoot: {}, newRoot: {}",
           blockCapsule, ByteUtil.toHexString(oldRoot.toByteArray()),
           ByteUtil.toHexString(newRoot));
       throw new BadBlockException("the accountStateRoot hash is error");
-    }
+    }*/
+    logger.info("[STATEHASH] block {} stateHash {}", blockCapsule.getBlockId().getNum(),
+        newRoot.hashCode());
+
   }
 
   public void executeGenerateFinish() {
@@ -100,7 +102,7 @@ public class AccountStateCallBack extends AccountStateCallBackUtils {
     if (ArrayUtils.isEmpty(newRoot)) {
       newRoot = Hash.EMPTY_TRIE_HASH;
     }
-    blockCapsule.setAccountStateRoot(newRoot);
+//    blockCapsule.setAccountStateRoot(newRoot);
     execute = false;
   }
 
