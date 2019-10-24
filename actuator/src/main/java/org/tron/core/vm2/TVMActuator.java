@@ -142,9 +142,9 @@ public class TVMActuator implements VMActuator {
         ContractContext contractContext = ContractContext
             .createContext(repository, contractBase).setEnableInterpreter2(true)
             .execute();
-
         //process result
         processResult(contractContext, isStatic);
+        //set result to txcontext
         context.setProgramResult(contractContext.getContractBase().getProgramResult());
 
       } catch (Throwable e) {

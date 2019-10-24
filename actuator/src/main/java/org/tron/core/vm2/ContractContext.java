@@ -88,10 +88,6 @@ public class ContractContext {
 
   private boolean enableInterpreter2 =false;
 
-  public boolean isEnableInterpreter2() {
-    return enableInterpreter2;
-  }
-
   public ContractContext setEnableInterpreter2(boolean enableInterpreter2) {
     this.enableInterpreter2 = enableInterpreter2;
     return this;
@@ -161,6 +157,11 @@ public class ContractContext {
 
   }
 
+
+  public void commit() {
+    this.getStorage().commit();
+  }
+
   public static ContractContext createContext(Repository repository,
       ContractBase contractBase) {
     ContractContext context = new ContractContext(repository, contractBase);
@@ -168,14 +169,15 @@ public class ContractContext {
   }
 
 
-  public static ContractContext createContext(Repository repository,
+  public static ContractContext createChildContext(
       ContractBase contractBase,
       ContractContext pre) {
-    ContractContext env = new ContractContext(repository, contractBase);
+    Repository repositoryChild = pre.getStorage().newRepositoryChild();
+    ContractContext childContext = new ContractContext(repositoryChild, contractBase);
     if (pre != null) {
-      env.callDeep = pre.getCallDeep() + 1;
+      childContext.callDeep = pre.getCallDeep() + 1;
     }
-    return env;
+    return childContext;
   }
 
 
@@ -908,17 +910,17 @@ public class ContractContext {
     //[4]execute
 
     //setup program environment
-    ContractContext cenv = ContractContext
-        .createContext(this.getStorage().newRepositoryChild(), create, this);
+    ContractContext childContext = ContractContext
+        .createChildContext(create, this);
     //play program
     try {
-      cenv.execute();
+      childContext.execute();
     } catch (ContractValidateException e) {
       //frankly, is the transfer reason
       throw ExceptionFactory.transferException("create opcode validateForSmartContract failure");
     }
     // always commit nonce
-    this.nonce = cenv.nonce;
+    this.nonce = childContext.nonce;
 
     ProgramResult createResult = create.getProgramResult();
 
@@ -947,7 +949,7 @@ public class ContractContext {
         returnDataBuffer = createResult.getHReturn();
       }
     } else {
-      cenv.getStorage().commit();
+      childContext.commit();
       //success then stackpush new address
       stackPush(new DataWord(newAddress));
     }
@@ -1084,13 +1086,12 @@ public class ContractContext {
       refundEnergy(msg.getEnergy().longValue(), "endowment out of long range");
       throw ExceptionFactory.transferException("endowment out of long range");
     }
-    Repository childStroage = getStorage().newRepositoryChild();
 
     // transfer trx validation
     boolean isTokenTransfer = msg.isTokenTransferMsg();
     // if not suffcient then stack push zero (need optimized)
     if (!isTokenTransfer) {
-      long senderBalance = childStroage.getBalance(senderAddress);
+      long senderBalance = storage.getBalance(senderAddress);
       if (senderBalance < endowment) {
         stackPushZero();
         refundEnergy(msg.getEnergy().longValue(), RefundReasonConstant.FROM_MSG_CALL);
@@ -1099,7 +1100,7 @@ public class ContractContext {
     } else {
       // transfer trc10 token validation
       tokenId = String.valueOf(msg.getTokenId().longValue()).getBytes();
-      long senderBalance = childStroage.getTokenBalance(senderAddress, tokenId);
+      long senderBalance = storage.getTokenBalance(senderAddress, tokenId);
       if (senderBalance < endowment) {
         stackPushZero();
         refundEnergy(msg.getEnergy().longValue(), RefundReasonConstant.FROM_MSG_CALL);
@@ -1152,9 +1153,9 @@ public class ContractContext {
     call.setBlockInfo(contractBase.getBlockInfo());
     call.setRootTransactionId(contractBase.getRootTransactionId());
 
-    ContractContext context = createContext(childStroage, call, this);
+    ContractContext childContext = createChildContext(call, this);
     try {
-      context.execute();
+      childContext.execute();
     } catch (ContractValidateException e) {
       refundEnergy(msg.getEnergy().longValue(), RefundReasonConstant.FROM_MSG_CALL);
       throw ExceptionFactory.transferException(e.getMessage());
@@ -1164,7 +1165,7 @@ public class ContractContext {
 
       contractBase.getProgramResult().merge(callResult);
       // always commit nonce
-      this.nonce = context.nonce;
+      this.nonce = childContext.nonce;
 
       if (callResult.getException() != null || callResult.isRevert()) {
         logger.debug("contract run halted by Exception: contract: [{}], exception: [{}]",
@@ -1187,12 +1188,12 @@ public class ContractContext {
         }
       } else {
         // 4. THE FLAG OF SUCCESS IS ONE PUSHED INTO THE STACK
-        childStroage.commit();
+        childContext.commit();
         stackPushOne();
       }
     } else {
       // 4. THE FLAG OF SUCCESS IS ONE PUSHED INTO THE STACK
-      childStroage.commit();
+      childContext.commit();
       stackPushOne();
     }
 
