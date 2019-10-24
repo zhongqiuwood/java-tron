@@ -6,6 +6,7 @@ import java.util.Arrays;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
+import org.spongycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.utils.Hash;
@@ -89,7 +90,8 @@ public class AccountStateCallBack extends AccountStateCallBackUtils {
       throw new BadBlockException("the accountStateRoot hash is error");
     }*/
     logger.info("[STATEHASH] block {} stateHash {}", blockCapsule.getBlockId().getNum(),
-        newRoot.hashCode());
+        Hex.toHexString(newRoot));
+    manager.getStateCompair().fill(Hex.toHexString(newRoot));
 
   }
 

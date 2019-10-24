@@ -244,6 +244,11 @@ public class Manager {
   @Autowired
   @Getter
   @Setter
+  private StateCompair stateCompair;
+
+  @Autowired
+  @Getter
+  @Setter
   private TreeBlockIndexStore merkleTreeIndexStore;
   private ExecutorService validateSignService;
   private boolean isRunRepushThread = true;
@@ -1130,17 +1135,16 @@ public class Manager {
 
           return;
         }
-
+        stateCompair.clear();
         //only for test
         try (ISession tmpSession = revokingStore.buildSession()) {
-
+          newBlock.setVm2(true);
           applyBlock(newBlock);
           tmpSession.revoke();
-
         }
 
         try (ISession tmpSession = revokingStore.buildSession()) {
-
+          newBlock.setVm2(false);
           applyBlock(newBlock);
           tmpSession.commit();
           // if event subscribe is enabled, post block trigger to queue
@@ -1150,6 +1154,10 @@ public class Manager {
           khaosDb.removeBlk(block.getBlockId());
           throw throwable;
         }
+        if (!stateCompair.compare()) {
+          throw new BadBlockException("VM RESULT DIFFERENT");
+        }
+
       }
       logger.info("save block: " + newBlock);
     }
@@ -1261,6 +1269,7 @@ public class Manager {
     return blockStore.iterator().hasNext() || this.khaosDb.hasData();
   }
 
+
   /**
    * Process transaction.
    */
@@ -1301,7 +1310,7 @@ public class Manager {
     VMConfig.initAllowTvmSolidity059(dynamicPropertiesStore.getAllowTvmSolidity059());
 */
 
-    trace.init(blockCap, eventPluginLoaded);
+    trace.init(blockCap, eventPluginLoaded, blockCap == null ? false : blockCap.isVm2());
     trace.checkIsConstant();
     trace.exec();
 

@@ -47,6 +47,10 @@ import org.tron.protos.Protocol.Transaction;
 @Slf4j(topic = "capsule")
 public class BlockCapsule implements ProtoCapsule<Block> {
 
+  @Setter
+  @Getter
+  private boolean vm2;
+
   public boolean generatedByMyself = false;
   @Getter
   @Setter

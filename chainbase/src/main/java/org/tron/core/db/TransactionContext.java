@@ -15,6 +15,8 @@ public class TransactionContext {
   private ProgramResult programResult = new ProgramResult();
   private boolean isConstant;
   private boolean eventPluginLoaded;
+  private boolean forceVM2;
+
 
   public TransactionContext(BlockCapsule blockCap, TransactionCapsule trxCap,
       StoreFactory storeFactory,

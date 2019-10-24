@@ -158,7 +158,7 @@ public class BandWidthRuntimeOutOfTimeTest {
       dbManager.consumeBandwidth(trxCap, trace);
       BlockCapsule blockCapsule = null;
       DepositImpl deposit = DepositImpl.createRoot(dbManager);
-      trace.init(blockCapsule);
+      trace.init(blockCapsule, false);
       trace.exec();
       trace.finalization();
 

@@ -110,6 +110,10 @@ public class TransactionTrace {
         || this.trxType == TRX_CONTRACT_CREATION_TYPE;
   }
 
+  public void init(BlockCapsule blockCap) {
+    init(blockCap, false);
+  }
+
   public void init(BlockCapsule blockCap, boolean vm2) {
     init(blockCap, false, vm2);
   }
@@ -119,6 +123,7 @@ public class TransactionTrace {
     txStartTimeInMs = System.currentTimeMillis();
     transactionContext = new TransactionContext(blockCap, trx, storeFactory, false,
         eventPluginLoaded);
+    transactionContext.setForceVM2(vm2);
   }
 
   public void checkIsConstant() throws ContractValidateException, VMIllegalException {
