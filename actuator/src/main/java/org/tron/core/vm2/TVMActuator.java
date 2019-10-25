@@ -62,14 +62,15 @@ public class TVMActuator implements VMActuator {
 
   private ContractBase contractBase;
 
+  double cpuLimitRatio = 1.0;
+
   @Setter
   private boolean isStatic;
 
   @Setter
   private boolean enableEventLinstener;
 
-  @Setter
-  private InternalTransaction.ExecutorType executorType;
+
 
   public TVMActuator(boolean isStatic) {
     this.isStatic = isStatic;
@@ -78,28 +79,16 @@ public class TVMActuator implements VMActuator {
 
   private EnergyProcessor initEnergyProcessor() {
     StoreFactory storeFactory = StoreFactory.getInstance();
-
     return new EnergyProcessor(storeFactory.getChainBaseManager().getDynamicPropertiesStore(),
         storeFactory.getChainBaseManager().getAccountStore());
   }
 
   @Override
   public void validate(TransactionContext context) throws ContractValidateException {
-
     enableEventLinstener = context.isEventPluginLoaded();
-
     this.trx = context.getTrxCap();
     this.blockCap = context.getBlockCap();
     this.energyProcessor = initEnergyProcessor();
-
-    if (Objects.nonNull(blockCap)) {
-      this.executorType = InternalTransaction.ExecutorType.ET_NORMAL_TYPE;
-    } else {
-      this.blockCap = new BlockCapsule(Protocol.Block.newBuilder().build());
-      this.executorType = InternalTransaction.ExecutorType.ET_PRE_TYPE;
-
-    }
-
     Protocol.Transaction.Contract.ContractType contractType
         = this.trx.getInstance().getRawData().getContract(0).getType();
     switch (contractType.getNumber()) {
@@ -110,6 +99,10 @@ public class TVMActuator implements VMActuator {
         trxType = InternalTransaction.TrxType.TRX_CONTRACT_CREATION_TYPE;
     }
 
+    if (Objects.nonNull(blockCap)) {
+      initCpuLimitInUsRatio();
+    }
+
     //validate and get contractBase
     contractBase = getContractBase(isStatic);
 
@@ -117,6 +110,11 @@ public class TVMActuator implements VMActuator {
     loadEventPlugin(contractBase);
 
     //judge if already timeout
+    judgeAlreadyTimeOut(context);
+
+  }
+
+  private void judgeAlreadyTimeOut(TransactionContext context) {
     if (null != blockCap && blockCap.generatedByMyself && null != TransactionUtil
         .getContractRet(trx.getInstance())
         && contractResult.OUT_OF_TIME == TransactionUtil.getContractRet(trx.getInstance())) {
@@ -138,12 +136,12 @@ public class TVMActuator implements VMActuator {
   public void execute(TransactionContext context) throws ContractExeException {
     if (!alreadyTimeOut && contractBase != null) {
       try {
-        //setup program environment and play
+        //setup program context and play
         ContractContext contractContext = ContractContext
             .createContext(repository, contractBase).setEnableInterpreter2(true)
             .execute();
         //process result
-        processResult(contractContext, isStatic);
+        processResult(contractContext);
         //set result to txcontext
         context.setProgramResult(contractContext.getContractBase().getProgramResult());
 
@@ -153,7 +151,7 @@ public class TVMActuator implements VMActuator {
     }
   }
 
-  private void processResult(ContractContext context, boolean isStatic) {
+  private void processResult(ContractContext context) {
     ContractBase contractBase = context.getContractBase();
     result = contractBase.getProgramResult();
 
@@ -172,7 +170,7 @@ public class TVMActuator implements VMActuator {
     }
 
     // for static call don't processResult
-    if (isStatic) {
+    if (context.getContractBase().isStatic()) {
       return;
     }
     //
@@ -191,7 +189,7 @@ public class TVMActuator implements VMActuator {
         result.setRuntimeError("REVERT opcode executed");
       }
     } else {
-      repository.commit();
+      context.commit();
 
       if (logInfoTriggerParser != null) {
         List<ContractTrigger> triggers = logInfoTriggerParser
@@ -295,7 +293,7 @@ public class TVMActuator implements VMActuator {
     long maxCpuTimeOfOneTx = repository.getDynamicPropertiesStore()
         .getMaxCpuTimeOfOneTx()
             * VMConstant.ONE_THOUSAND;
-    long thisTxCPULimitInUs = (long) (maxCpuTimeOfOneTx * getCpuLimitInUsRatio());
+    long thisTxCPULimitInUs = (long) (maxCpuTimeOfOneTx * cpuLimitRatio);
     long vmStartInUs = System.nanoTime() / VMConstant.ONE_THOUSAND;
     long vmShouldEndInUs = vmStartInUs + thisTxCPULimitInUs;
     contractBase.setVmStartInUs(vmStartInUs);
@@ -418,15 +416,7 @@ public class TVMActuator implements VMActuator {
 
   }
 
-  private double getCpuLimitInUsRatio() {
-    double cpuLimitRatio;
-
-    if (InternalTransaction.ExecutorType.ET_PRE_TYPE == executorType) {
-      cpuLimitRatio = 1.0;
-      return cpuLimitRatio;
-    }
-
-
+  private void initCpuLimitInUsRatio() {
     // self witness generates block
     if (this.blockCap != null && blockCap.generatedByMyself
         && this.blockCap.getInstance().getBlockHeader().getWitnessSignature().isEmpty()) {
@@ -440,7 +430,6 @@ public class TVMActuator implements VMActuator {
         cpuLimitRatio = DBConfig.getMaxTimeRatio();
       }
     }
-    return cpuLimitRatio;
   }
 
   private boolean isCheckTransaction() {
