@@ -7,6 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.tron.core.vm.config.VMConfig;
 import org.tron.core.vm.program.Program;
 import org.tron.core.vm2.interpretor.Op;
+import org.tron.core.vm2.interpretor.OpConvertor;
 
 
 @Slf4j(topic = "VM2")
@@ -50,7 +51,7 @@ public class Interpreter2 {
     }
 
     try {
-      Op op = Op.code(context.getCurrentOp());
+      Op op = OpConvertor.getOp(context.getCurrentOp());
       if (op == null) {
         throw Program.Exception
             .invalidOpCode(context.getCurrentOp());
