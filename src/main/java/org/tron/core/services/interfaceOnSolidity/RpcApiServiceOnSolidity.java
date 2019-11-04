@@ -25,6 +25,7 @@ import org.tron.api.GrpcAPI.PaginatedMessage;
 import org.tron.api.GrpcAPI.Return;
 import org.tron.api.GrpcAPI.Return.response_code;
 import org.tron.api.GrpcAPI.TransactionExtention;
+import org.tron.api.GrpcAPI.TransactionInfoList;
 import org.tron.api.GrpcAPI.WitnessList;
 import org.tron.api.WalletSolidityGrpc.WalletSolidityImplBase;
 import org.tron.common.application.Service;
@@ -317,6 +318,15 @@ public class RpcApiServiceOnSolidity implements Service {
               .getTransactionInfoById(request, responseObserver)
       );
 
+    }
+
+    @Override
+    public void getTransactionInfoByBlockNum(NumberMessage request,
+        StreamObserver<TransactionInfoList> responseObserver) {
+      walletOnSolidity.futureGet(
+          () -> rpcApiService.getWalletSolidityApi()
+              .getTransactionInfoByBlockNum(request, responseObserver)
+      );
     }
 
     @Override

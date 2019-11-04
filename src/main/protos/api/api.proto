@@ -604,6 +604,16 @@ service Wallet {
     };
   }
 
+   rpc GetTransactionInfoByBlockNum (NumberMessage) returns (TransactionInfoList) {
+     option (google.api.http) = {
+       post: "/wallet/gettransactioninfobyblocknum"
+       body: "*"
+       additional_bindings {
+         get: "/wallet/gettransactioninfobyblocknum"
+       }
+     };
+   }
+
   rpc AccountPermissionUpdate (AccountPermissionUpdateContract) returns (TransactionExtention) {
     option (google.api.http) = {
       post: "/wallet/accountpermissionupdate"
@@ -757,6 +767,16 @@ service WalletSolidity {
       body: "*"
       additional_bindings {
         get: "/walletsolidity/gettransactioninfobyid"
+      }
+    };
+  }
+
+  rpc GetTransactionInfoByBlockNum (NumberMessage) returns (TransactionInfoList) {
+    option (google.api.http) = {
+      post: "/walletsolidity/gettransactioninfobyblocknum"
+      body: "*"
+      additional_bindings {
+        get: "/walletsolidity/gettransactioninfobyblocknum"
       }
     };
   }
@@ -1062,4 +1082,8 @@ message TransactionApprovedList {
   repeated bytes approved_list = 2;
   Result result = 4;
   TransactionExtention transaction = 5;
+}
+
+message TransactionInfoList {
+  repeated TransactionInfo transactionInfo = 1;
 }

@@ -28,6 +28,7 @@ import org.tron.core.services.http.GetNowBlockServlet;
 import org.tron.core.services.http.GetPaginatedAssetIssueListServlet;
 import org.tron.core.services.http.GetRewardServlet;
 import org.tron.core.services.http.GetTransactionCountByBlockNumServlet;
+import org.tron.core.services.http.GetTransactionInfoByBlockNumServlet;
 import org.tron.core.services.http.ListExchangesServlet;
 import org.tron.core.services.http.ListWitnessesServlet;
 import org.tron.core.services.http.TriggerConstantContractServlet;
@@ -95,6 +96,8 @@ public class SolidityNodeHttpApiService implements Service {
   private GetRewardServlet getRewardServlet;
   @Autowired
   private TriggerConstantContractServlet triggerConstantContractServlet;
+  @Autowired
+  private GetTransactionInfoByBlockNumServlet getTransactionInfoByBlockNumServlet;
 
   @Override
   public void init() {
@@ -156,6 +159,8 @@ public class SolidityNodeHttpApiService implements Service {
       context
           .addServlet(new ServletHolder(getTransactionInfoByIdServlet),
               "/walletsolidity/gettransactioninfobyid");
+      context.addServlet(new ServletHolder(getTransactionInfoByBlockNumServlet),
+          "/walletsolidity/gettransactioninfobyblocknum");
       context
           .addServlet(new ServletHolder(getTransactionCountByBlockNumServlet),
               "/walletsolidity/gettransactioncountbyblocknum");

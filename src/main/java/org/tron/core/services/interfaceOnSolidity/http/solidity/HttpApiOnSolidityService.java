@@ -8,6 +8,7 @@ import org.eclipse.jetty.servlet.ServletHolder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.tron.common.application.Service;
 import org.tron.core.config.args.Args;
+import org.tron.core.services.http.GetTransactionInfoByBlockNumServlet;
 import org.tron.core.services.interfaceOnSolidity.http.GetAccountByIdOnSolidityServlet;
 import org.tron.core.services.interfaceOnSolidity.http.GetAccountOnSolidityServlet;
 import org.tron.core.services.interfaceOnSolidity.http.GetAssetIssueByIdOnSolidityServlet;
@@ -91,6 +92,8 @@ public class HttpApiOnSolidityService implements Service {
   private GetRewardOnSolidityServlet getRewardServlet;
   @Autowired
   private TriggerConstantContractOnSolidityServlet triggerConstantContractOnSolidityServlet;
+  @Autowired
+  private GetTransactionInfoByBlockNumServlet getTransactionInfoByBlockNumServlet;
 
   @Override
   public void init() {
@@ -153,7 +156,8 @@ public class HttpApiOnSolidityService implements Service {
       context
           .addServlet(new ServletHolder(getTransactionInfoByIdOnSolidityServlet),
               "/walletsolidity/gettransactioninfobyid");
-
+      context.addServlet(new ServletHolder(getTransactionInfoByBlockNumServlet),
+          "/walletsolidity/gettransactioninfobyblocknum");
       context
           .addServlet(new ServletHolder(getTransactionCountByBlockNumOnSolidityServlet),
               "/walletsolidity/gettransactioncountbyblocknum");

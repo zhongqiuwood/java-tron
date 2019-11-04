@@ -172,6 +172,8 @@ public class FullNodeHttpApiService implements Service {
   private GetRewardServlet getRewardServlet;
   @Autowired
   private UpdateBrokerageServlet updateBrokerageServlet;
+  @Autowired
+  private GetTransactionInfoByBlockNumServlet getTransactionInfoByBlockNumServlet;
 
 
   @Override
@@ -283,6 +285,8 @@ public class FullNodeHttpApiService implements Service {
       context.addServlet(new ServletHolder(getBrokerageServlet), "/getBrokerage");
       context.addServlet(new ServletHolder(getRewardServlet), "/getReward");
       context.addServlet(new ServletHolder(updateBrokerageServlet), "/updateBrokerage");
+      context.addServlet(new ServletHolder(getTransactionInfoByBlockNumServlet),
+          "/gettransactioninfobyblocknum");
 
       int maxHttpConnectNumber = Args.getInstance().getMaxHttpConnectNumber();
       if (maxHttpConnectNumber > 0) {
