@@ -3,12 +3,10 @@ package org.tron.common.runtime;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
-
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.tron.common.utils.DBConfig;
 import org.tron.core.actuator.Actuator;
-import org.tron.core.actuator.Actuator2;
 import org.tron.core.actuator.ActuatorCreator;
 import org.tron.core.actuator.VMActuator;
 import org.tron.core.actuator.VMFactory;
@@ -58,7 +56,7 @@ public class RuntimeImpl implements Runtime {
         if (!actuatorSet.isEmpty() && !actuatorSet.contains(VMActuator.class.getSimpleName())) {
           throw new ContractValidateException("not exist contract " + "SmartContract");
         }
-        actuator2 = new VMActuator(context.isStatic());
+        vmActuator = VMFactory.getInstance().loadVM(context.isConstant(), false);
         break;
       default:
 //      actuatorList = ActuatorFactory.createActuator(context.getTrxCap(), dbManger);

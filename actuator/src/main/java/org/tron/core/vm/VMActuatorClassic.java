@@ -1,4 +1,4 @@
-package org.tron.core.actuator;
+package org.tron.core.vm;
 
 import static java.lang.Math.max;
 import static java.lang.Math.min;
@@ -32,12 +32,6 @@ import org.tron.core.db.TransactionContext;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.utils.TransactionUtil;
-import org.tron.core.vm.EnergyCost;
-import org.tron.core.vm.LogInfoTriggerParser;
-import org.tron.core.vm.VM;
-import org.tron.core.vm.VMConstant;
-import org.tron.core.vm.VMUtils;
-import org.tron.core.vm.config.ConfigLoader;
 import org.tron.core.vm.config.VMConfig;
 import org.tron.core.vm.program.Program;
 import org.tron.core.vm.program.Program.JVMStackOverFlowException;
@@ -60,7 +54,7 @@ import org.tron.protos.contract.SmartContractOuterClass.SmartContract;
 import org.tron.protos.contract.SmartContractOuterClass.TriggerSmartContract;
 
 @Slf4j(topic = "VM")
-public class VMActuator implements Actuator2 {
+public class VMActuatorClassic implements VMActuator {
 
   private Transaction trx;
   private BlockCapsule blockCap;
@@ -88,7 +82,7 @@ public class VMActuator implements Actuator2 {
   private LogInfoTriggerParser logInfoTriggerParser;
 
 
-  public VMActuator(boolean isConstanCall) {
+  public VMActuatorClassic(boolean isConstanCall) {
     this.isConstanCall = isConstanCall;
     programInvokeFactory = new ProgramInvokeFactoryImpl();
   }
@@ -103,9 +97,12 @@ public class VMActuator implements Actuator2 {
   }
 
   @Override
-  public void validate(TransactionContext context) throws ContractValidateException {
-    //Load Config
-    ConfigLoader.load(context.getStoreFactory());
+  public void validate(Object object) throws ContractValidateException {
+    TransactionContext context = (TransactionContext) object;
+    if (Objects.isNull(context)) {
+      throw new RuntimeException("TransactionContext is null");
+    }
+
     trx = context.getTrxCap().getInstance();
     blockCap = context.getBlockCap();
     //Route Type

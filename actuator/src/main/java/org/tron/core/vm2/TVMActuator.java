@@ -84,7 +84,12 @@ public class TVMActuator implements VMActuator {
   }
 
   @Override
-  public void validate(TransactionContext context) throws ContractValidateException {
+  public void validate(Object object) throws ContractValidateException {
+    TransactionContext context = (TransactionContext) object;
+    if (Objects.isNull(context)) {
+      throw new RuntimeException("TransactionContext is null");
+    }
+
     enableEventLinstener = context.isEventPluginLoaded();
     this.trx = context.getTrxCap();
     this.blockCap = context.getBlockCap();
@@ -133,7 +138,12 @@ public class TVMActuator implements VMActuator {
 
 
   @Override
-  public void execute(TransactionContext context) throws ContractExeException {
+  public void execute(Object object) throws ContractExeException {
+    TransactionContext context = (TransactionContext) object;
+    if (Objects.isNull(context)) {
+      throw new RuntimeException("TransactionContext is null");
+    }
+
     if (!alreadyTimeOut && contractBase != null) {
       try {
         //setup program context and play
