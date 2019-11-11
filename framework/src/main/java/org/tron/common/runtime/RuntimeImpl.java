@@ -59,7 +59,7 @@ public class RuntimeImpl implements Runtime {
         vmActuator = VMFactory.getInstance().loadVM(context.isConstant(), false);
         break;
       default:
-//      actuatorList = ActuatorFactory.createActuator(context.getTrxCap(), dbManger);
+        //actuatorList = ActuatorFactory.createActuator(context.getTrxCap(), dbManger);
         actuatorList = ActuatorCreator.getINSTANCE().createActuator(context.getTrxCap());
     }
     if (vmActuator != null) {
