@@ -1,7 +1,6 @@
 package org.tron.core.services.http;
 
 import com.alibaba.fastjson.JSONObject;
-import java.io.IOException;
 import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -31,7 +30,7 @@ public class CreateAddressServlet extends RateLimiterServlet {
       jsonObject.put("value", input);
       BytesMessage.Builder build = BytesMessage.newBuilder();
       JsonFormat.merge(jsonObject.toJSONString(), build, visible);
-      byte[] address = wallet.createAdresss(build.getValue().toByteArray());
+      byte[] address = wallet.createAddress(build.getValue().toByteArray());
       String base58check = Wallet.encode58Check(address);
       String hexString = ByteArray.toHexString(address);
       JSONObject jsonAddress = new JSONObject();
@@ -39,12 +38,7 @@ public class CreateAddressServlet extends RateLimiterServlet {
       jsonAddress.put("value", hexString);
       response.getWriter().println(jsonAddress.toJSONString());
     } catch (Exception e) {
-      logger.debug("Exception: {}", e.getMessage());
-      try {
-        response.getWriter().println(Util.printErrorMsg(e));
-      } catch (IOException ioe) {
-        logger.debug("IOException: {}", ioe.getMessage());
-      }
+      Util.processError(e, response);
     }
   }
 
@@ -66,7 +60,7 @@ public class CreateAddressServlet extends RateLimiterServlet {
       }
       BytesMessage.Builder build = BytesMessage.newBuilder();
       JsonFormat.merge(input, build, visible);
-      byte[] address = wallet.createAdresss(build.getValue().toByteArray());
+      byte[] address = wallet.createAddress(build.getValue().toByteArray());
       String base58check = Wallet.encode58Check(address);
       String hexString = ByteArray.toHexString(address);
       JSONObject jsonAddress = new JSONObject();
@@ -74,12 +68,7 @@ public class CreateAddressServlet extends RateLimiterServlet {
       jsonAddress.put("value", hexString);
       response.getWriter().println(jsonAddress.toJSONString());
     } catch (Exception e) {
-      logger.debug("Exception: {}", e.getMessage());
-      try {
-        response.getWriter().println(Util.printErrorMsg(e));
-      } catch (IOException ioe) {
-        logger.debug("IOException: {}", ioe.getMessage());
-      }
+      Util.processError(e, response);
     }
   }
 }

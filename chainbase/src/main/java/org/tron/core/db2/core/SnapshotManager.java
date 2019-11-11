@@ -21,7 +21,10 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.tron.common.storage.WriteOptionsWrapper;
+import org.tron.common.utils.DBConfig;
 import org.tron.core.db.RevokingDatabase;
+import org.tron.core.db2.ISession;
 import org.tron.core.db2.common.DB;
 import org.tron.core.db2.common.IRevokingDB;
 import org.tron.core.db2.common.Key;
@@ -316,7 +319,8 @@ public class SnapshotManager implements RevokingDatabase {
 
     checkTmpStore.getDbSource().updateByBatch(batch.entrySet().stream()
         .map(e -> Maps.immutableEntry(e.getKey().getBytes(), e.getValue().getBytes()))
-        .collect(HashMap::new, (m, k) -> m.put(k.getKey(), k.getValue()), HashMap::putAll));
+        .collect(HashMap::new, (m, k) -> m.put(k.getKey(), k.getValue()), HashMap::putAll),
+        WriteOptionsWrapper.getInstance().sync(DBConfig.isDbSync()));
   }
 
   private void deleteCheckpoint() {

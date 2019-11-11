@@ -1,4 +1,4 @@
-package org.tron.core.vm;
+package org.tron.core.actuator;
 
 import static java.lang.Math.max;
 import static java.lang.Math.min;
@@ -32,6 +32,12 @@ import org.tron.core.db.TransactionContext;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.utils.TransactionUtil;
+import org.tron.core.vm.EnergyCost;
+import org.tron.core.vm.LogInfoTriggerParser;
+import org.tron.core.vm.VM;
+import org.tron.core.vm.VMConstant;
+import org.tron.core.vm.VMUtils;
+import org.tron.core.vm.config.ConfigLoader;
 import org.tron.core.vm.config.VMConfig;
 import org.tron.core.vm.program.Program;
 import org.tron.core.vm.program.Program.JVMStackOverFlowException;
@@ -54,7 +60,7 @@ import org.tron.protos.contract.SmartContractOuterClass.SmartContract;
 import org.tron.protos.contract.SmartContractOuterClass.TriggerSmartContract;
 
 @Slf4j(topic = "VM")
-public class VMActuatorClassic implements VMActuator {
+public class VMActuator implements Actuator2 {
 
   private Transaction trx;
   private BlockCapsule blockCap;
@@ -82,7 +88,7 @@ public class VMActuatorClassic implements VMActuator {
   private LogInfoTriggerParser logInfoTriggerParser;
 
 
-  public VMActuatorClassic(boolean isConstanCall) {
+  public VMActuator(boolean isConstanCall) {
     this.isConstanCall = isConstanCall;
     programInvokeFactory = new ProgramInvokeFactoryImpl();
   }
@@ -98,9 +104,8 @@ public class VMActuatorClassic implements VMActuator {
 
   @Override
   public void validate(TransactionContext context) throws ContractValidateException {
-
-    enableEventLinstener = context.isEventPluginLoaded();
-
+    //Load Config
+    ConfigLoader.load(context.getStoreFactory());
     trx = context.getTrxCap().getInstance();
     blockCap = context.getBlockCap();
     //Route Type
@@ -136,7 +141,12 @@ public class VMActuatorClassic implements VMActuator {
   }
 
   @Override
-  public void execute(TransactionContext context) throws ContractExeException {
+  public void execute(Object object) throws ContractExeException {
+    TransactionContext context = (TransactionContext) object;
+    if (Objects.isNull(context)){
+      throw new RuntimeException("TransactionContext is null");
+    }
+
     ProgramResult result = context.getProgramResult();
 
     try {
@@ -169,6 +179,7 @@ public class VMActuatorClassic implements VMActuator {
             result.setRuntimeError(result.getException().getMessage());
             result.rejectInternalTransactions();
           }
+          context.setProgramResult(result);
           return;
         }
 

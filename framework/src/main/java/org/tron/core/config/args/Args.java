@@ -24,10 +24,12 @@ import java.net.Socket;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Properties;
+import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -49,7 +51,6 @@ import org.tron.common.utils.DBConfig;
 import org.tron.core.Constant;
 import org.tron.core.Wallet;
 import org.tron.core.config.Configuration;
-import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.config.Parameter.NetConstants;
 import org.tron.core.config.Parameter.NodeConstant;
 import org.tron.core.db.backup.DbBackupConfig;
@@ -504,6 +505,10 @@ public class Args {
   @Setter
   private long changedDelegation;
 
+  @Getter
+  @Setter
+  private Set<String> actuatorSet;
+
   public static void clearParam() {
     INSTANCE.outputDirectory = "output-directory";
     INSTANCE.help = false;
@@ -623,9 +628,9 @@ public class Args {
       }
       INSTANCE.localWitnesses.initWitnessAccountAddress();
       logger.debug("Got privateKey from cmd");
-    } else if (config.hasPath(Constant.LOCA_LWITENSS)) {
+    } else if (config.hasPath(Constant.LOCAL_WITENSS)) {
       INSTANCE.localWitnesses = new LocalWitnesses();
-      List<String> localwitness = config.getStringList(Constant.LOCA_LWITENSS);
+      List<String> localwitness = config.getStringList(Constant.LOCAL_WITENSS);
       if (localwitness.size() > 1) {
         logger.warn("localwitness size must be one, get the first one");
         localwitness = localwitness.subList(0, 1);
@@ -1038,7 +1043,12 @@ public class Args {
       initRocksDbSettings(config);
     }
 
-    logConfig();
+      INSTANCE.actuatorSet =
+              config.hasPath(Constant.ACTUATOR_WHITELIST) ?
+                      new HashSet<>(config.getStringList(Constant.ACTUATOR_WHITELIST))
+                      : Collections.emptySet();
+
+      logConfig();
     initDBConfig(INSTANCE);
   }
 
@@ -1443,6 +1453,7 @@ public class Args {
     DBConfig.setSupportConstant(cfgArgs.isSupportConstant());
     DBConfig.setLongRunningTime(cfgArgs.getLongRunningTime());
     DBConfig.setChangedDelegation(cfgArgs.getChangedDelegation());
+    DBConfig.setActuatorSet(cfgArgs.getActuatorSet());
   }
 
   public void setFullNodeAllowShieldedTransaction(boolean fullNodeAllowShieldedTransaction) {

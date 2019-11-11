@@ -108,6 +108,10 @@ public class PeerConnection extends Channel {
     msgQueue.sendMessage(message);
   }
 
+  public void fastSend(Message message) {
+    msgQueue.fastSend(message);
+  }
+
   public void onConnect() {
     if (getHelloMessage().getHeadBlockId().getNum() > tronNetDelegate.getHeadBlockId().getNum()) {
       setTronState(TronState.SYNCING);
@@ -132,32 +136,6 @@ public class PeerConnection extends Channel {
 
   public String log() {
     long now = System.currentTimeMillis();
-//    logger.info("Peer {}:{} [ {}, ping {} ms]-----------\n"
-//            + "connect time: {}\n"
-//            + "last know block num: {}\n"
-//            + "needSyncFromPeer:{}\n"
-//            + "needSyncFromUs:{}\n"
-//            + "syncToFetchSize:{}\n"
-//            + "syncToFetchSizePeekNum:{}\n"
-//            + "syncBlockRequestedSize:{}\n"
-//            + "remainNum:{}\n"
-//            + "syncChainRequested:{}\n"
-//            + "blockInProcess:{}\n"
-//            + "{}",
-//        this.getNode().getHost(), this.getNode().getPort(), this.getNode().getHexIdShort(),
-//        (int) this.getPeerStats().getAvgLatency(),
-//        (now - super.getStartTime()) / 1000,
-//        blockBothHave.getNum(),
-//        isNeedSyncFromPeer(),
-//        isNeedSyncFromUs(),
-//        syncBlockToFetch.size(),
-//        syncBlockToFetch.size() > 0 ? syncBlockToFetch.peek().getNum() : -1,
-//        syncBlockRequested.size(),
-//        remainNum,
-//        syncChainRequested == null ? 0 : (now - syncChainRequested.getValue()) / 1000,
-//        syncBlockInProcess.size(),
-//        nodeStatistics.toString());
-////
     return String.format(
         "Peer %s [%8s]\n"
             + "ping msg: count %d, max-average-min-last: %d %d %d %d\n"
@@ -185,7 +163,7 @@ public class PeerConnection extends Channel {
         isNeedSyncFromPeer(),
         isNeedSyncFromUs(),
         syncBlockToFetch.size(),
-        syncBlockToFetch.size() > 0 ? syncBlockToFetch.peek().getNum() : -1,
+        !syncBlockToFetch.isEmpty() ? syncBlockToFetch.peek().getNum() : -1,
         syncBlockRequested.size(),
         remainNum,
         syncChainRequested == null ? 0 : (now - syncChainRequested.getValue()) / 1000,
