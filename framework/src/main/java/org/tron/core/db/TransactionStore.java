@@ -7,6 +7,7 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import org.tron.common.storage.RecentBlockDB;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule;
@@ -22,6 +23,9 @@ public class TransactionStore extends TronStoreWithRevoking<TransactionCapsule> 
   private BlockStore blockStore;
 
   @Autowired
+  private RecentBlockDB recentBlockDB;
+
+  @Autowired
   private KhaosDatabase khaosDatabase;
 
   @Autowired
@@ -34,6 +38,14 @@ public class TransactionStore extends TronStoreWithRevoking<TransactionCapsule> 
     if (Objects.isNull(item) || item.getBlockNum() == -1) {
       super.put(key, item);
     } else {
+      byte[] prevHash = recentBlockDB.getPrevBlockHash(item.getBlockNum());
+      if (prevHash != null) {
+        BlockCapsule blockCapsule = blockStore.getUnchecked(prevHash);
+        if (blockCapsule != null) {
+          blockCapsule.getTransactions().forEach(transactionCapsule ->
+              super.delete(transactionCapsule.getTransactionId().getBytes()));
+        }
+      }
       revokingDB.put(key, ByteArray.fromLong(item.getBlockNum()));
     }
   }

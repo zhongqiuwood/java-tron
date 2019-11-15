@@ -5,23 +5,36 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import org.tron.common.storage.RecentBlockDB;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.exception.ItemNotFoundException;
 
+import javax.annotation.PostConstruct;
+
 @Component
 public class BlockIndexStore extends TronStoreWithRevoking<BytesCapsule> {
 
+  @Autowired
+  private RecentBlockDB recentBlockDB;
 
   @Autowired
   public BlockIndexStore(@Value("block-index") String dbName) {
     super(dbName);
+  }
 
+  @PostConstruct
+  public void init() {
+    recentBlockDB.load(this);
   }
 
   public void put(BlockId id) {
+    byte[] prevHash = recentBlockDB.getPrevBlockHash(id.getBytes());
+    if (prevHash != null) {
+      delete(prevHash);
+    }
     put(ByteArray.fromLong(id.getNum()), new BytesCapsule(id.getBytes()));
   }
 

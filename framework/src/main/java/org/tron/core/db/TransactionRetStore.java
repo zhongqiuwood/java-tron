@@ -7,6 +7,7 @@ import org.apache.commons.lang3.BooleanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import org.tron.common.storage.RecentBlockDB;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.capsule.TransactionInfoCapsule;
 import org.tron.core.capsule.TransactionRetCapsule;
@@ -22,6 +23,9 @@ public class TransactionRetStore extends TronStoreWithRevoking<TransactionRetCap
   private TransactionStore transactionStore;
 
   @Autowired
+  private RecentBlockDB recentBlockDB;
+
+  @Autowired
   public TransactionRetStore(@Value("transactionRetStore") String dbName) {
     super(dbName);
   }
@@ -29,6 +33,10 @@ public class TransactionRetStore extends TronStoreWithRevoking<TransactionRetCap
   @Override
   public void put(byte[] key, TransactionRetCapsule item) {
     if (BooleanUtils.toBoolean(Args.getInstance().getStorage().getTransactionHistoreSwitch())) {
+      long prevBlockNum = recentBlockDB.getPrevBlockNum(ByteArray.toLong(key));
+      if (prevBlockNum != -1) {
+        super.delete(ByteArray.fromLong(prevBlockNum));
+      }
       super.put(key, item);
     }
   }

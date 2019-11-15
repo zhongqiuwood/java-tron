@@ -23,6 +23,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import org.tron.common.storage.RecentBlockDB;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
@@ -33,8 +34,25 @@ import org.tron.core.exception.BadItemException;
 public class BlockStore extends TronStoreWithRevoking<BlockCapsule> {
 
   @Autowired
+  RecentBlockDB recentBlockDB;
+
+  @Autowired
   private BlockStore(@Value("block") String dbName) {
     super(dbName);
+  }
+
+  @Override
+  public void put(byte[] key, BlockCapsule capsule) {
+    if (Objects.isNull(key) || Objects.isNull(capsule)) {
+      return;
+    }
+
+    byte[] prevHash = recentBlockDB.getPrevBlockHash(key);
+    if (prevHash != null) {
+      super.delete(prevHash);
+    }
+
+    super.put(key, capsule);
   }
 
   public List<BlockCapsule> getLimitNumber(long startNumber, long limit) {
