@@ -172,6 +172,8 @@ public class FullNodeHttpApiService implements Service {
   private GetRewardServlet getRewardServlet;
   @Autowired
   private UpdateBrokerageServlet updateBrokerageServlet;
+  @Autowired
+  private ConstructorParameterServlet constructorParameterServlet;
 
 
   @Override
@@ -283,6 +285,7 @@ public class FullNodeHttpApiService implements Service {
       context.addServlet(new ServletHolder(getBrokerageServlet), "/getBrokerage");
       context.addServlet(new ServletHolder(getRewardServlet), "/getReward");
       context.addServlet(new ServletHolder(updateBrokerageServlet), "/updateBrokerage");
+      context.addServlet(new ServletHolder(constructorParameterServlet), "/getconstructorparam");
 
       int maxHttpConnectNumber = Args.getInstance().getMaxHttpConnectNumber();
       if (maxHttpConnectNumber > 0) {
