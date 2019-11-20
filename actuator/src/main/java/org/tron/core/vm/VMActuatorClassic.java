@@ -140,7 +140,7 @@ public class VMActuatorClassic implements VMActuator {
   @Override
   public void execute(Object object) throws ContractExeException {
     TransactionContext context = (TransactionContext) object;
-    if (Objects.isNull(context)){
+    if (Objects.isNull(context)) {
       throw new RuntimeException("TransactionContext is null");
     }
 

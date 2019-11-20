@@ -1,7 +1,5 @@
 package org.tron.core.services.http;
 
-import javax.servlet.http.HttpServletResponse;
-
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
@@ -10,7 +8,6 @@ import com.google.protobuf.ByteString;
 import com.google.protobuf.GeneratedMessageV3;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.Message;
-
 import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.math.BigDecimal;
@@ -18,6 +15,7 @@ import java.nio.charset.Charset;
 import java.security.InvalidParameterException;
 import java.util.List;
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.jetty.util.StringUtil;
 import org.pf4j.util.StringUtils;
@@ -30,6 +28,7 @@ import org.tron.api.GrpcAPI.TransactionExtention;
 import org.tron.api.GrpcAPI.TransactionList;
 import org.tron.api.GrpcAPI.TransactionSignWeight;
 import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.DecodeUtil;
 import org.tron.common.utils.Hash;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.Wallet;
@@ -38,6 +37,7 @@ import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.config.args.Args;
 import org.tron.core.services.http.JsonFormat.ParseException;
+import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
@@ -52,6 +52,13 @@ public class Util {
   public static final String VALUE = "value";
   public static final String CONTRACT_TYPE = "contractType";
   public static final String EXTRA_DATA = "extra_data";
+
+  public static String printTransactionFee(String transactionFee) {
+    JSONObject jsonObject = new JSONObject();
+    JSONObject receipt = JSONObject.parseObject(transactionFee);
+    jsonObject.put("Receipt", receipt.get("receipt"));
+    return jsonObject.toJSONString();
+  }
 
   public static String printErrorMsg(Exception e) {
     JSONObject jsonObject = new JSONObject();
@@ -175,7 +182,7 @@ public class Util {
     System.arraycopy(txRawDataHash, 0, combined, 0, txRawDataHash.length);
     System.arraycopy(ownerAddress, 0, combined, txRawDataHash.length, ownerAddress.length);
 
-    return Hash.sha3omit12(combined);
+    return DecodeUtil.sha3omit12(combined);
   }
 
   public static JSONObject printTransactionToJSON(Transaction transaction, boolean selfType) {
@@ -406,5 +413,30 @@ public class Util {
     }
   }
 
+  public static String convertOutput(Account account) {
+    if (account.getAssetIssuedID().isEmpty()) {
+      return JsonFormat.printToString(account, false);
+    } else {
+      JSONObject accountJson = JSONObject.parseObject(JsonFormat.printToString(account, false));
+      String assetId = accountJson.get("asset_issued_ID").toString();
+      accountJson.put(
+              "asset_issued_ID",
+              ByteString.copyFrom(ByteArray.fromHexString(assetId)).toStringUtf8());
+      return accountJson.toJSONString();
+    }
+  }
+
+  public static void printAccount(Account reply, HttpServletResponse response, Boolean visible)
+          throws java.io.IOException {
+    if (reply != null) {
+      if (visible) {
+        response.getWriter().println(JsonFormat.printToString(reply, true));
+      } else {
+        response.getWriter().println(convertOutput(reply));
+      }
+    } else {
+      response.getWriter().println("{}");
+    }
+  }
 
 }
