@@ -1277,14 +1277,25 @@ public class Wallet {
     try {
       result = dbManager.getTransactionRetStore()
           .getTransactionInfoByBlockNum(ByteArray.fromLong(blockNum));
+
+      if (!Objects.isNull(result) && !Objects.isNull(result.getInstance())) {
+        result.getInstance().getTransactioninfoList().forEach(
+            transactionInfo -> transactionInfoList.addTransactionInfo(transactionInfo));
+      } else {
+        Block block = dbManager.getBlockByNum(blockNum).getInstance();
+        if (block != null) {
+          List<Transaction> listTransaction = block.getTransactionsList();
+          for (Transaction transaction : listTransaction) {
+            TransactionInfoCapsule transactionInfoCapsule = dbManager.getTransactionHistoryStore()
+                .get(Sha256Hash.hash(transaction.getRawData().toByteArray()));
+            transactionInfoList.addTransactionInfo(transactionInfoCapsule.getInstance());
+          }
+        }
+      }
     } catch (BadItemException e) {
+    } catch (StoreException e) {
+      logger.error(e.getMessage());
     }
-
-    if (!Objects.isNull(result) && !Objects.isNull(result.getInstance())) {
-      result.getInstance().getTransactioninfoList().forEach(
-          transactionInfo -> transactionInfoList.addTransactionInfo(transactionInfo));
-    }
-
     return transactionInfoList.build();
   }
 
