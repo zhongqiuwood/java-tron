@@ -46,6 +46,7 @@ import org.joda.time.DateTime;
 import org.spongycastle.util.encoders.Hex;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.tron.api.GrpcAPI.AccountResourceMessage;
 import org.tron.common.logsfilter.EventPluginLoader;
 import org.tron.common.logsfilter.FilterQuery;
 import org.tron.common.logsfilter.capsule.BlockLogTriggerCapsule;
@@ -109,6 +110,7 @@ import org.tron.core.net.TronNetService;
 import org.tron.core.net.message.BlockMessage;
 import org.tron.core.services.DelegationService;
 import org.tron.core.services.WitnessService;
+import org.tron.core.services.http.JsonFormat;
 import org.tron.core.witness.ProposalController;
 import org.tron.core.witness.WitnessController;
 import org.tron.core.zen.merkle.MerkleContainer;
@@ -268,6 +270,9 @@ public class Manager {
   @Getter
   @Autowired
   private DelegationService delegationService;
+
+  @Autowired
+  private Wallet wallet;
 
   public WitnessStore getWitnessStore() {
     return this.witnessStore;
@@ -1315,6 +1320,11 @@ public class Manager {
         String txId = Hex.toHexString(trxCap.getTransactionId().getBytes());
         long balance = getAccountStore().get(targetAddress).getBalance();
         logger.info("checkAccount[{}] txID:{} balance:{}", someAddress, txId, balance);
+
+        AccountResourceMessage reply = wallet.getAccountResource(ByteString.copyFrom(targetAddress));
+        if (reply != null) {
+          logger.info("checkAccount resource {} ", JsonFormat.printToString(reply, true));
+        }
       }
     }
 
