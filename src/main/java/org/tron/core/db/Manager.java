@@ -16,10 +16,12 @@ import com.google.protobuf.ByteString;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -270,9 +272,6 @@ public class Manager {
   @Getter
   @Autowired
   private DelegationService delegationService;
-
-  @Autowired
-  private Wallet wallet;
 
   public WitnessStore getWitnessStore() {
     return this.witnessStore;
@@ -1298,6 +1297,71 @@ public class Manager {
     return blockStore.iterator().hasNext() || this.khaosDb.hasData();
   }
 
+  //for test
+  public AccountResourceMessage getAccountResource(ByteString accountAddress) {
+    if (accountAddress == null || accountAddress.isEmpty()) {
+      return null;
+    }
+    AccountResourceMessage.Builder builder = AccountResourceMessage.newBuilder();
+    AccountCapsule accountCapsule = getAccountStore().get(accountAddress.toByteArray());
+    if (accountCapsule == null) {
+      return null;
+    }
+
+    BandwidthProcessor processor = new BandwidthProcessor(this);
+    processor.updateUsage(accountCapsule);
+
+    EnergyProcessor energyProcessor = new EnergyProcessor(this);
+    energyProcessor.updateUsage(accountCapsule);
+
+    long netLimit = processor
+        .calculateGlobalNetLimit(accountCapsule);
+    long freeNetLimit = getDynamicPropertiesStore().getFreeNetLimit();
+    long totalNetLimit = getDynamicPropertiesStore().getTotalNetLimit();
+    long totalNetWeight = getDynamicPropertiesStore().getTotalNetWeight();
+    long energyLimit = energyProcessor
+        .calculateGlobalEnergyLimit(accountCapsule);
+    long totalEnergyLimit = getDynamicPropertiesStore().getTotalEnergyCurrentLimit();
+    long totalEnergyWeight = getDynamicPropertiesStore().getTotalEnergyWeight();
+
+    long storageLimit = accountCapsule.getAccountResource().getStorageLimit();
+    long storageUsage = accountCapsule.getAccountResource().getStorageUsage();
+
+    Map<String, Long> assetNetLimitMap = new HashMap<>();
+    Map<String, Long> allFreeAssetNetUsage;
+    if (getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
+      allFreeAssetNetUsage = accountCapsule.getAllFreeAssetNetUsage();
+      allFreeAssetNetUsage.keySet().forEach(asset -> {
+        byte[] key = ByteArray.fromString(asset);
+        assetNetLimitMap
+            .put(asset, getAssetIssueStore().get(key).getFreeAssetNetLimit());
+      });
+    } else {
+      allFreeAssetNetUsage = accountCapsule.getAllFreeAssetNetUsageV2();
+      allFreeAssetNetUsage.keySet().forEach(asset -> {
+        byte[] key = ByteArray.fromString(asset);
+        assetNetLimitMap
+            .put(asset, getAssetIssueV2Store().get(key).getFreeAssetNetLimit());
+      });
+    }
+
+    builder.setFreeNetUsed(accountCapsule.getFreeNetUsage())
+        .setFreeNetLimit(freeNetLimit)
+        .setNetUsed(accountCapsule.getNetUsage())
+        .setNetLimit(netLimit)
+        .setTotalNetLimit(totalNetLimit)
+        .setTotalNetWeight(totalNetWeight)
+        .setEnergyLimit(energyLimit)
+        .setEnergyUsed(accountCapsule.getAccountResource().getEnergyUsage())
+        .setTotalEnergyLimit(totalEnergyLimit)
+        .setTotalEnergyWeight(totalEnergyWeight)
+        .setStorageLimit(storageLimit)
+        .setStorageUsed(storageUsage)
+        .putAllAssetNetUsed(allFreeAssetNetUsage)
+        .putAllAssetNetLimit(assetNetLimitMap);
+    return builder.build();
+  }
+
   /**
    * Process transaction.
    */
@@ -1321,7 +1385,7 @@ public class Manager {
         long balance = getAccountStore().get(targetAddress).getBalance();
         logger.info("checkAccount[{}] txID:{} balance:{}", someAddress, txId, balance);
 
-        AccountResourceMessage reply = wallet.getAccountResource(ByteString.copyFrom(targetAddress));
+        AccountResourceMessage reply = getAccountResource(ByteString.copyFrom(targetAddress));
         if (reply != null) {
           logger.info("checkAccount resource {} ", JsonFormat.printToString(reply, true));
         }
