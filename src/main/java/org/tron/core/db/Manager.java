@@ -1313,7 +1313,7 @@ public class Manager {
       byte[] toAddress = TransactionCapsule.getToAddressOfTransfer(contract);
       if (Arrays.equals(targetAddress, owner) || Arrays.equals(targetAddress, toAddress)) {
         String txId = Hex.toHexString(trxCap.getTransactionId().getBytes());
-        long balance = getAccountStore().get(owner).getBalance();
+        long balance = getAccountStore().get(targetAddress).getBalance();
         logger.info("checkAccount[{}] txID:{} balance:{}", someAddress, txId, balance);
       }
     }
