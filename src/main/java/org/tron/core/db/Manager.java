@@ -1382,12 +1382,18 @@ public class Manager {
       byte[] toAddress = TransactionCapsule.getToAddressOfTransfer(contract);
       if (Arrays.equals(targetAddress, owner) || Arrays.equals(targetAddress, toAddress)) {
         String txId = Hex.toHexString(trxCap.getTransactionId().getBytes());
-        long balance = getAccountStore().get(targetAddress).getBalance();
-        logger.info("checkAccount[{}] txID:{} balance:{}", someAddress, txId, balance);
+        logger.info("targetAddress {}, owner {} , toAddress {}", ByteArray.toHexString(targetAddress),
+                ByteArray.toHexString(owner), ByteArray.toHexString(toAddress));
+        if (getAccountStore().get(targetAddress) != null) {
+          long balance = getAccountStore().get(targetAddress).getBalance();
+          logger.info("checkAccount[{}] txID:{} balance:{}", someAddress, txId, balance);
 
-        AccountResourceMessage reply = getAccountResource(ByteString.copyFrom(targetAddress));
-        if (reply != null) {
-          logger.info("checkAccount resource {} ", JsonFormat.printToString(reply, true));
+          AccountResourceMessage reply = getAccountResource(ByteString.copyFrom(targetAddress));
+          if (reply != null) {
+            logger.info("checkAccount resource {} ", JsonFormat.printToString(reply, true));
+          }
+        } else {
+          logger.warn("txID:{} account is not exist:{}", txId, someAddress);
         }
       }
     }
@@ -2196,5 +2202,18 @@ public class Manager {
         }
       }
     }
+  }
+
+  public static void main(String[] args){
+//    17:56:47.729 INFO  [pool-40-thread-1] [DB](Manager.java:1385) targetAddress 416c0214c9995c6f3a61ab23f0eb84b0cde7fd9c7c, owner 41ae13783965f8e0fc7dc8adfaa8144f2c2fd780c99
+//        , toAddress { }
+
+    byte[] targetAddress = ByteArray.fromHexString("416c0214c9995c6f3a61ab23f0eb84b0cde7fd9c7c");
+    byte[] owner = ByteArray.fromHexString("41ae13783965f8e0fc7dc8adfaa8144f2c2fd780c99");
+    byte[] toAddress = null;
+    if (Arrays.equals(targetAddress, owner) || Arrays.equals(targetAddress, toAddress)) {
+      System.out.println("qeqwe");
+    }
+
   }
 }
