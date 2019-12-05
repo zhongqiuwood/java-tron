@@ -480,9 +480,9 @@ public class ShieldedTransferActuator extends AbstractActuator {
   private void setAndCheckMonitorMerkleTree() {
     setShieldedTransactionParameter();
 
-    long t1 = System.currentTimeMillis();
+    /*
     long cmNumberFromDB = dbManager.getMerkleContainer().getCurrentMerkle().size();
-    long nullifierNumberFromDB = dbManager.getNullfierStore().size();
+    long nullifierNumberFromDB = dbManager.getNullfierStore().size(); //耗时比较久，将近0.5s
     long shieldedValueFromDB = dbManager.getDynamicPropertiesStore()
         .getTotalShieldedPoolValue();
     long cmNumberFromTransaction = dbManager.getDynamicPropertiesStore()
@@ -510,8 +510,6 @@ public class ShieldedTransferActuator extends AbstractActuator {
     long totalNullFromTransaction =
         shieldedToOneShielded + shieldedToTwoShielded + shieldedToPublicOneShielded
             + shieldedToPublicTwoShielded + shieldedToPublic;
-    long t2 = System.currentTimeMillis();
-    logger.info("test 111 cost: {}", (t2 - t1));
 
     logger.info("cmNumberFromDb {} cmNumberFromTransaction {} nullifierFromDb {} "
             + "nullifierFromTransaction {} shieldValueFromDb {} shieldValueFromTransaction {} "
@@ -519,8 +517,6 @@ public class ShieldedTransferActuator extends AbstractActuator {
         cmNumberFromDB, cmNumberFromTransaction, nullifierNumberFromDB,
         nullifierNumberFromTransaction, shieldedValueFromDB, shieldedValueFromTransaction,
         totalCmFromTransaction, totalNullFromTransaction);
-    long t3 = System.currentTimeMillis();
-    logger.info("test 222 cost: {}", (t3 - t2));
 
     if (cmNumberFromDB != cmNumberFromTransaction ||
         nullifierNumberFromDB != nullifierNumberFromTransaction ||
@@ -537,12 +533,10 @@ public class ShieldedTransferActuator extends AbstractActuator {
     } else {
       logger.info("setAndCheckMonitorMerkleTree success!");
     }
-    long t4 = System.currentTimeMillis();
-    logger.info("test  333 cost: {}", (t4 - t1));
+    */
   }
 
   private void setShieldedTransactionParameter() {
-    long t1 = System.currentTimeMillis();
     long newCMNumber = shieldedTransferContract.getReceiveDescriptionCount();
     long newNullifierNumber = shieldedTransferContract.getSpendDescriptionCount();
     long amountFromPublic = shieldedTransferContract.getFromAmount();
@@ -599,8 +593,6 @@ public class ShieldedTransferActuator extends AbstractActuator {
         }
       }
     }
-    long t2 = System.currentTimeMillis();
-    logger.info("setShieldedTransactionParameter cost:{}", (t2 - t1));
   }
 
   @Override
