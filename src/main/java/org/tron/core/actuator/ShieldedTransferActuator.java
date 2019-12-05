@@ -478,9 +478,9 @@ public class ShieldedTransferActuator extends AbstractActuator {
   }
 
   private void setAndCheckMonitorMerkleTree() {
-    long t1 = System.currentTimeMillis();
     setShieldedTransactionParameter();
 
+    long t1 = System.currentTimeMillis();
     long cmNumberFromDB = dbManager.getMerkleContainer().getCurrentMerkle().size();
     long nullifierNumberFromDB = dbManager.getNullfierStore().size();
     long shieldedValueFromDB = dbManager.getDynamicPropertiesStore()
@@ -510,6 +510,8 @@ public class ShieldedTransferActuator extends AbstractActuator {
     long totalNullFromTransaction =
         shieldedToOneShielded + shieldedToTwoShielded + shieldedToPublicOneShielded
             + shieldedToPublicTwoShielded + shieldedToPublic;
+    long t2 = System.currentTimeMillis();
+    logger.info("test 111 cost: {}", (t2 - t1));
 
     logger.info("cmNumberFromDb {} cmNumberFromTransaction {} nullifierFromDb {} "
             + "nullifierFromTransaction {} shieldValueFromDb {} shieldValueFromTransaction {} "
@@ -517,6 +519,8 @@ public class ShieldedTransferActuator extends AbstractActuator {
         cmNumberFromDB, cmNumberFromTransaction, nullifierNumberFromDB,
         nullifierNumberFromTransaction, shieldedValueFromDB, shieldedValueFromTransaction,
         totalCmFromTransaction, totalNullFromTransaction);
+    long t3 = System.currentTimeMillis();
+    logger.info("test 222 cost: {}", (t3 - t2));
 
     if (cmNumberFromDB != cmNumberFromTransaction ||
         nullifierNumberFromDB != nullifierNumberFromTransaction ||
@@ -533,8 +537,8 @@ public class ShieldedTransferActuator extends AbstractActuator {
     } else {
       logger.info("setAndCheckMonitorMerkleTree success!");
     }
-    long t2 = System.currentTimeMillis();
-    logger.info("setAndCheckMonitorMerkleTree cost: {}", (t2 - t1));
+    long t4 = System.currentTimeMillis();
+    logger.info("test  333 cost: {}", (t4 - t1));
   }
 
   private void setShieldedTransactionParameter() {
