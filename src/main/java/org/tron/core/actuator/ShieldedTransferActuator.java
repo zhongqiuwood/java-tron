@@ -96,7 +96,7 @@ public class ShieldedTransferActuator extends AbstractActuator {
     ret.setStatus(fee, code.SUCESS);
     ret.setShieldedTransactionFee(shieldedTransactionFee);
 
-    // setAndCheckMonitorMerkleTree(); 
+    // setAndCheckMonitorMerkleTree();
     return true;
   }
 
