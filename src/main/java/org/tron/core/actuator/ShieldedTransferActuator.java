@@ -96,7 +96,7 @@ public class ShieldedTransferActuator extends AbstractActuator {
     ret.setStatus(fee, code.SUCESS);
     ret.setShieldedTransactionFee(shieldedTransactionFee);
 
-    // setAndCheckMonitorMerkleTree();
+    setAndCheckMonitorMerkleTree();
     return true;
   }
 
@@ -478,6 +478,7 @@ public class ShieldedTransferActuator extends AbstractActuator {
   }
 
   private void setAndCheckMonitorMerkleTree() {
+    long t1 = System.currentTimeMillis();
     setShieldedTransactionParameter();
 
     long cmNumberFromDB = dbManager.getMerkleContainer().getCurrentMerkle().size();
@@ -532,9 +533,12 @@ public class ShieldedTransferActuator extends AbstractActuator {
     } else {
       logger.info("setAndCheckMonitorMerkleTree success!");
     }
+    long t2 = System.currentTimeMillis();
+    logger.info("setAndCheckMonitorMerkleTree cost: {}", (t2 - t1));
   }
 
   private void setShieldedTransactionParameter() {
+    long t1 = System.currentTimeMillis();
     long newCMNumber = shieldedTransferContract.getReceiveDescriptionCount();
     long newNullifierNumber = shieldedTransferContract.getSpendDescriptionCount();
     long amountFromPublic = shieldedTransferContract.getFromAmount();
@@ -591,6 +595,8 @@ public class ShieldedTransferActuator extends AbstractActuator {
         }
       }
     }
+    long t2 = System.currentTimeMillis();
+    logger.info("setShieldedTransactionParameter cost:{}", (t2 - t1));
   }
 
   @Override
