@@ -516,7 +516,7 @@ public class ShieldedTransferActuator extends AbstractActuator {
         shieldedToOneShielded + shieldedToTwoShielded + shieldedToPublicOneShielded
             + shieldedToPublicTwoShielded + shieldedToPublic;
 
-    logger.info("cmNumberFromDb {} cmNumberFromTransaction {} nullifierFromDb {} "
+    logger.info("[setAndCheckMonitorMerkleTree] cmNumberFromDb {} cmNumberFromTransaction {} nullifierFromDb {} "
             + "nullifierFromTransaction {} shieldValueFromDb {} shieldValueFromTransaction {} "
             + "totalCmFromTransaction {} totalNullFromTransaction {}",
         cmNumberFromDB, cmNumberFromTransaction, nullifierNumberFromDB,
@@ -529,14 +529,14 @@ public class ShieldedTransferActuator extends AbstractActuator {
         cmNumberFromDB != totalCmFromTransaction ||
         nullifierNumberFromDB != totalNullFromTransaction) {
       byte[] signHash = TransactionCapsule.getShieldTransactionHashIgnoreTypeException(tx);
-      logger.error("Last BlockNum {} transaction {} shield transaction check failure.",
+      logger.error("[setAndCheckMonitorMerkleTree] Last BlockNum {} transaction {} shield transaction check failure.",
           dbManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber(),
           ByteArray.toHexString(signHash));
 
 //      postAlarmToDingDing(cmNumberFromDB, cmNumberFromTransaction, nullifierNumberFromDB,
 //          nullifierNumberFromTransaction, shieldedValueFromDB,shieldedValueFromTransaction);
     } else {
-      logger.info("setAndCheckMonitorMerkleTree success!");
+      logger.info("[setAndCheckMonitorMerkleTree] success!");
     }
   }
 
