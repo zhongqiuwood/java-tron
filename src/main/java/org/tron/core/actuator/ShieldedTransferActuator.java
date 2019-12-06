@@ -479,8 +479,13 @@ public class ShieldedTransferActuator extends AbstractActuator {
 
   private void setAndCheckMonitorMerkleTree() {
     setShieldedTransactionParameter();
+    if (Args.getInstance().isMonitorShieldCheckLog()) {
+      checkDataDBAndMonitor();
+    }
 
-    /*
+  }
+
+  private void checkDataDBAndMonitor() {
     long cmNumberFromDB = dbManager.getMerkleContainer().getCurrentMerkle().size();
     long nullifierNumberFromDB = dbManager.getNullfierStore().size(); //耗时比较久，将近0.5s
     long shieldedValueFromDB = dbManager.getDynamicPropertiesStore()
@@ -533,7 +538,6 @@ public class ShieldedTransferActuator extends AbstractActuator {
     } else {
       logger.info("setAndCheckMonitorMerkleTree success!");
     }
-    */
   }
 
   private void setShieldedTransactionParameter() {

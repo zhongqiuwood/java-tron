@@ -436,6 +436,10 @@ public class Args {
 
   @Getter
   @Setter
+  private boolean monitorShieldCheckLog;
+
+  @Getter
+  @Setter
   private long allowShieldedTransaction; //committee parameter
 
   // full node used this parameter to close shielded transaction
@@ -573,6 +577,7 @@ public class Args {
     INSTANCE.allowMultiSign = 0;
     INSTANCE.trxExpirationTimeInMilliseconds = 0;
     INSTANCE.fullNodeAllowShieldedTransaction = true;
+    INSTANCE.monitorShieldCheckLog = true;
     INSTANCE.zenTokenId = "000000";
     INSTANCE.allowProtoFilterNum = 0;
     INSTANCE.allowAccountStateRoot = 0;
@@ -981,6 +986,10 @@ public class Args {
 
     INSTANCE.eventFilter =
         config.hasPath("event.subscribe.filter") ? getEventFilter(config) : null;
+
+    INSTANCE.monitorShieldCheckLog =
+        config.hasPath("monitor.monitorShieldCheckLog") ?
+            config.getBoolean("monitor.monitorShieldCheckLog") : true;
 
     INSTANCE.fullNodeAllowShieldedTransaction =
             !config.hasPath("node.fullNodeAllowShieldedTransaction")
