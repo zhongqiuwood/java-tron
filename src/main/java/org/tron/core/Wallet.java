@@ -2752,7 +2752,7 @@ public class Wallet {
         dbManager.getDynamicPropertiesStore().getShieldedToOneShieldedNumber());
     transactionObject.put("shieldedTo2Shielded",
         dbManager.getDynamicPropertiesStore().getShieldedToTwoShieldedNumber());
-    resultJsonObject.put("ShiledNumber", transactionObject);
+    resultJsonObject.put("ShieldNumber", transactionObject);
 
     JSONObject cmJsonObject = new JSONObject();
     cmJsonObject.put("fromDb", dbManager.getMerkleContainer().getCurrentMerkle().size());
