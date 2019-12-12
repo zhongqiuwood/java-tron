@@ -2733,7 +2733,7 @@ public class Wallet {
   }
 
   public String getShieldedMonitorInfo() {
-    JSONObject jsonObject = new JSONObject();
+    JSONObject resultJsonObject = new JSONObject(true);
 
     JSONObject transactionObject = new JSONObject(true);
     transactionObject.put("totalNumber",
@@ -2752,31 +2752,31 @@ public class Wallet {
         dbManager.getDynamicPropertiesStore().getShieldedToOneShieldedNumber());
     transactionObject.put("shieldedTo2Shielded",
         dbManager.getDynamicPropertiesStore().getShieldedToTwoShieldedNumber());
-    jsonObject.put("ShiledNumber", transactionObject);
+    resultJsonObject.put("ShiledNumber", transactionObject);
 
     JSONObject cmJsonObject = new JSONObject();
     cmJsonObject.put("fromDb", dbManager.getMerkleContainer().getCurrentMerkle().size());
     cmJsonObject.put("fromTransactions",
         dbManager.getDynamicPropertiesStore().getTotalCMNumberFromTransactions());
-    jsonObject.put("cmNumber", cmJsonObject);
+    resultJsonObject.put("cmNumber", cmJsonObject);
 
     JSONObject nullifierJsonObject = new JSONObject();
     nullifierJsonObject
         .put("fromTransactions", dbManager.getDynamicPropertiesStore().getTotalNullifierNumber());
     nullifierJsonObject.put("fromDb", dbManager.getNullfierStore().size());
-    jsonObject.put("nullifierNumber", nullifierJsonObject);
+    resultJsonObject.put("nullifierNumber", nullifierJsonObject);
 
     JSONObject shieldedValueJsonObject = new JSONObject();
     shieldedValueJsonObject
         .put("fromDb", dbManager.getDynamicPropertiesStore().getTotalShieldedPoolValue());
     shieldedValueJsonObject.put("fromTransactions",
         dbManager.getDynamicPropertiesStore().getShieldValueFromTransaction());
-    jsonObject.put("shieldValue", shieldedValueJsonObject);
+    resultJsonObject.put("shieldValue", shieldedValueJsonObject);
 
     MerkleContainer merkleContainer = dbManager.getMerkleContainer();
     IncrementalMerkleTreeContainer currentMerkle = merkleContainer.getCurrentMerkle();
-    jsonObject.put("merkleHeight", currentMerkle.monitorMerkleHeight());
+    resultJsonObject.put("merkleHeight", currentMerkle.monitorMerkleHeight());
 
-    return jsonObject.toJSONString();
+    return resultJsonObject.toJSONString();
   }
 }
