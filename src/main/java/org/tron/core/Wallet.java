@@ -2761,9 +2761,9 @@ public class Wallet {
     jsonObject.put("cmNumber", cmJsonObject);
 
     JSONObject nullifierJsonObject = new JSONObject();
-    nullifierJsonObject.put("fromDb", dbManager.getNullfierStore().size());
     nullifierJsonObject
         .put("fromTransactions", dbManager.getDynamicPropertiesStore().getTotalNullifierNumber());
+    nullifierJsonObject.put("fromDb", dbManager.getNullfierStore().size());
     jsonObject.put("nullifierNumber", nullifierJsonObject);
 
     JSONObject shieldedValueJsonObject = new JSONObject();
