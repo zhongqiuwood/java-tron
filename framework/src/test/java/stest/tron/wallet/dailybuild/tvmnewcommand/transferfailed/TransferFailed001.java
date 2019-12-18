@@ -382,7 +382,7 @@ public class TransferFailed001 {
 
     Assert.assertTrue(infoById.get().getResultValue() == 1);
     Assert.assertEquals(contractResult.TRANSFER_FAILED, infoById.get().getReceipt().getResult());
-    Assert.assertEquals("transfer trx failed: Cannot transfer TRX to yourself.",
+    Assert.assertEquals("transfer trx failed: Cannot transfer trx to yourself.",
         ByteArray.toStr(infoById.get().getResMessage().toByteArray()));
 
     Assert.assertTrue(afterBalance + fee == beforeBalance);

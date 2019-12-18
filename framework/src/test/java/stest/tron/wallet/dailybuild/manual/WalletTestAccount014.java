@@ -54,7 +54,7 @@ public class WalletTestAccount014 {
     Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
   }
 
-  /**
+  /**WalletTestMutiSign002
    * constructor.
    */
   @BeforeClass(enabled = true)

@@ -289,7 +289,7 @@ public class ContractTrcToken005 {
 
     Assert.assertFalse(response.getResult());
     Assert.assertEquals(CONTRACT_VALIDATE_ERROR, response.getCode());
-    Assert.assertEquals("contract validate error : tokenValue must be >= 0",
+    Assert.assertEquals("contract validate error : tokenValue must >= 0",
         response.getMessage().toStringUtf8());
 
     tokenId = assetAccountId.toStringUtf8();
@@ -302,7 +302,7 @@ public class ContractTrcToken005 {
 
     Assert.assertFalse(response.getResult());
     Assert.assertEquals(CONTRACT_VALIDATE_ERROR, response.getCode());
-    Assert.assertEquals("contract validate error : tokenValue must be >= 0",
+    Assert.assertEquals("contract validate error : tokenValue must >= 0",
         response.getMessage().toStringUtf8());
 
     PublicMethed
@@ -320,7 +320,7 @@ public class ContractTrcToken005 {
 
     Assert.assertFalse(response.getResult());
     Assert.assertEquals(CONTRACT_VALIDATE_ERROR, response.getCode());
-    Assert.assertEquals("contract validate error : tokenId must be > 1000000",
+    Assert.assertEquals("contract validate error : tokenId must > 1000000",
         response.getMessage().toStringUtf8());
 
     // tokenId is long.min
@@ -334,7 +334,7 @@ public class ContractTrcToken005 {
 
     Assert.assertFalse(response.getResult());
     Assert.assertEquals(CONTRACT_VALIDATE_ERROR, response.getCode());
-    Assert.assertEquals("contract validate error : tokenId must be > 1000000",
+    Assert.assertEquals("contract validate error : tokenId must > 1000000",
         response.getMessage().toStringUtf8());
 
     // tokenId is 0
@@ -366,7 +366,7 @@ public class ContractTrcToken005 {
 
     Assert.assertFalse(response.getResult());
     Assert.assertEquals(CONTRACT_VALIDATE_ERROR, response.getCode());
-    Assert.assertEquals("contract validate error : tokenId must be > 1000000",
+    Assert.assertEquals("contract validate error : tokenId must > 1000000",
         response.getMessage().toStringUtf8());
 
     PublicMethed.waitProduceNextBlock(blockingStubFull);
@@ -381,7 +381,7 @@ public class ContractTrcToken005 {
 
     Assert.assertFalse(response.getResult());
     Assert.assertEquals(CONTRACT_VALIDATE_ERROR, response.getCode());
-    Assert.assertEquals("contract validate error : tokenId must be > 1000000",
+    Assert.assertEquals("contract validate error : tokenId must > 1000000",
         response.getMessage().toStringUtf8());
 
     PublicMethed.waitProduceNextBlock(blockingStubFull);
@@ -396,7 +396,7 @@ public class ContractTrcToken005 {
 
     Assert.assertFalse(response.getResult());
     Assert.assertEquals(CONTRACT_VALIDATE_ERROR, response.getCode());
-    Assert.assertEquals("contract validate error : tokenId must be > 1000000",
+    Assert.assertEquals("contract validate error : tokenId must > 1000000",
         response.getMessage().toStringUtf8());
 
     accountResource = PublicMethed.getAccountResource(dev001Address, blockingStubFull);
