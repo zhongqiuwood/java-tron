@@ -22,7 +22,6 @@ import org.tron.common.runtime.InternalTransaction;
 import org.tron.common.runtime.InternalTransaction.ExecutorType;
 import org.tron.common.runtime.InternalTransaction.TrxType;
 import org.tron.common.runtime.ProgramResult;
-import org.tron.common.utils.DBConfig;
 import org.tron.common.utils.StorageUtils;
 import org.tron.common.utils.WalletUtil;
 import org.tron.core.capsule.AccountCapsule;
@@ -484,7 +483,7 @@ public class VMActuator implements Actuator2 {
               tokenValue, tokenId, blockCap.getInstance(), repository, vmStartInUs,
               vmShouldEndInUs, energyLimit);
       if (isConstanCall) {
-        programInvoke.setConstantCall();
+        programInvoke.setRootConstantCall();
       }
       this.vm = new VM();
       rootInternalTransaction = new InternalTransaction(trx, trxType);

@@ -53,13 +53,14 @@ public class ProgramInvokeImpl implements ProgramInvoke {
   private boolean byTransaction = true;
   private boolean byTestingSuite = false;
   private int callDeep = 0;
-  private boolean isConstantCall = false;
+  private boolean isStaticCall = false;
+  private boolean isRootConstantCall = false;
 
   public ProgramInvokeImpl(DataWord address, DataWord origin, DataWord caller, DataWord balance,
       DataWord callValue, DataWord tokenValue, DataWord tokenId, byte[] msgData,
       DataWord lastHash, DataWord coinbase, DataWord timestamp, DataWord number,
       DataWord difficulty,
-      Repository deposit, int callDeep, boolean isConstantCall, boolean byTestingSuite,
+      Repository deposit, int callDeep, boolean isStaticCall, boolean byTestingSuite,
       long vmStartInUs, long vmShouldEndInUs, long energyLimit) {
     this.address = address;
     this.origin = origin;
@@ -81,7 +82,7 @@ public class ProgramInvokeImpl implements ProgramInvoke {
 
     this.deposit = deposit;
     this.byTransaction = false;
-    this.isConstantCall = isConstantCall;
+    this.isStaticCall = isStaticCall;
     this.byTestingSuite = byTestingSuite;
     this.vmStartInUs = vmStartInUs;
     this.vmShouldEndInUs = vmShouldEndInUs;
@@ -253,8 +254,8 @@ public class ProgramInvokeImpl implements ProgramInvoke {
   }
 
   @Override
-  public boolean isConstantCall() {
-    return isConstantCall;
+  public boolean isStaticCall() {
+    return isStaticCall;
   }
 
   @Override
@@ -365,9 +366,13 @@ public class ProgramInvokeImpl implements ProgramInvoke {
   }
 
   @Override
-  public void setConstantCall() {
-    isConstantCall = true;
+  public void setRootConstantCall() {
+    isRootConstantCall = true;
   }
 
+  @Override
+  public boolean isRootConstantCall() {
+    return isRootConstantCall;
+  }
 
 }

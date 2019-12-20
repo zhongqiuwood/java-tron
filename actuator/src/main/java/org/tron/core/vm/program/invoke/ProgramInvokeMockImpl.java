@@ -218,7 +218,7 @@ public class ProgramInvokeMockImpl implements ProgramInvoke {
   }
 
   @Override
-  public boolean isConstantCall() {
+  public boolean isStaticCall() {
     return isConstantCall;
   }
 
@@ -237,10 +237,13 @@ public class ProgramInvokeMockImpl implements ProgramInvoke {
   }
 
   @Override
-  public void setConstantCall() {
-    isConstantCall = true;
+  public void setRootConstantCall() {
   }
 
+  @Override
+  public boolean isRootConstantCall() {
+    return false;
+  }
 
   @Override
   public boolean byTestingSuite() {

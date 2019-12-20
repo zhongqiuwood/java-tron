@@ -63,7 +63,7 @@ public interface ProgramInvoke {
 
   Repository getDeposit();
 
-  boolean isConstantCall();
+  boolean isStaticCall();
 
   long getVmShouldEndInUs();
 
@@ -71,6 +71,7 @@ public interface ProgramInvoke {
 
   long getEnergyLimit();
 
-  void setConstantCall();
+  void setRootConstantCall();
 
+  boolean isRootConstantCall();
 }
