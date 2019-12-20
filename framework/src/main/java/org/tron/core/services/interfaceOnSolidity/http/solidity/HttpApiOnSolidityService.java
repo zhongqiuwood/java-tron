@@ -176,6 +176,7 @@ public class HttpApiOnSolidityService implements Service {
       // only for SolidityNode
       context.addServlet(new ServletHolder(getTransactionByIdOnSolidityServlet),
           "/walletsolidity/gettransactionbyid");
+
       context
           .addServlet(new ServletHolder(getTransactionInfoByIdOnSolidityServlet),
               "/walletsolidity/gettransactioninfobyid");

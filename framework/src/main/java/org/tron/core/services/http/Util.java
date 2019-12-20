@@ -47,12 +47,11 @@ import org.tron.protos.contract.SmartContractOuterClass.CreateSmartContract;
 @Slf4j(topic = "API")
 public class Util {
 
-  public static final String PERMISSION_ID = "Permission_id";
   public static final String VISIBLE = "visible";
+  public static final String PERMISSION_ID = "Permission_id";
   public static final String TRANSACTION = "transaction";
   public static final String VALUE = "value";
   public static final String CONTRACT_TYPE = "contractType";
-  public static final String EXTRA_DATA = "extra_data";
 
   public static String printTransactionFee(String transactionFee) {
     JSONObject jsonObject = new JSONObject();
@@ -64,16 +63,6 @@ public class Util {
   public static String printErrorMsg(Exception e) {
     JSONObject jsonObject = new JSONObject();
     jsonObject.put("Error", e.getClass() + " : " + e.getMessage());
-    return jsonObject.toJSONString();
-  }
-
-  public static String printBlockList(BlockList list, boolean selfType) {
-    List<Block> blocks = list.getBlockList();
-    JSONObject jsonObject = JSONObject.parseObject(JsonFormat.printToString(list, selfType));
-    JSONArray jsonArray = new JSONArray();
-    blocks.stream().forEach(block -> jsonArray.add(printBlockToJSON(block, selfType)));
-    jsonObject.put("block", jsonArray);
-
     return jsonObject.toJSONString();
   }
 
@@ -125,12 +114,6 @@ public class Util {
 
   public static String printTransaction(Transaction transaction) {
     return printTransactionToJSON(transaction, true).toJSONString();
-  }
-
-  public static String printCreateTransaction(Transaction transaction, boolean selfType) {
-    JSONObject jsonObject = printTransactionToJSON(transaction, selfType);
-    jsonObject.put(VISIBLE, selfType);
-    return jsonObject.toJSONString();
   }
 
   public static String printTransactionExtention(TransactionExtention transactionExtention,
@@ -235,73 +218,17 @@ public class Util {
     return jsonTransaction;
   }
 
-  public static Transaction packTransaction(String strTransaction, boolean selfType) {
-    JSONObject jsonTransaction = JSONObject.parseObject(strTransaction);
-    JSONObject rawData = jsonTransaction.getJSONObject("raw_data");
-    JSONArray contracts = new JSONArray();
-    JSONArray rawContractArray = rawData.getJSONArray("contract");
-
-    for (int i = 0; i < rawContractArray.size(); i++) {
-      try {
-        JSONObject contract = rawContractArray.getJSONObject(i);
-        JSONObject parameter = contract.getJSONObject("parameter");
-        String contractType = contract.getString("type");
-        Any any = null;
-        Class clazz = TransactionFactory.getContract(ContractType.valueOf(contractType));
-        if (clazz != null) {
-          Constructor<GeneratedMessageV3> constructor = clazz.getDeclaredConstructor();
-          constructor.setAccessible(true);
-          GeneratedMessageV3 generatedMessageV3 = constructor.newInstance();
-          Message.Builder builder = generatedMessageV3.toBuilder();
-          JsonFormat.merge(parameter.getJSONObject(VALUE).toJSONString(), builder, selfType);
-          any = Any.pack(builder.build());
-        }
-        if (any != null) {
-          String value = ByteArray.toHexString(any.getValue().toByteArray());
-          parameter.put(VALUE, value);
-          contract.put("parameter", parameter);
-          contracts.add(contract);
-        }
-      } catch (ParseException e) {
-        logger.debug("ParseException: {}", e.getMessage());
-      } catch (Exception e) {
-        logger.error("", e);
-      }
-    }
-    rawData.put("contract", contracts);
-    jsonTransaction.put("raw_data", rawData);
-    Transaction.Builder transactionBuilder = Transaction.newBuilder();
-    try {
-      JsonFormat.merge(jsonTransaction.toJSONString(), transactionBuilder, selfType);
-      return transactionBuilder.build();
-    } catch (ParseException e) {
-      logger.debug("ParseException: {}", e.getMessage());
-      return null;
-    }
-  }
-
   public static void checkBodySize(String body) throws Exception {
     CommonParameter parameter = Args.getInstance();
     if (body.getBytes().length > parameter.getMaxMessageSize()) {
       throw new Exception("body size is too big, the limit is " + parameter.getMaxMessageSize());
     }
   }
-
   public static boolean getVisible(final HttpServletRequest request) {
     boolean visible = false;
     if (StringUtil.isNotBlank(request.getParameter(VISIBLE))) {
       visible = Boolean.valueOf(request.getParameter(VISIBLE));
     }
-    return visible;
-  }
-
-  public static boolean getVisiblePost(final String input) {
-    boolean visible = false;
-    JSONObject jsonObject = JSON.parseObject(input);
-    if (jsonObject.containsKey(VISIBLE)) {
-      visible = jsonObject.getBoolean(VISIBLE);
-    }
-
     return visible;
   }
 
@@ -312,48 +239,6 @@ public class Util {
       contractType = jsonObject.getString(CONTRACT_TYPE);
     }
     return contractType;
-  }
-
-  public static String getHexAddress(final String address) {
-    if (address != null) {
-      byte[] addressByte = Wallet.decodeFromBase58Check(address);
-      return ByteArray.toHexString(addressByte);
-    } else {
-      return null;
-    }
-  }
-
-  public static String getHexString(final String string) {
-    return ByteArray.toHexString(ByteString.copyFromUtf8(string).toByteArray());
-  }
-
-  public static Transaction setTransactionPermissionId(JSONObject jsonObject,
-      Transaction transaction) {
-    if (jsonObject.containsKey(PERMISSION_ID)) {
-      int permissionId = jsonObject.getInteger(PERMISSION_ID);
-      if (permissionId > 0) {
-        Transaction.raw.Builder raw = transaction.getRawData().toBuilder();
-        Transaction.Contract.Builder contract = raw.getContract(0).toBuilder()
-            .setPermissionId(permissionId);
-        raw.clearContract();
-        raw.addContract(contract);
-        return transaction.toBuilder().setRawData(raw).build();
-      }
-    }
-    return transaction;
-  }
-
-  public static Transaction setTransactionExtraData(JSONObject jsonObject,
-      Transaction transaction) {
-    if (jsonObject.containsKey(EXTRA_DATA)) {
-      String data = jsonObject.getString(EXTRA_DATA);
-      if (data.length() > 0) {
-        Transaction.raw.Builder raw = transaction.getRawData().toBuilder();
-        raw.setData(ByteString.copyFrom(Base64.decode(data)));
-        return transaction.toBuilder().setRawData(raw).build();
-      }
-    }
-    return transaction;
   }
 
   public static boolean getVisibleOnlyForSign(JSONObject jsonObject) {
@@ -401,40 +286,4 @@ public class Util {
     System.arraycopy(memo, 0, inputCheck, 0, index);
     return new String(inputCheck, Charset.forName("UTF-8"));
   }
-
-  public static void processError(Exception e, HttpServletResponse response) {
-    logger.debug("Exception: {}", e.getMessage());
-    try {
-      response.getWriter().println(Util.printErrorMsg(e));
-    } catch (IOException ioe) {
-      logger.debug("IOException: {}", ioe.getMessage());
-    }
-  }
-
-  public static String convertOutput(Account account) {
-    if (account.getAssetIssuedID().isEmpty()) {
-      return JsonFormat.printToString(account, false);
-    } else {
-      JSONObject accountJson = JSONObject.parseObject(JsonFormat.printToString(account, false));
-      String assetId = accountJson.get("asset_issued_ID").toString();
-      accountJson.put(
-          "asset_issued_ID",
-          ByteString.copyFrom(ByteArray.fromHexString(assetId)).toStringUtf8());
-      return accountJson.toJSONString();
-    }
-  }
-
-  public static void printAccount(Account reply, HttpServletResponse response, Boolean visible)
-      throws java.io.IOException {
-    if (reply != null) {
-      if (visible) {
-        response.getWriter().println(JsonFormat.printToString(reply, true));
-      } else {
-        response.getWriter().println(convertOutput(reply));
-      }
-    } else {
-      response.getWriter().println("{}");
-    }
-  }
-
 }

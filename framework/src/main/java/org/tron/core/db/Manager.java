@@ -145,7 +145,7 @@ import org.tron.protos.Protocol.TransactionInfo;
 
 @Slf4j(topic = "DB")
 @Component
-public class Manager {
+public class Manager extends ChainBaseManager{
 
   private static final int SHIELDED_TRANS_IN_BLOCK_COUNTS = 1;
   private static final String SAVE_BLOCK = "save block: ";
@@ -154,23 +154,15 @@ public class Manager {
   @Getter
   @Setter
   public boolean eventPluginLoaded = false;
-  @Autowired
-  private TransactionStore transactionStore;
   @Autowired(required = false)
   private TransactionCache transactionCache;
   @Autowired
-  @Getter
-  private TransactionRetStore transactionRetStore;
-  @Autowired
   private RecentBlockStore recentBlockStore;
-  @Autowired
-  private TransactionHistoryStore transactionHistoryStore;
   // for network
   @Autowired
   private PeersStore peersStore;
   @Autowired
   private KhaosDatabase khaosDb;
-  private BlockCapsule genesisBlock;
   @Getter
   @Autowired
   private RevokingDatabase revokingStore;
@@ -199,11 +191,6 @@ public class Manager {
   private boolean isRunTriggerCapsuleProcessThread = true;
   private long latestSolidifiedBlockNumber;
   private BlockingQueue<TransactionCapsule> pushTransactionQueue = new LinkedBlockingQueue<>();
-  @Getter
-  private Cache<Sha256Hash, Boolean> transactionIdCache = CacheBuilder
-      .newBuilder().maximumSize(100_000).recordStats().build();
-  @Getter
-  private ForkController forkController = ForkController.instance();
   @Autowired
   private AccountStateCallBack accountStateCallBack;
   @Autowired
@@ -335,14 +322,6 @@ public class Manager {
     return chainBaseManager.getBlockIndexStore();
   }
 
-  public ExchangeStore getExchangeStoreFinal() {
-    if (getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
-      return getExchangeStore();
-    } else {
-      return getExchangeV2Store();
-    }
-  }
-
   public void putExchangeCapsule(ExchangeCapsule exchangeCapsule) {
     if (getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
       getExchangeStore().put(exchangeCapsule.createDbKey(), exchangeCapsule);
@@ -395,18 +374,8 @@ public class Manager {
     }
   }
 
-  public synchronized BlockId getHeadBlockId() {
-    return new BlockId(
-        getDynamicPropertiesStore().getLatestBlockHeaderHash(),
-        getDynamicPropertiesStore().getLatestBlockHeaderNumber());
-  }
-
   public long getHeadBlockNum() {
     return getDynamicPropertiesStore().getLatestBlockHeaderNumber();
-  }
-
-  public long getHeadBlockTimeStamp() {
-    return getDynamicPropertiesStore().getLatestBlockHeaderTimestamp();
   }
 
   public void clearAndWriteNeighbours(Set<Node> nodes) {
@@ -494,13 +463,6 @@ public class Manager {
     TransactionRegister.registerActuator();
   }
 
-  public BlockId getGenesisBlockId() {
-    return this.genesisBlock.getBlockId();
-  }
-
-  public BlockCapsule getGenesisBlock() {
-    return genesisBlock;
-  }
 
   /**
    * init genesis block.
@@ -756,7 +718,7 @@ public class Manager {
       return transactionCache.has(transactionCapsule.getTransactionId().getBytes());
     }
 
-    return transactionStore.has(transactionCapsule.getTransactionId().getBytes());
+    return chainBaseManager.getTransactionStore().has(transactionCapsule.getTransactionId().getBytes());
   }
 
   /**
@@ -883,7 +845,7 @@ public class Manager {
     chainBaseManager.getBlockStore().put(block.getBlockId().getBytes(), block);
     chainBaseManager.getBlockIndexStore().put(block.getBlockId());
     if (block.getTransactions().size() != 0) {
-      this.transactionRetStore.put(ByteArray.fromLong(block.getNum()), block.getResult());
+      this.getTransactionRetStore().put(ByteArray.fromLong(block.getNum()), block.getResult());
     }
 
     updateFork(block);
@@ -1202,18 +1164,6 @@ public class Manager {
   }
 
   /**
-   * Get a BlockCapsule by id.
-   */
-  public BlockCapsule getBlockById(final Sha256Hash hash)
-      throws BadItemException, ItemNotFoundException {
-    BlockCapsule block = this.khaosDb.getBlock(hash);
-    if (block == null) {
-      block = chainBaseManager.getBlockStore().get(hash.getBytes());
-    }
-    return block;
-  }
-
-  /**
    * judge has blocks.
    */
   public boolean hasBlocks() {
@@ -1279,7 +1229,7 @@ public class Manager {
     if (Objects.nonNull(blockCap) && getDynamicPropertiesStore().supportVM()) {
       trxCap.setResult(trace.getTransactionContext());
     }
-    transactionStore.put(trxCap.getTransactionId().getBytes(), trxCap);
+    chainBaseManager.getTransactionStore().put(trxCap.getTransactionId().getBytes(), trxCap);
 
     Optional.ofNullable(transactionCache)
         .ifPresent(t -> t.put(trxCap.getTransactionId().getBytes(),
@@ -1296,18 +1246,6 @@ public class Manager {
     }
 
     return transactionInfo.getInstance();
-  }
-
-  /**
-   * Get the block id from the number.
-   */
-  public BlockId getBlockIdByNum(final long num) throws ItemNotFoundException {
-    return chainBaseManager.getBlockIndexStore().get(num);
-  }
-
-  public BlockCapsule getBlockByNum(final long num) throws
-      ItemNotFoundException, BadItemException {
-    return getBlockById(getBlockIdByNum(num));
   }
 
   /**
@@ -1444,11 +1382,11 @@ public class Manager {
   }
 
   public TransactionStore getTransactionStore() {
-    return this.transactionStore;
+    return this.getTransactionStore();
   }
 
   public TransactionHistoryStore getTransactionHistoryStore() {
-    return this.transactionHistoryStore;
+    return this.getTransactionHistoryStore();
   }
 
   public BlockStore getBlockStore() {
@@ -1575,15 +1513,6 @@ public class Manager {
         - revokingStore.size();
   }
 
-  public BlockId getSolidBlockId() {
-    try {
-      long num = chainBaseManager.getDynamicPropertiesStore().getLatestSolidifiedBlockNum();
-      return getBlockIdByNum(num);
-    } catch (Exception e) {
-      return getGenesisBlockId();
-    }
-  }
-
   public AssetIssueStore getAssetIssueStore() {
     return chainBaseManager.getAssetIssueStore();
   }
@@ -1591,14 +1520,6 @@ public class Manager {
 
   public AssetIssueV2Store getAssetIssueV2Store() {
     return chainBaseManager.getAssetIssueV2Store();
-  }
-
-  public AssetIssueStore getAssetIssueStoreFinal() {
-    if (getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
-      return getAssetIssueStore();
-    } else {
-      return getAssetIssueV2Store();
-    }
   }
 
   public AccountIdIndexStore getAccountIdIndexStore() {
@@ -1611,11 +1532,8 @@ public class Manager {
 
   public void closeAllStore() {
     logger.info("******** begin to close db ********");
-    closeOneStore(transactionStore);
     closeOneStore(peersStore);
     closeOneStore(recentBlockStore);
-    closeOneStore(transactionHistoryStore);
-    closeOneStore(transactionRetStore);
     chainBaseManager.closeAllStore();
     logger.info("******** end to close db ********");
   }

@@ -1,16 +1,27 @@
 package org.tron.core;
 
+import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
+
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.tron.common.utils.ForkController;
+import org.tron.common.utils.Sha256Hash;
 import org.tron.common.zksnark.MerkleContainer;
+import org.tron.core.capsule.BlockCapsule;
+import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.db.BlockIndexStore;
 import org.tron.core.db.BlockStore;
 import org.tron.core.db.DelegationService;
 import org.tron.core.db.KhaosDatabase;
+import org.tron.core.db.TransactionStore;
 import org.tron.core.db2.core.ITronChainBase;
+import org.tron.core.exception.BadItemException;
+import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.store.AccountIdIndexStore;
 import org.tron.core.store.AccountIndexStore;
 import org.tron.core.store.AccountStore;
@@ -28,6 +39,8 @@ import org.tron.core.store.IncrementalMerkleTreeStore;
 import org.tron.core.store.NullifierStore;
 import org.tron.core.store.ProposalStore;
 import org.tron.core.store.StorageRowStore;
+import org.tron.core.store.TransactionHistoryStore;
+import org.tron.core.store.TransactionRetStore;
 import org.tron.core.store.VotesStore;
 import org.tron.core.store.WitnessScheduleStore;
 import org.tron.core.store.WitnessStore;
@@ -44,6 +57,9 @@ public class ChainBaseManager {
   @Autowired
   @Getter
   private BlockStore blockStore;
+  @Autowired
+  @Getter
+  private TransactionStore transactionStore;
   @Autowired
   @Getter
   private WitnessStore witnessStore;
@@ -120,7 +136,28 @@ public class ChainBaseManager {
 
   @Autowired
   @Getter
+  private TransactionRetStore transactionRetStore;
+
+  @Autowired
+  @Getter
+  private TransactionHistoryStore transactionHistoryStore;
+
+  @Autowired
+  @Getter
   private KhaosDatabase khaosDb;
+
+  protected BlockCapsule genesisBlock;
+
+  @Getter
+  protected Cache<Sha256Hash, Boolean> transactionIdCache = CacheBuilder
+      .newBuilder().maximumSize(100_000).recordStats().build();
+
+  @Getter
+  protected ForkController forkController = ForkController.instance();
+
+  public BlockCapsule getGenesisBlock() {
+    return genesisBlock;
+  }
 
   public void closeOneStore(ITronChainBase database) {
     logger.info("******** begin to close " + database.getName() + " ********");
@@ -130,6 +167,74 @@ public class ChainBaseManager {
       logger.info("failed to close  " + database.getName() + ". " + e);
     } finally {
       logger.info("******** end to close " + database.getName() + " ********");
+    }
+  }
+
+  public long getHeadSlot() {
+    return (getDynamicPropertiesStore().getLatestBlockHeaderTimestamp() - getGenesisBlock()
+        .getTimeStamp()) / BLOCK_PRODUCED_INTERVAL;
+  }
+
+  public long getHeadBlockTimeStamp() {
+    return getDynamicPropertiesStore().getLatestBlockHeaderTimestamp();
+  }
+
+  public synchronized BlockId getHeadBlockId() {
+    return new BlockId(
+        getDynamicPropertiesStore().getLatestBlockHeaderHash(),
+        getDynamicPropertiesStore().getLatestBlockHeaderNumber());
+  }
+
+  public AssetIssueStore getAssetIssueStoreFinal() {
+    if (getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
+      return getAssetIssueStore();
+    } else {
+      return getAssetIssueV2Store();
+    }
+  }
+
+  /**
+   * Get the block id from the number.
+   */
+  public BlockId getBlockIdByNum(final long num) throws ItemNotFoundException {
+    return getBlockIndexStore().get(num);
+  }
+
+  public BlockId getGenesisBlockId() {
+    return this.genesisBlock.getBlockId();
+  }
+
+  public BlockId getSolidBlockId() {
+    try {
+      long num = getDynamicPropertiesStore().getLatestSolidifiedBlockNum();
+      return getBlockIdByNum(num);
+    } catch (Exception e) {
+      return getGenesisBlockId();
+    }
+  }
+
+  /**
+   * Get a BlockCapsule by id.
+   */
+  public BlockCapsule getBlockById(final Sha256Hash hash)
+      throws BadItemException, ItemNotFoundException {
+    BlockCapsule block = this.khaosDb.getBlock(hash);
+    if (block == null) {
+      block = getBlockStore().get(hash.getBytes());
+    }
+    return block;
+  }
+
+  public BlockCapsule getBlockByNum(final long num) throws
+      ItemNotFoundException, BadItemException {
+    return getBlockById(getBlockIdByNum(num));
+  }
+
+  public ExchangeStore getExchangeStoreFinal() {
+    if (getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
+      return getExchangeStore();
+    } else {
+      return getExchangeV2Store();
     }
   }
 
@@ -156,5 +261,8 @@ public class ChainBaseManager {
     closeOneStore(merkleTreeStore);
     closeOneStore(delegationStore);
     closeOneStore(proofStore);
+    closeOneStore(transactionStore);
+    closeOneStore(transactionHistoryStore);
+    closeOneStore(transactionRetStore);
   }
 }

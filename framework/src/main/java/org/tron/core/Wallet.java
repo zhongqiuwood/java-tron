@@ -515,44 +515,6 @@ public class Wallet {
     return trx;
   }
 
-  public TransactionCapsule createTransactionCapsule(com.google.protobuf.Message message,
-      ContractType contractType) throws ContractValidateException {
-    TransactionCapsule trx = new TransactionCapsule(message, contractType);
-    if (contractType != ContractType.CreateSmartContract
-        && contractType != ContractType.TriggerSmartContract) {
-      List<Actuator> actList = ActuatorFactory.createActuator(trx, dbManager);
-      for (Actuator act : actList) {
-        act.validate();
-      }
-    }
-
-    if (contractType == ContractType.CreateSmartContract) {
-
-      CreateSmartContract contract = ContractCapsule
-          .getSmartContractFromTransaction(trx.getInstance());
-      long percent = contract.getNewContract().getConsumeUserResourcePercent();
-      if (percent < 0 || percent > 100) {
-        throw new ContractValidateException("percent must be >= 0 and <= 100");
-      }
-    }
-
-    try {
-      BlockId blockId = dbManager.getHeadBlockId();
-      if ("solid".equals(Args.getInstance().getTrxReferenceBlock())) {
-        blockId = dbManager.getSolidBlockId();
-      }
-      trx.setReference(blockId.getNum(), blockId.getBytes());
-      long expiration =
-          dbManager.getHeadBlockTimeStamp() + Args.getInstance()
-              .getTrxExpirationTimeInMilliseconds();
-      trx.setExpiration(expiration);
-      trx.setTimestamp();
-    } catch (Exception e) {
-      logger.error("Create transaction capsule failed.", e);
-    }
-    return trx;
-  }
-
   /**
    * Broadcast a transaction.
    */
@@ -797,15 +759,6 @@ public class Wallet {
     }
   }
 
-  public Block getBlockByNum(long blockNum) {
-    try {
-      return dbManager.getBlockByNum(blockNum).getInstance();
-    } catch (StoreException e) {
-      logger.info(e.getMessage());
-      return null;
-    }
-  }
-
   public long getTransactionCountByBlockNum(long blockNum) {
     long count = 0;
 
@@ -817,14 +770,6 @@ public class Wallet {
     }
 
     return count;
-  }
-
-  public WitnessList getWitnessList() {
-    WitnessList.Builder builder = WitnessList.newBuilder();
-    List<WitnessCapsule> witnessCapsuleList = dbManager.getWitnessStore().getAllWitnesses();
-    witnessCapsuleList
-        .forEach(witnessCapsule -> builder.addWitnesses(witnessCapsule.getInstance()));
-    return builder.build();
   }
 
   public ProposalList getProposalList() {
@@ -1082,29 +1027,6 @@ public class Wallet {
     return builder.build();
   }
 
-  public AssetIssueList getAssetIssueList() {
-    AssetIssueList.Builder builder = AssetIssueList.newBuilder();
-
-    dbManager.getAssetIssueStoreFinal().getAllAssetIssues()
-        .forEach(issueCapsule -> builder.addAssetIssue(issueCapsule.getInstance()));
-
-    return builder.build();
-  }
-
-  public AssetIssueList getAssetIssueList(long offset, long limit) {
-    AssetIssueList.Builder builder = AssetIssueList.newBuilder();
-
-    List<AssetIssueCapsule> assetIssueList =
-        dbManager.getAssetIssueStoreFinal().getAssetIssuesPaginated(offset, limit);
-
-    if (CollectionUtils.isEmpty(assetIssueList)) {
-      return null;
-    }
-
-    assetIssueList.forEach(issueCapsule -> builder.addAssetIssue(issueCapsule.getInstance()));
-    return builder.build();
-  }
-
   public AssetIssueList getAssetIssueByAccount(ByteString accountAddress) {
     if (accountAddress == null || accountAddress.isEmpty()) {
       return null;
@@ -1118,54 +1040,6 @@ public class Wallet {
         .filter(assetIssueCapsule -> assetIssueCapsule.getOwnerAddress().equals(accountAddress))
         .forEach(issueCapsule -> builder.addAssetIssue(issueCapsule.getInstance()));
 
-    return builder.build();
-  }
-
-  public AccountNetMessage getAccountNet(ByteString accountAddress) {
-    if (accountAddress == null || accountAddress.isEmpty()) {
-      return null;
-    }
-    AccountNetMessage.Builder builder = AccountNetMessage.newBuilder();
-    AccountCapsule accountCapsule = dbManager.getAccountStore().get(accountAddress.toByteArray());
-    if (accountCapsule == null) {
-      return null;
-    }
-
-    BandwidthProcessor processor = new BandwidthProcessor(dbManager);
-    processor.updateUsage(accountCapsule);
-
-    long netLimit = processor
-        .calculateGlobalNetLimit(accountCapsule);
-    long freeNetLimit = dbManager.getDynamicPropertiesStore().getFreeNetLimit();
-    long totalNetLimit = dbManager.getDynamicPropertiesStore().getTotalNetLimit();
-    long totalNetWeight = dbManager.getDynamicPropertiesStore().getTotalNetWeight();
-
-    Map<String, Long> assetNetLimitMap = new HashMap<>();
-    Map<String, Long> allFreeAssetNetUsage;
-    if (dbManager.getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
-      allFreeAssetNetUsage = accountCapsule.getAllFreeAssetNetUsage();
-      allFreeAssetNetUsage.keySet().forEach(asset -> {
-        byte[] key = ByteArray.fromString(asset);
-        assetNetLimitMap
-            .put(asset, dbManager.getAssetIssueStore().get(key).getFreeAssetNetLimit());
-      });
-    } else {
-      allFreeAssetNetUsage = accountCapsule.getAllFreeAssetNetUsageV2();
-      allFreeAssetNetUsage.keySet().forEach(asset -> {
-        byte[] key = ByteArray.fromString(asset);
-        assetNetLimitMap
-            .put(asset, dbManager.getAssetIssueV2Store().get(key).getFreeAssetNetLimit());
-      });
-    }
-
-    builder.setFreeNetUsed(accountCapsule.getFreeNetUsage())
-        .setFreeNetLimit(freeNetLimit)
-        .setNetUsed(accountCapsule.getNetUsage())
-        .setNetLimit(netLimit)
-        .setTotalNetLimit(totalNetLimit)
-        .setTotalNetWeight(totalNetWeight)
-        .putAllAssetNetUsed(allFreeAssetNetUsage)
-        .putAllAssetNetLimit(assetNetLimitMap);
     return builder.build();
   }
 
@@ -1234,126 +1108,10 @@ public class Wallet {
     return builder.build();
   }
 
-  public AssetIssueContract getAssetIssueByName(ByteString assetName)
-      throws NonUniqueObjectException {
-    if (assetName == null || assetName.isEmpty()) {
-      return null;
-    }
-
-    if (dbManager.getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
-      // fetch from old DB, same as old logic ops
-      AssetIssueCapsule assetIssueCapsule =
-          dbManager.getAssetIssueStore().get(assetName.toByteArray());
-      return assetIssueCapsule != null ? assetIssueCapsule.getInstance() : null;
-    } else {
-      // get asset issue by name from new DB
-      List<AssetIssueCapsule> assetIssueCapsuleList =
-          dbManager.getAssetIssueV2Store().getAllAssetIssues();
-      AssetIssueList.Builder builder = AssetIssueList.newBuilder();
-      assetIssueCapsuleList
-          .stream()
-          .filter(assetIssueCapsule -> assetIssueCapsule.getName().equals(assetName))
-          .forEach(
-              issueCapsule -> builder.addAssetIssue(issueCapsule.getInstance()));
-
-      // check count
-      if (builder.getAssetIssueCount() > 1) {
-        throw new NonUniqueObjectException(
-            "To get more than one asset, please use getAssetIssuebyid syntax");
-      } else {
-        // fetch from DB by assetName as id
-        AssetIssueCapsule assetIssueCapsule =
-            dbManager.getAssetIssueV2Store().get(assetName.toByteArray());
-
-        if (assetIssueCapsule != null) {
-          // check already fetch
-          if (builder.getAssetIssueCount() > 0
-              && builder.getAssetIssue(0).getId().equals(assetIssueCapsule.getInstance().getId())) {
-            return assetIssueCapsule.getInstance();
-          }
-
-          builder.addAssetIssue(assetIssueCapsule.getInstance());
-          // check count
-          if (builder.getAssetIssueCount() > 1) {
-            throw new NonUniqueObjectException(
-                "To get more than one asset, please use getAssetIssueById syntax");
-          }
-        }
-      }
-
-      if (builder.getAssetIssueCount() > 0) {
-        return builder.getAssetIssue(0);
-      } else {
-        return null;
-      }
-    }
-  }
-
-  public AssetIssueList getAssetIssueListByName(ByteString assetName) {
-    if (assetName == null || assetName.isEmpty()) {
-      return null;
-    }
-
-    List<AssetIssueCapsule> assetIssueCapsuleList =
-        dbManager.getAssetIssueStoreFinal().getAllAssetIssues();
-
-    AssetIssueList.Builder builder = AssetIssueList.newBuilder();
-    assetIssueCapsuleList.stream()
-        .filter(assetIssueCapsule -> assetIssueCapsule.getName().equals(assetName))
-        .forEach(issueCapsule -> builder.addAssetIssue(issueCapsule.getInstance()));
-
-    return builder.build();
-  }
-
-  public AssetIssueContract getAssetIssueById(String assetId) {
-    if (assetId == null || assetId.isEmpty()) {
-      return null;
-    }
-    AssetIssueCapsule assetIssueCapsule = dbManager.getAssetIssueV2Store()
-        .get(ByteArray.fromString(assetId));
-    return assetIssueCapsule != null ? assetIssueCapsule.getInstance() : null;
-  }
-
-  public NumberMessage totalTransaction() {
-    NumberMessage.Builder builder = NumberMessage.newBuilder()
-        .setNum(dbManager.getTransactionStore().getTotalTransactions());
-    return builder.build();
-  }
-
   public NumberMessage getNextMaintenanceTime() {
     NumberMessage.Builder builder = NumberMessage.newBuilder()
         .setNum(dbManager.getDynamicPropertiesStore().getNextMaintenanceTime());
     return builder.build();
-  }
-
-  public Block getBlockById(ByteString blockId) {
-    if (Objects.isNull(blockId)) {
-      return null;
-    }
-    Block block = null;
-    try {
-      block = dbManager.getBlockStore().get(blockId.toByteArray()).getInstance();
-    } catch (StoreException e) {
-      logger.error(e.getMessage());
-    }
-    return block;
-  }
-
-  public BlockList getBlocksByLimitNext(long number, long limit) {
-    if (limit <= 0) {
-      return null;
-    }
-    BlockList.Builder blockListBuilder = BlockList.newBuilder();
-    dbManager.getBlockStore().getLimitNumber(number, limit).forEach(
-        blockCapsule -> blockListBuilder.addBlock(blockCapsule.getInstance()));
-    return blockListBuilder.build();
-  }
-
-  public BlockList getBlockByLatestNum(long getNum) {
-    BlockList.Builder blockListBuilder = BlockList.newBuilder();
-    dbManager.getBlockStore().getBlockByLatestNum(getNum).forEach(
-        blockCapsule -> blockListBuilder.addBlock(blockCapsule.getInstance()));
-    return blockListBuilder.build();
   }
 
   public Transaction getTransactionById(ByteString transactionId) {

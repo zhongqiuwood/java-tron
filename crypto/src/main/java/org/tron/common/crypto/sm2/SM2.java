@@ -441,6 +441,10 @@ public class SM2 implements Serializable, SignInterface {
         return pub.getEncoded(/* compressed */ false);
     }
 
+    public byte[] getCompressPubKey() {
+        return pub.getEncoded(true);
+    }
+
     /**
      * Gets the address form of the public key.
      *

@@ -8,6 +8,7 @@ import java.util.Arrays;
 
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
+import org.spongycastle.util.encoders.Base64;
 import org.spongycastle.util.encoders.Hex;
 import org.tron.common.crypto.sm2.SM2;
 
@@ -56,9 +57,10 @@ public class SignatureInterfaceTest {
   public void testPirvateKey() {
     SignInterface sign = new SM2(SM2_privateKey, true);
     assertArrayEquals(sign.getPubKey(), SM2_pubKey);
-
+    String ans = org.tron.core.Wallet.encode58Check(sign.getAddress());
     sign = new ECKey(EC_privateKey, true);
     assertArrayEquals(sign.getPubKey(), EC_pubKey);
+    String ans2 = org.tron.core.Wallet.encode58Check(sign.getAddress());
 
   }
 
