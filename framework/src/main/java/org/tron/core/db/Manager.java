@@ -1368,9 +1368,17 @@ public class Manager {
   public synchronized BlockCapsule generateBlock(Miner miner, long blockTime, long timeout) {
 
     long postponedTrxCount = 0;
-
-    BlockCapsule blockCapsule = new BlockCapsule(getHeadBlockNum() + 1, getHeadBlockId(),
+    BlockId parentBlkId = null;
+    try {
+      parentBlkId = getBlockByNum(getHeadBlockNum()).getParentBlockId();
+    } catch (ItemNotFoundException e) {
+      e.printStackTrace();
+    } catch (BadItemException e) {
+      e.printStackTrace();
+    }
+    BlockCapsule blockCapsule = new BlockCapsule(getHeadBlockNum(), parentBlkId,
         blockTime, miner.getWitnessAddress());
+
     blockCapsule.generatedByMyself = true;
     session.reset();
     session.setValue(revokingStore.buildSession());
