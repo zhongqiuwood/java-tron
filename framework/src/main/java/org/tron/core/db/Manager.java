@@ -1368,17 +1368,18 @@ public class Manager {
   public synchronized BlockCapsule generateBlock(Miner miner, long blockTime, long timeout) {
 
     long postponedTrxCount = 0;
-    BlockId parentBlkId = null;
-    try {
-      parentBlkId = getBlockByNum(getHeadBlockNum()).getParentBlockId();
-    } catch (ItemNotFoundException e) {
-      e.printStackTrace();
-    } catch (BadItemException e) {
-      e.printStackTrace();
-    }
-    BlockCapsule blockCapsule = new BlockCapsule(getHeadBlockNum(), parentBlkId,
-        blockTime, miner.getWitnessAddress());
 
+    List<KhaosBlock> parents = khaosDb.getMiniStore().getBlockByNum(getHeadBlockNum());
+    BlockCapsule nowBlock = getDynamicPropertiesStore().getLatestBlockCapsule();
+    KhaosBlock otherBlock = null;
+    for (KhaosBlock tmp : parents) {
+      if (!tmp.getBlk().getBlockId().equals( nowBlock.getBlockId())) {
+        otherBlock = tmp;
+      }
+    }
+
+    BlockCapsule blockCapsule = new BlockCapsule(getHeadBlockNum() + 1, otherBlock.getBlk().getBlockId(),
+        blockTime, miner.getWitnessAddress());
     blockCapsule.generatedByMyself = true;
     session.reset();
     session.setValue(revokingStore.buildSession());
