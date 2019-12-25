@@ -1143,6 +1143,9 @@ public class Manager {
           switchFork(newBlock);
           printAfterSwitchFork(newBlock, block);
           return;
+        } else if (!checkInSameFork(newBlock)) {
+          logger.warn("switch fork4.");
+          return;
         }
         try (ISession tmpSession = revokingStore.buildSession()) {
 
