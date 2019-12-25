@@ -1134,7 +1134,7 @@ public class Manager {
           printBeforeSwitchFork(newBlock, block);
           switchFork(findHighestBlockNum(blockHash));
           printAfterSwitchFork(newBlock, block);
-
+          logger.warn("switch fork2.");
 
           return;
         } else if (checkInSameFork(newBlock) && !newBlock.getParentHash()
@@ -1142,6 +1142,10 @@ public class Manager {
           printBeforeSwitchFork(newBlock, block);
           switchFork(newBlock);
           printAfterSwitchFork(newBlock, block);
+          logger.warn("switch fork3.");
+          return;
+        } else if (!checkInSameFork(newBlock)) {
+          logger.warn("switch fork4.");
           return;
         }
         try (ISession tmpSession = revokingStore.buildSession()) {
