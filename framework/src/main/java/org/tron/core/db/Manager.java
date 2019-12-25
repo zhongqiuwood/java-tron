@@ -1134,17 +1134,17 @@ public class Manager {
           printBeforeSwitchFork(newBlock, block);
           switchFork(findHighestBlockNum(blockHash));
           printAfterSwitchFork(newBlock, block);
-
-
+          logger.warn("block {} switch fork2.", newBlock.getBlockId().getString());
           return;
         } else if (checkInSameFork(newBlock) && !newBlock.getParentHash()
             .equals(getDynamicPropertiesStore().getLatestBlockHeaderHash())) {
           printBeforeSwitchFork(newBlock, block);
           switchFork(newBlock);
           printAfterSwitchFork(newBlock, block);
+          logger.warn("block {}  switch fork3.", newBlock.getBlockId().getString());
           return;
         } else if (!checkInSameFork(newBlock)) {
-          logger.warn("switch fork4.");
+          logger.warn("block{} switch fork4.", newBlock.getBlockId().getString());
           return;
         }
         try (ISession tmpSession = revokingStore.buildSession()) {
