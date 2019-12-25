@@ -5,3 +5,4 @@
 -XX:+CMSParallelRemarkEnabled
 -XX:ReservedCodeCacheSize=256m
 -XX:+CMSScavengeBeforeRemark
+-Xdebug -Xrunjdwp:transport=dt_socket,suspend=n,server=y,address=8889
