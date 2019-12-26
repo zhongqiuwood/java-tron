@@ -1007,6 +1007,9 @@ public class Manager {
     if (DBConfig.isDebug()) {
       return true;
     }
+    if (newblock.getNum() <= commonDataBase.getLatestPbftBlockNum()) {
+      return true;
+    }
     Sha256Hash blockHash = commonDataBase.getLatestPbftBlockHash();
     if (Objects.isNull(blockHash) || Objects.isNull(newblock)) {
       return true;
@@ -1184,7 +1187,7 @@ public class Manager {
   }
 
   public void updateDynamicProperties(BlockCapsule block) {
-
+    logger.warn("block update block" + block.getNum());
     chainBaseManager.getDynamicPropertiesStore()
         .saveLatestBlockHeaderHash(block.getBlockId().getByteString());
     chainBaseManager.getDynamicPropertiesStore()
