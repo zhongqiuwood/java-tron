@@ -1113,6 +1113,8 @@ public class Manager {
             "shielded transaction count > " + SHIELDED_TRANS_IN_BLOCK_COUNTS);
       }
 
+      logger.warn("wb block khaosdb " + block.toMainString());
+
       BlockCapsule newBlock = this.khaosDb.push(block);
 
 
