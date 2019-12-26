@@ -33,6 +33,7 @@ import org.tron.common.crypto.ECKey.ECDSASignature;
 import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.common.utils.Time;
+import org.tron.common.utils.WalletUtil;
 import org.tron.core.capsule.utils.MerkleTree;
 import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.exception.BadItemException;
@@ -267,6 +268,18 @@ public class BlockCapsule implements ProtoCapsule<Block> {
 
   public BlockId getParentBlockId() {
     return new BlockId(getParentHash(), getNum() - 1);
+  }
+
+  public String toMainString() {
+    StringBuilder toStringBuff = new StringBuilder();
+    toStringBuff.append("number=").append(getNum()).append("\n");
+    toStringBuff.append("hash=").append(getBlockId()).append("\n");
+    toStringBuff.append("witness address=")
+        .append(WalletUtil.encode58Check(getWitnessAddress().toByteArray())).append("\n");
+    toStringBuff.append("parentId=").append(getParentHash()).append("\n");
+    toStringBuff.append("generate time=").append(Time.getTimeString(getTimeStamp())).append("\n");
+
+    return toStringBuff.toString();
   }
 
   public ByteString getParentHashStr() {
