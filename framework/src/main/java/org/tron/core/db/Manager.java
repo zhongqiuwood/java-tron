@@ -1007,6 +1007,10 @@ public class Manager {
     if (DBConfig.isDebug()) {
       return true;
     }
+    if (newblock.getNum() <= commonDataBase.getLatestPbftBlockNum()) {
+      return true;
+    }
+
     Sha256Hash blockHash = commonDataBase.getLatestPbftBlockHash();
     if (Objects.isNull(blockHash) || Objects.isNull(newblock)) {
       return true;
@@ -1146,6 +1150,7 @@ public class Manager {
           logger.warn("switch fork3.");
           return;
         } else if (!checkInSameFork(newBlock)) {
+          khaosDb.removeBlk(block.getBlockId());
           logger.warn("switch fork4.");
           return;
         }
