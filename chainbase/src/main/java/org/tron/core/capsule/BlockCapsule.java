@@ -282,6 +282,10 @@ public class BlockCapsule implements ProtoCapsule<Block> {
     return this.block.getBlockHeader().getRawData().getTimestamp();
   }
 
+  public String toWitness() {
+    return WalletUtil.encode58Check(getWitnessAddress().toByteArray());
+  }
+
   public String toMainString() {
     StringBuilder toStringBuff = new StringBuilder();
     toStringBuff.append("number=").append(getNum()).append("\n");

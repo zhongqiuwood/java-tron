@@ -1077,7 +1077,7 @@ public class Manager {
             + ", khaosDb unlinkMiniStore size: "
             + khaosDb.getMiniUnlinkedStore().size());
   }
-
+  int record = 0;
   /**
    * save a block.
    */
@@ -1116,7 +1116,8 @@ public class Manager {
             "shielded transaction count > " + SHIELDED_TRANS_IN_BLOCK_COUNTS);
       }
 
-      logger.warn("wb block khaosdb " + block.toMainString());
+      logger.warn("wb block khaosdb " + block.toWitness() + "   " + block.getParentHash().toString() + " " + "self " + block.getBlockId().toString() + " " + block.toMainString() );
+
 
       BlockCapsule newBlock = this.khaosDb.push(block);
 
@@ -1133,6 +1134,9 @@ public class Manager {
         }
 
         BlockCapsule latestBlockCapsule = getDynamicPropertiesStore().getLatestBlockCapsule();
+        if (newBlock.toWitness().contains("TAoKBWaZNpeQWcS7FK6yTkuzGmWnKPExvj") == false) {
+          logger.warn("switch forkmmmm.");
+        }
         if (!checkInSameFork(latestBlockCapsule)) {
           // check lastest pbft consensus block is in main chain or not
           Sha256Hash blockHash = commonDataBase.getLatestPbftBlockHash();
@@ -1150,7 +1154,7 @@ public class Manager {
           logger.warn("switch fork3.");
           return;
         } else if (!checkInSameFork(newBlock)) {
-          logger.warn("switch fork4.");
+          khaosDb.removeBlk(newBlock.getBlockId());
           return;
         }
         try (ISession tmpSession = revokingStore.buildSession()) {
