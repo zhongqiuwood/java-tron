@@ -1154,7 +1154,7 @@ public class Manager {
           logger.warn("switch fork3.");
           return;
         } else if (!checkInSameFork(newBlock)) {
-          khaosDb.removeBlk(newBlock.getBlockId());
+          khaosDb.removeBlk(block.getBlockId());
           return;
         }
         try (ISession tmpSession = revokingStore.buildSession()) {
