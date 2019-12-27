@@ -1007,6 +1007,10 @@ public class Manager {
     if (DBConfig.isDebug()) {
       return true;
     }
+    if (newblock.getNum() <= commonDataBase.getLatestPbftBlockNum()) {
+      return true;
+    }
+
     Sha256Hash blockHash = commonDataBase.getLatestPbftBlockHash();
     if (Objects.isNull(blockHash) || Objects.isNull(newblock)) {
       return true;
@@ -1145,6 +1149,7 @@ public class Manager {
           return;
         } else if (!checkInSameFork(newBlock)) {
           logger.warn("block{} switch fork4.", newBlock.getBlockId().getString());
+          khaosDb.removeBlk(block.getBlockId());
           return;
         }
         try (ISession tmpSession = revokingStore.buildSession()) {
