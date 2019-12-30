@@ -8,8 +8,6 @@
     <packages>
       <package name="stest.tron.wallet.dailybuild.tvmnewcommand.transferfailed">
       </package>
-      <package name="stest.tron.wallet.dailybuild.tvmnewcommand.triggerconstant">
-      </package>
     </packages>
   </test>
 </suite>
