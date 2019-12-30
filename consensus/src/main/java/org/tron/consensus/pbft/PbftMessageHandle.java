@@ -133,6 +133,12 @@ public class PbftMessageHandle {
     if (!doneMsg.containsKey(message.getNo())) {
       long agCou = agreePare.incrementAndGet(message.getDataKey());
       if (agCou >= Param.getInstance().getAgreeNodeCount()) {
+        try {
+          Thread.sleep(12500);
+        } catch (InterruptedException e) {
+          e.printStackTrace();
+        }
+
         agreePare.remove(message.getDataKey());
         //Entering the submission stage
         PbftBaseMessage cmMessage = message.buildCommitMessage();
