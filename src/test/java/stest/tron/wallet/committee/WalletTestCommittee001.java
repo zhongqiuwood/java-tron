@@ -1,7 +1,6 @@
 package stest.tron.wallet.committee;
 
 import com.google.protobuf.ByteString;
-import com.sun.media.jfxmedia.logging.Logger;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import java.math.BigInteger;
