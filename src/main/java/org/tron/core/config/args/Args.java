@@ -578,7 +578,7 @@ public class Args {
     INSTANCE.trxExpirationTimeInMilliseconds = 0;
     INSTANCE.fullNodeAllowShieldedTransaction = true;
     INSTANCE.monitorShieldCheckLog = true;
-    INSTANCE.zenTokenId = "000000";
+    INSTANCE.zenTokenId = "1000016";
     INSTANCE.allowProtoFilterNum = 0;
     INSTANCE.allowAccountStateRoot = 0;
     INSTANCE.validContractProtoThreadNum = 1;
@@ -996,7 +996,7 @@ public class Args {
              || config.getBoolean("node.fullNodeAllowShieldedTransaction");
 
     INSTANCE.zenTokenId = config.hasPath("node.zenTokenId") ?
-        config.getString("node.zenTokenId") : "000000";
+        config.getString("node.zenTokenId") : "1000016";
 
     INSTANCE.allowProtoFilterNum =
         config.hasPath("committee.allowProtoFilterNum") ? config

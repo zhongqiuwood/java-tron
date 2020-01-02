@@ -72,6 +72,7 @@ import org.tron.api.GrpcAPI.ProposalList;
 import org.tron.api.GrpcAPI.ReceiveNote;
 import org.tron.api.GrpcAPI.Return;
 import org.tron.api.GrpcAPI.Return.response_code;
+import org.tron.api.GrpcAPI.ShieldedAddressInfo;
 import org.tron.api.GrpcAPI.SpendAuthSigParameters;
 import org.tron.api.GrpcAPI.SpendNote;
 import org.tron.api.GrpcAPI.SpendResult;
@@ -234,7 +235,7 @@ public class Wallet {
       boolean constant = isConstant(abi, getSelector(triggerSmartContract.getData().toByteArray()));
       if (constant) {
         if (!Args.getInstance().isSupportConstant()) {
-          throw new ContractValidateException("this node don't support constant");
+          throw new ContractValidateException("This node does not support constant");
         }
       }
       return constant;
@@ -272,12 +273,12 @@ public class Wallet {
     }
     if (address.length != Constant.ADDRESS_SIZE / 2) {
       logger.warn(
-          "Warning: Address length need " + Constant.ADDRESS_SIZE + " but " + address.length
+          "Warning: Address length requires " + Constant.ADDRESS_SIZE + " but " + address.length
               + " !!");
       return false;
     }
     if (address[0] != addressPreFixByte) {
-      logger.warn("Warning: Address need prefix with " + addressPreFixByte + " but "
+      logger.warn("Warning: Address requires a prefix with " + addressPreFixByte + " but "
           + address[0] + " !!");
       return false;
     }
@@ -523,11 +524,12 @@ public class Wallet {
   public GrpcAPI.Return broadcastTransaction(Transaction signaturedTransaction) {
     GrpcAPI.Return.Builder builder = GrpcAPI.Return.newBuilder();
     TransactionCapsule trx = new TransactionCapsule(signaturedTransaction);
+    String errorMessage = "Broadcast transaction {} failed, {}.";
     try {
       Message message = new TransactionMessage(signaturedTransaction.toByteArray());
       if (minEffectiveConnection != 0) {
         if (tronNetDelegate.getActivePeer().isEmpty()) {
-          logger.warn("Broadcast transaction {} failed, no connection.", trx.getTransactionId());
+          logger.warn("Broadcast transaction {} has failed, no connection.", trx.getTransactionId());
           return builder.setResult(false).setCode(response_code.NO_CONNECTION)
               .setMessage(ByteString.copyFromUtf8("no connection"))
               .build();
@@ -540,7 +542,7 @@ public class Wallet {
         if (count < minEffectiveConnection) {
           String info = "effective connection:" + count + " lt minEffectiveConnection:"
               + minEffectiveConnection;
-          logger.warn("Broadcast transaction {} failed, {}.", trx.getTransactionId(), info);
+          logger.warn("Broadcast transaction {} has failed, {}.", trx.getTransactionId(), info);
           return builder.setResult(false).setCode(response_code.NOT_ENOUGH_EFFECTIVE_CONNECTION)
               .setMessage(ByteString.copyFromUtf8(info))
               .build();
@@ -548,18 +550,18 @@ public class Wallet {
       }
 
       if (dbManager.isTooManyPending()) {
-        logger.warn("Broadcast transaction {} failed, too many pending.", trx.getTransactionId());
+        logger.warn("Broadcast transaction {} has failed, too many pending.", trx.getTransactionId());
         return builder.setResult(false).setCode(response_code.SERVER_BUSY).build();
       }
 
       if (dbManager.isGeneratingBlock()) {
         logger
-            .warn("Broadcast transaction {} failed, is generating block.", trx.getTransactionId());
+            .warn("Broadcast transaction {} has failed, is currently generating block.", trx.getTransactionId());
         return builder.setResult(false).setCode(response_code.SERVER_BUSY).build();
       }
 
       if (dbManager.getTransactionIdCache().getIfPresent(trx.getTransactionId()) != null) {
-        logger.warn("Broadcast transaction {} failed, is already exist.", trx.getTransactionId());
+        logger.warn("Broadcast transaction {} has failed, it already exists.", trx.getTransactionId());
         return builder.setResult(false).setCode(response_code.DUP_TRANSACTION_ERROR).build();
       } else {
         dbManager.getTransactionIdCache().put(trx.getTransactionId(), true);
@@ -572,47 +574,47 @@ public class Wallet {
       logger.info("Broadcast transaction {} successfully.", trx.getTransactionId());
       return builder.setResult(true).setCode(response_code.SUCCESS).build();
     } catch (ValidateSignatureException e) {
-      logger.error("Broadcast transaction {} failed, {}.", trx.getTransactionId(), e.getMessage());
+      logger.error(errorMessage, trx.getTransactionId(), e.getMessage());
       return builder.setResult(false).setCode(response_code.SIGERROR)
           .setMessage(ByteString.copyFromUtf8("validate signature error " + e.getMessage()))
           .build();
     } catch (ContractValidateException e) {
-      logger.error("Broadcast transaction {} failed, {}.", trx.getTransactionId(), e.getMessage());
+      logger.error(errorMessage, trx.getTransactionId(), e.getMessage());
       return builder.setResult(false).setCode(response_code.CONTRACT_VALIDATE_ERROR)
           .setMessage(ByteString.copyFromUtf8("contract validate error : " + e.getMessage()))
           .build();
     } catch (ContractExeException e) {
-      logger.error("Broadcast transaction {} failed, {}.", trx.getTransactionId(), e.getMessage());
+      logger.error(errorMessage, trx.getTransactionId(), e.getMessage());
       return builder.setResult(false).setCode(response_code.CONTRACT_EXE_ERROR)
           .setMessage(ByteString.copyFromUtf8("contract execute error : " + e.getMessage()))
           .build();
     } catch (AccountResourceInsufficientException e) {
-      logger.error("Broadcast transaction {} failed, {}.", trx.getTransactionId(), e.getMessage());
+      logger.error(errorMessage, trx.getTransactionId(), e.getMessage());
       return builder.setResult(false).setCode(response_code.BANDWITH_ERROR)
           .setMessage(ByteString.copyFromUtf8("AccountResourceInsufficient error"))
           .build();
     } catch (DupTransactionException e) {
-      logger.error("Broadcast transaction {} failed, {}.", trx.getTransactionId(), e.getMessage());
+      logger.error(errorMessage, trx.getTransactionId(), e.getMessage());
       return builder.setResult(false).setCode(response_code.DUP_TRANSACTION_ERROR)
           .setMessage(ByteString.copyFromUtf8("dup transaction"))
           .build();
     } catch (TaposException e) {
-      logger.error("Broadcast transaction {} failed, {}.", trx.getTransactionId(), e.getMessage());
+      logger.error(errorMessage, trx.getTransactionId(), e.getMessage());
       return builder.setResult(false).setCode(response_code.TAPOS_ERROR)
           .setMessage(ByteString.copyFromUtf8("Tapos check error"))
           .build();
     } catch (TooBigTransactionException e) {
-      logger.error("Broadcast transaction {} failed, {}.", trx.getTransactionId(), e.getMessage());
+      logger.error(errorMessage, trx.getTransactionId(), e.getMessage());
       return builder.setResult(false).setCode(response_code.TOO_BIG_TRANSACTION_ERROR)
           .setMessage(ByteString.copyFromUtf8("transaction size is too big"))
           .build();
     } catch (TransactionExpirationException e) {
-      logger.error("Broadcast transaction {} failed, {}.", trx.getTransactionId(), e.getMessage());
+      logger.error(errorMessage, trx.getTransactionId(), e.getMessage());
       return builder.setResult(false).setCode(response_code.TRANSACTION_EXPIRATION_ERROR)
           .setMessage(ByteString.copyFromUtf8("transaction expired"))
           .build();
     } catch (Exception e) {
-      logger.error("Broadcast transaction {} failed, {}.", trx.getTransactionId(), e.getMessage());
+      logger.error(errorMessage, trx.getTransactionId(), e.getMessage());
       return builder.setResult(false).setCode(response_code.OTHER_ERROR)
           .setMessage(ByteString.copyFromUtf8("other error : " + e.getMessage()))
           .build();
@@ -638,7 +640,7 @@ public class Wallet {
       throws PermissionException {
     ByteString operations = permission.getOperations();
     if (operations.size() != 32) {
-      throw new PermissionException("operations size must 32");
+      throw new PermissionException("operations size must be 32");
     }
     int contractType = contract.getTypeValue();
     boolean b = (operations.byteAt(contractType / 8) & (1 << (contractType % 8))) != 0;
@@ -660,12 +662,12 @@ public class Wallet {
       byte[] owner = TransactionCapsule.getOwner(contract);
       AccountCapsule account = dbManager.getAccountStore().get(owner);
       if (account == null) {
-        throw new PermissionException("Account is not exist!");
+        throw new PermissionException("Account does not exist!");
       }
       int permissionId = contract.getPermissionId();
       Permission permission = account.getPermissionById(permissionId);
       if (permission == null) {
-        throw new PermissionException("permission isn't exit");
+        throw new PermissionException("Permission for this, does not exist!");
       }
       if (permissionId != 0) {
         if (permission.getType() != PermissionType.Active) {
@@ -673,7 +675,7 @@ public class Wallet {
         }
         //check oprations
         if (!checkPermissionOprations(permission, contract)) {
-          throw new PermissionException("Permission denied");
+          throw new PermissionException("Permission denied!");
         }
       }
       tswBuilder.setPermission(permission);
@@ -1243,7 +1245,7 @@ public class Wallet {
 
       // check count
       if (builder.getAssetIssueCount() > 1) {
-        throw new NonUniqueObjectException("get more than one asset, please use getassetissuebyid");
+        throw new NonUniqueObjectException("To get more than one asset, please use getAssetIssuebyid syntax");
       } else {
         // fetch from DB by assetName as id
         AssetIssueCapsule assetIssueCapsule =
@@ -1260,7 +1262,7 @@ public class Wallet {
           // check count
           if (builder.getAssetIssueCount() > 1) {
             throw new NonUniqueObjectException(
-                "get more than one asset, please use getassetissuebyid");
+                "To get more than one asset, please use getAssetIssuebyid syntax");
           }
         }
       }
@@ -1629,11 +1631,11 @@ public class Wallet {
       throw new ZksnarkException(SHIELDED_ID_NOT_ALLOWED);
     }
     if (request.getBlockNum() < 0 || request.getBlockNum() > 1000) {
-      throw new BadItemException("request.BlockNum must be range in【0，1000】");
+      throw new BadItemException("request.BlockNum must be specified with range in【0，1000】");
     }
 
     if (request.getOutPointsCount() < 1 || request.getOutPointsCount() > 10) {
-      throw new BadItemException("request.OutPointsCount must be range in【1，10】");
+      throw new BadItemException("request.OutPointsCount must be speccified with range in【1，10】");
     }
 
     for (org.tron.protos.Contract.OutputPoint outputPoint : request.getOutPointsList()) {
@@ -1976,6 +1978,41 @@ public class Wallet {
 
   }
 
+
+  public ShieldedAddressInfo getNewShieldedAddress() throws BadItemException, ZksnarkException {
+    if (!getFullNodeAllowShieldedTransaction()) {
+      throw new ZksnarkException(SHIELDED_ID_NOT_ALLOWED);
+    }
+
+    ShieldedAddressInfo.Builder addressInfo = ShieldedAddressInfo.newBuilder();
+
+    BytesMessage sk = getSpendingKey();
+    DiversifierMessage d = getDiversifier();
+    ExpandedSpendingKeyMessage expandedSpendingKeyMessage = getExpandedSpendingKey(sk.getValue());
+
+    BytesMessage ak = getAkFromAsk(expandedSpendingKeyMessage.getAsk());
+    BytesMessage nk = getNkFromNsk(expandedSpendingKeyMessage.getNsk());
+    IncomingViewingKeyMessage ivk = getIncomingViewingKey(ak.getValue().toByteArray(),
+        nk.getValue().toByteArray());
+
+    PaymentAddressMessage addressMessage =
+        getPaymentAddress(new IncomingViewingKey(ivk.getIvk().toByteArray()),
+            new DiversifierT(d.getD().toByteArray()));
+
+    addressInfo.setSk(sk.getValue());
+    addressInfo.setAsk(expandedSpendingKeyMessage.getAsk());
+    addressInfo.setNsk(expandedSpendingKeyMessage.getNsk());
+    addressInfo.setOvk(expandedSpendingKeyMessage.getOvk());
+    addressInfo.setAk(ak.getValue());
+    addressInfo.setNk(nk.getValue());
+    addressInfo.setIvk(ivk.getIvk());
+    addressInfo.setD(d.getD());
+    addressInfo.setPkD(addressMessage.getPkD());
+    addressInfo.setPaymentAddress(addressMessage.getPaymentAddress());
+
+    return addressInfo.build();
+
+  }
   public BytesMessage getSpendingKey() throws ZksnarkException {
     if (!getFullNodeAllowShieldedTransaction()) {
       throw new ZksnarkException(SHIELDED_ID_NOT_ALLOWED);
@@ -2135,7 +2172,7 @@ public class Wallet {
     if (incrementalMerkleVoucherInfo.getVouchersCount() == 0) {
       result = SpendResult.newBuilder()
           .setResult(false)
-          .setMessage("input note not exists")
+          .setMessage("The input note does not exist")
           .build();
       return result;
     }
@@ -2150,12 +2187,12 @@ public class Wallet {
     if (dbManager.getNullfierStore().has(nf)) {
       result = SpendResult.newBuilder()
           .setResult(true)
-          .setMessage("input note already spent")
+          .setMessage("Input note has been spent")
           .build();
     } else {
       result = SpendResult.newBuilder()
           .setResult(false)
-          .setMessage("input note not spent or not exists")
+          .setMessage("The input note is not spent or does not exist")
           .build();
     }
 
@@ -2221,7 +2258,7 @@ public class Wallet {
     }
     List<Contract> contract = transaction.getRawData().getContractList();
     if (contract == null || contract.size() == 0) {
-      throw new ContractValidateException("contract is null");
+      throw new ContractValidateException("Contract is null");
     }
     ContractType contractType = contract.get(0).getType();
     if (contractType != ContractType.ShieldedTransferContract) {
@@ -2277,7 +2314,7 @@ public class Wallet {
     SmartContract.ABI abi = contractStore.getABI(contractAddress);
     if (abi == null) {
       throw new ContractValidateException(
-          "No contract or not a smart contract");
+          "No contract or not a valid smart contract");
     }
 
     byte[] selector = getSelector(
@@ -2308,7 +2345,7 @@ public class Wallet {
     }
 
     if (!Args.getInstance().isSupportConstant()) {
-      throw new ContractValidateException("this node don't support constant");
+      throw new ContractValidateException("this node does not support constant");
     }
 
     return callConstantContract(trxCap, builder, retBuilder);
@@ -2320,7 +2357,7 @@ public class Wallet {
       throws ContractValidateException, ContractExeException, HeaderNotFound, VMIllegalException {
 
     if (!Args.getInstance().isSupportConstant()) {
-      throw new ContractValidateException("this node don't support constant");
+      throw new ContractValidateException("this node does not support constant");
     }
     DepositImpl deposit = DepositImpl.createRoot(dbManager);
 
@@ -2380,7 +2417,7 @@ public class Wallet {
     AccountCapsule accountCapsule = dbManager.getAccountStore().get(address);
     if (accountCapsule == null) {
       logger.error(
-          "Get contract failed, the account is not exist or the account does not have code hash!");
+          "Get contract failed, the account does not exist or the account does not have a code hash!");
       return null;
     }
 
@@ -2658,7 +2695,7 @@ public class Wallet {
     GrpcAPI.DecryptNotes.Builder builder = GrpcAPI.DecryptNotes.newBuilder();
     if (!(startNum >= 0 && endNum > startNum && endNum - startNum <= 1000)) {
       throw new BadItemException(
-          "request require start_block_index >= 0 && end_block_index > start_block_index "
+          "request requires start_block_index >= 0 && end_block_index > start_block_index "
               + "&& end_block_index - start_block_index <= 1000");
     }
     BlockList blockList = this.getBlocksByLimitNext(startNum, endNum - startNum);
