@@ -216,7 +216,7 @@ public class StressPrecondition {
     }
   }
 
-  @Test(enabled = true)
+  @Test(enabled = false)
   public void test02CreateShieldProposal() {
     ChainParameters chainParameters = blockingStubFull
         .getChainParameters(EmptyMessage.newBuilder().build());
