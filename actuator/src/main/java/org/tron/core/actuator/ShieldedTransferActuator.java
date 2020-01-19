@@ -47,10 +47,12 @@ import org.tron.protos.contract.ShieldContract.SpendDescription;
 @Slf4j(topic = "actuator")
 public class ShieldedTransferActuator extends AbstractActuator {
 
+  public static String zenTokenId;
   private ShieldedTransferContract shieldedTransferContract;
 
   public ShieldedTransferActuator() {
     super(ContractType.ShieldedTransferContract, ShieldedTransferContract.class);
+    zenTokenId = CommonParameter.getInstance().getZenTokenId();
   }
 
   @Override
@@ -78,8 +80,7 @@ public class ShieldedTransferActuator extends AbstractActuator {
             shieldedTransferContract.getFromAmount(), ret,fee);
       }
       Commons.adjustAssetBalanceV2(accountStore.getBlackhole().createDbKey(),
-          CommonParameter.getInstance().getZenTokenId(), fee,
-          accountStore, assetIssueStore, dynamicStore);
+          zenTokenId, fee, accountStore, assetIssueStore, dynamicStore);
     } catch (BalanceInsufficientException e) {
       logger.debug(e.getMessage(), e);
       ret.setStatus(0, code.FAILED);
@@ -119,8 +120,8 @@ public class ShieldedTransferActuator extends AbstractActuator {
     AssetIssueStore assetIssueStore = chainBaseManager.getAssetIssueStore();
     DynamicPropertiesStore dynamicStore = chainBaseManager.getDynamicPropertiesStore();
     try {
-      Commons.adjustAssetBalanceV2(ownerAddress, CommonParameter.getInstance()
-              .getZenTokenId(), -amount, accountStore, assetIssueStore,
+      Commons.adjustAssetBalanceV2(ownerAddress, zenTokenId, -amount,
+          accountStore, assetIssueStore,
           dynamicStore);
     } catch (BalanceInsufficientException e) {
       ret.setStatus(0, code.FAILED);
@@ -144,9 +145,8 @@ public class ShieldedTransferActuator extends AbstractActuator {
             dynamicStore.getLatestBlockHeaderTimestamp(), withDefaultPermission, dynamicStore);
         accountStore.put(toAddress, toAccount);
       }
-      Commons.adjustAssetBalanceV2(toAddress, CommonParameter.getInstance().getZenTokenId(),
-          amount, accountStore, assetIssueStore,
-          dynamicStore);
+      Commons.adjustAssetBalanceV2(toAddress, zenTokenId, amount, accountStore,
+          assetIssueStore, dynamicStore);
     } catch (BalanceInsufficientException e) {
       ret.setStatus(0, code.FAILED);
       ret.setShieldedTransactionFee(fee);
@@ -463,12 +463,10 @@ public class ShieldedTransferActuator extends AbstractActuator {
   }
 
   private long getZenBalance(AccountCapsule account) {
-    if (account.getAssetMapV2().get(CommonParameter
-        .getInstance().getZenTokenId()) == null) {
+    if (account.getAssetMapV2().get(zenTokenId) == null) {
       return 0L;
     } else {
-      return account.getAssetMapV2().get(CommonParameter
-          .getInstance().getZenTokenId());
+      return account.getAssetMapV2().get(zenTokenId);
     }
   }
 
