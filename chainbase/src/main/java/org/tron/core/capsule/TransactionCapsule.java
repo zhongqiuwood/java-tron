@@ -85,8 +85,7 @@ import org.tron.protos.contract.WitnessContract.WitnessUpdateContract;
 public class TransactionCapsule implements ProtoCapsule<Transaction> {
 
   private static final ExecutorService executorService = Executors
-      .newFixedThreadPool(CommonParameter.getInstance()
-          .getValidContractProtoThreadNum());
+      .newFixedThreadPool(DBConfig.getValidContractProtoThreadNum());
   private static final String OWNER_ADDRESS = "ownerAddress_";
 
   private Transaction transaction;
