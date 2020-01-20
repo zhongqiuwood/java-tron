@@ -590,15 +590,13 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     try {
       this.getAllowProtoFilterNum();
     } catch (IllegalArgumentException e) {
-      this.saveAllowProtoFilterNum(CommonParameter.getInstance()
-          .getAllowProtoFilterNum());
+      this.saveAllowProtoFilterNum(DBConfig.getAllowProtoFilterNum());
     }
 
     try {
       this.getChangeDelegation();
     } catch (IllegalArgumentException e) {
-      this.saveChangeDelegation(CommonParameter.getInstance()
-          .getChangedDelegation());
+      this.saveChangeDelegation(DBConfig.getChangedDelegation());
     }
 
   }

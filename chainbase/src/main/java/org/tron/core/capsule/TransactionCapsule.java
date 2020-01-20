@@ -231,8 +231,7 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
   //No exception will be thrown here
   public static byte[] getShieldTransactionHashIgnoreTypeException(Transaction tx) {
     try {
-      return hashShieldTransaction(tx, CommonParameter.getInstance()
-          .getZenTokenId());
+      return hashShieldTransaction(tx, DBConfig.getZenTokenId());
     } catch (ContractValidateException | InvalidProtocolBufferException e) {
       logger.debug(e.getMessage(), e);
     }

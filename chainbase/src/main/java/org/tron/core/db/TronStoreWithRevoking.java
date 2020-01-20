@@ -59,8 +59,8 @@ public abstract class TronStoreWithRevoking<T extends ProtoCapsule> implements I
                     new WriteOptions().sync(DBConfig.isDbSync())))));
       } else if ("ROCKSDB".equals(dbEngine.toUpperCase())) {
         String parentPath = Paths
-            .get(StorageUtils.getOutputDirectoryByDbName(dbName), CommonParameter
-                .getInstance().getStorage().getDbDirectory()).toString();
+            .get(StorageUtils.getOutputDirectoryByDbName(dbName),
+                DBConfig.getDbDirectory()).toString();
 
         this.revokingDB = new Chainbase(new SnapshotRoot(
             new RocksDB(

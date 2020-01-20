@@ -35,7 +35,7 @@ public abstract class TronDatabase<T> implements ITronChainBase<T> {
               new WriteOptions().sync(DBConfig.isDbSync()));
     } else if ("ROCKSDB".equals(DBConfig.getDbEngine().toUpperCase())) {
       String parentName = Paths.get(StorageUtils.getOutputDirectoryByDbName(dbName),
-          CommonParameter.getInstance().getStorage().getDbDirectory()).toString();
+          DBConfig.getDbDirectory()).toString();
       dbSource =
           new RocksDbDataSourceImpl(parentName, dbName, DBConfig.getRocksDbSettings());
     }

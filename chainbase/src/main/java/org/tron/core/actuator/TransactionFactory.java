@@ -22,7 +22,7 @@ public class TransactionFactory {
 
   public static void register(ContractType type, Class<? extends Actuator> actuatorClass,
       Class<? extends GeneratedMessageV3> clazz) {
-    Set<String> actuatorSet = CommonParameter.getInstance().getActuatorSet();
+    Set<String> actuatorSet = DBConfig.getActuatorSet();
     if (actuatorClass != null && !actuatorSet.isEmpty() && !actuatorSet
         .contains(actuatorClass.getSimpleName())) {
       return;

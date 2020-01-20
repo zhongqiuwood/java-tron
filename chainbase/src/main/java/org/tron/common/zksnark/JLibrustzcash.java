@@ -284,7 +284,7 @@ public class JLibrustzcash {
   }
 
   public static boolean isOpenZen() {
-    boolean res = CommonParameter.getInstance().isFullNodeAllowShieldedTransactionArgs();
+    boolean res = DBConfig.isFullNodeAllowShieldedTransaction();
     if (res) {
       INSTANCE = LibrustzcashWrapper.getInstance();
     }
