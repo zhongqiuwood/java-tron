@@ -71,7 +71,7 @@ public class LevelDbDataSourceImpl implements DbSourceInter<byte[]>,
       WriteOptions writeOptions) {
     this.parentPath = Paths.get(
         parentPath,
-        CommonParameter.getInstance().getStorage().getDbDirectory()
+        DBConfig.getDbDirectory()
     ).toString();
     this.dataBaseName = dataBaseName;
     this.options = options;
@@ -82,7 +82,7 @@ public class LevelDbDataSourceImpl implements DbSourceInter<byte[]>,
   public LevelDbDataSourceImpl(String parentPath, String dataBaseName) {
     this.parentPath = Paths.get(
         parentPath,
-        CommonParameter.getInstance().getStorage().getDbDirectory()
+        DBConfig.getDbDirectory()
     ).toString();
 
     this.dataBaseName = dataBaseName;

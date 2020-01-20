@@ -965,10 +965,10 @@ public class Program {
 
   public void checkCPUTimeLimit(String opName) {
 
-    if (CommonParameter.getInstance().isDebug()) {
+    if (DBConfig.isDebug()) {
       return;
     }
-    if (CommonParameter.getInstance().isSolidityNode()) {
+    if (DBConfig.isSolidityNode()) {
       return;
     }
     long vmNowInUs = System.nanoTime() / 1000;
