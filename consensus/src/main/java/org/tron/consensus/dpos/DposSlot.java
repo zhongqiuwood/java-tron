@@ -26,7 +26,9 @@ public class DposSlot {
   }
 
   public long getSlot(long time) {
+    logger.info("time: {}",time);
     long firstSlotTime = getTime(1);
+    logger.info("firstSlotTime: {}",firstSlotTime);
     if (time < firstSlotTime) {
       return 0;
     }

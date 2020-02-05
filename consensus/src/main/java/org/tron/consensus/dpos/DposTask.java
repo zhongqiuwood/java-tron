@@ -84,8 +84,9 @@ public class DposTask {
       return state;
     }
 
+    logger.info("currentTime1: {} ",System.currentTimeMillis());
     synchronized (dposService.getBlockHandle().getLock()) {
-
+      logger.info("currentTime2: {} ",System.currentTimeMillis());
       long slot = dposSlot.getSlot(System.currentTimeMillis() + 50);
       if (slot == 0) {
         return State.NOT_TIME_YET;
