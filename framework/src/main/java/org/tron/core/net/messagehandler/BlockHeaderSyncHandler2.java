@@ -351,12 +351,10 @@ public class BlockHeaderSyncHandler2 {
       return;
     }
 
-    if (commonDataBase.getSRL(chainId, epoch).getSrAddressCount() == 0) {
-      commonDataBase.savePreEpoch(chainId, commonDataBase.getCurrentEpoch(chainId));
-      commonDataBase.saveCurrentEpoch(chainId, epoch);
-      sendEpoch(chainId, epoch);
-      syncEpoch = Pair.of(true, System.currentTimeMillis());
-    }
+    commonDataBase.savePreEpoch(chainId, commonDataBase.getCurrentEpoch(chainId));
+    commonDataBase.saveCurrentEpoch(chainId, epoch);
+    sendEpoch(chainId, epoch);
+    syncEpoch = Pair.of(true, System.currentTimeMillis());
   }
 
   public void handleMisbehaviour(BlockHeader blockHeader) {
