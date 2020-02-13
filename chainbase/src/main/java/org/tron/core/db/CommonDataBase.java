@@ -24,6 +24,7 @@ public class CommonDataBase extends TronDatabase<byte[]> {
   private static final byte[] LATEST_PBFT_BLOCK_HASH = "LATEST_PBFT_BLOCK_HASH".getBytes();
   private static final byte[] NEXT_EPOCH = "NEXT_EPOCH".getBytes();
   private static final byte[] CURRENT_EPOCH = "CURRENT_EPOCH".getBytes();
+  private static final byte[] PRE_EPOCH = "PRE_EPOCH".getBytes();
 
   public CommonDataBase() {
     super("common-database");
@@ -191,4 +192,16 @@ public class CommonDataBase extends TronDatabase<byte[]> {
     this.put(buildKey(NEXT_EPOCH, chainId), ByteArray.fromLong(currentEpoch));
   }
 
+  public long getPreEpoch(String chainId) {
+    byte[] value = get(buildKey(PRE_EPOCH, chainId));
+    if (value == null || value.length == 0) {
+      return 1L;
+    } else {
+      return ByteArray.toLong(value);
+    }
+  }
+
+  public void savePreEpoch(String chainId, long currentEpoch) {
+    this.put(buildKey(PRE_EPOCH, chainId), ByteArray.fromLong(currentEpoch));
+  }
 }

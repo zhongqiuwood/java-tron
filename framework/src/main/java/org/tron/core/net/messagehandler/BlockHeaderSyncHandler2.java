@@ -10,10 +10,12 @@ import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
+import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.overlay.server.SyncPool;
 import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.DBConfig;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
@@ -258,12 +260,13 @@ public class BlockHeaderSyncHandler2 {
     }
 
     if (!verifySrList(srlMessage.getDataSign(),
-        commonDataBase.getNextEpoch(chainId),
-        commonDataBase.getSRL(chainId, commonDataBase.getCurrentEpoch(chainId)).getSrAddressList())) {
+        commonDataBase.getCurrentEpoch(chainId),
+        commonDataBase.getSRL(chainId, commonDataBase.getPreEpoch(chainId)).getSrAddressList())) {
       throw new Exception("verify SRL error");
     }
 
     commonDataBase.saveSRL(chainId, epoch, srlMessage.getSrl());
+    syncEpoch = Pair.of(false, System.currentTimeMillis());
   }
 
   private boolean verifySrList(Protocol.PBFTCommitResult srl,
@@ -316,8 +319,8 @@ public class BlockHeaderSyncHandler2 {
 
     if (syncEpoch.getLeft()) {
       long now = System.currentTimeMillis();
-      if (now - syncEpoch.getRight() >= 1_1000L) {
-        sendEpoch(chainId, commonDataBase.getNextEpoch(chainId));
+      if (now - syncEpoch.getRight() >= 1_000L) {
+        sendEpoch(chainId, commonDataBase.getCurrentEpoch(chainId));
         syncEpoch = Pair.of(true, now);
       }
       return;
@@ -325,6 +328,34 @@ public class BlockHeaderSyncHandler2 {
 
     if (!verifyBlockPbftSign(blockHeader)) {
       handleMisbehaviour(blockHeader);
+    }
+
+    updateCurrentEpoch(blockHeader);
+  }
+
+  public boolean shouldBeUpdatedCurrentSRL(String chainId, long epoch) {
+    return commonDataBase.getSRL(chainId, epoch).getSrAddressCount() == 0;
+  }
+
+  public long currentEpoch(BlockHeader blockHeader) {
+    long blockTime = blockHeader.getRawData().getTimestamp();
+    long maintenanceTimeInterval = DBConfig.getMaintenanceTimeInterval();
+    long round = blockTime / maintenanceTimeInterval;
+    return round * maintenanceTimeInterval;
+  }
+
+  public void updateCurrentEpoch(BlockHeader blockHeader) {
+    String chainId = ByteArray.toHexString(blockHeader.getRawData().getChainId().toByteArray());
+    long epoch = currentEpoch(blockHeader);
+    if (!shouldBeUpdatedCurrentSRL(chainId, epoch)) {
+      return;
+    }
+
+    if (commonDataBase.getSRL(chainId, epoch).getSrAddressCount() == 0) {
+      commonDataBase.savePreEpoch(chainId, commonDataBase.getCurrentEpoch(chainId));
+      commonDataBase.saveCurrentEpoch(chainId, epoch);
+      sendEpoch(chainId, epoch);
+      syncEpoch = Pair.of(true, System.currentTimeMillis());
     }
   }
 
