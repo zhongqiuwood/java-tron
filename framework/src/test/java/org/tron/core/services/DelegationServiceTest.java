@@ -12,10 +12,15 @@ import org.tron.api.GrpcAPI.TransactionExtention;
 import org.tron.api.WalletGrpc;
 import org.tron.api.WalletGrpc.WalletBlockingStub;
 import org.tron.common.application.TronApplicationContext;
+import org.tron.common.utils.ByteArray;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.AccountCapsule;
+import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.db.DelegationService;
 import org.tron.core.db.Manager;
+import org.tron.protos.Protocol.Block;
+import org.tron.protos.Protocol.BlockHeader;
+import org.tron.protos.Protocol.BlockHeader.raw;
 import org.tron.protos.contract.StorageContract.UpdateBrokerageContract;
 
 @Slf4j
@@ -24,6 +29,10 @@ public class DelegationServiceTest {
   private static String fullnode = "127.0.0.1:50051";
   private DelegationService delegationService;
   private Manager manager;
+  BlockCapsule blockCapsule = new BlockCapsule(Block.newBuilder().setBlockHeader(
+      BlockHeader.newBuilder().setRawData(raw.newBuilder().setParentHash(ByteString.copyFrom(
+          ByteArray.fromHexString(
+              "0304f784e4e7bae517bcab94c3e0c9214fb4ac7ff9d7d5a937d1f40031f87b81"))))).build());
 
   public DelegationServiceTest(TronApplicationContext context) {
     delegationService = context.getBean(DelegationService.class);
@@ -56,7 +65,7 @@ public class DelegationServiceTest {
     } else if (cycle == 1) {
       rate = 0.2;
     }
-    delegationService.payStandbyWitness();
+    delegationService.payStandbyWitness(blockCapsule);
     Wallet.setAddressPreFixByte(ADD_PRE_FIX_BYTE_MAINNET);
     byte[] sr1 = decodeFromBase58Check("TLTDZBcPoJ8tZ6TTEeEqEvwYFk2wgotSfD");
     long value = manager.getDelegationStore().getReward(cycle, sr1);

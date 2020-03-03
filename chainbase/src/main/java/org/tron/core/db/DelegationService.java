@@ -11,6 +11,7 @@ import org.spongycastle.util.encoders.Hex;
 import org.springframework.stereotype.Component;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.capsule.AccountCapsule;
+import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.exception.BalanceInsufficientException;
@@ -44,7 +45,7 @@ public class DelegationService {
     this.accountStore = accountStore;
   }
 
-  public void payStandbyWitness() {
+  public void payStandbyWitness(BlockCapsule blockCapsule) {
     List<ByteString> witnessAddressList = new ArrayList<>();
     for (WitnessCapsule witnessCapsule : witnessStore.getAllWitnesses()) {
       witnessAddressList.add(witnessCapsule.getAddress());
@@ -59,10 +60,13 @@ public class DelegationService {
     for (ByteString b : witnessAddressList) {
       voteSum += getWitnesseByAddress(b).getVoteCount();
     }
+
     if (voteSum > 0) {
       for (ByteString b : witnessAddressList) {
         double eachVotePay = (double) totalPay / voteSum;
         long pay = (long) (getWitnesseByAddress(b).getVoteCount() * eachVotePay);
+        blockCapsule.getWitnessMap().put(StringUtil
+            .encode58Check(b.toByteArray()), pay);
         logger.debug("pay {} stand reward {}", Hex.toHexString(b.toByteArray()), pay);
         payReward(b.toByteArray(), pay);
       }

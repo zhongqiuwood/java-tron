@@ -1338,7 +1338,7 @@ public class Manager {
     if (getDynamicPropertiesStore().allowChangeDelegation()) {
       delegationService.payBlockReward(witnessCapsule.getAddress().toByteArray(),
           getDynamicPropertiesStore().getWitnessPayPerBlock());
-      delegationService.payStandbyWitness();
+      delegationService.payStandbyWitness(block);
     } else {
       byte[] witness = block.getWitnessAddress().toByteArray();
       AccountCapsule account = getAccountStore().get(witness);
@@ -1509,6 +1509,7 @@ public class Manager {
       BlockLogTriggerCapsule blockLogTriggerCapsule = new BlockLogTriggerCapsule(newBlock);
       blockLogTriggerCapsule.setLatestSolidifiedBlockNumber(getDynamicPropertiesStore()
           .getLatestSolidifiedBlockNum());
+      blockLogTriggerCapsule.setWitnessPlay(newBlock, chainBaseManager.getDynamicPropertiesStore());
       boolean result = triggerCapsuleQueue.offer(blockLogTriggerCapsule);
       if (!result) {
         logger.info("too many triggers, block trigger lost: {}", newBlock.getBlockId());

@@ -22,7 +22,9 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import java.security.SignatureException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 import lombok.Getter;
 import lombok.Setter;
@@ -60,6 +62,10 @@ public class BlockCapsule implements ProtoCapsule<Block> {
   private Block block;
   private List<TransactionCapsule> transactions = new ArrayList<>();
   private StringBuilder toStringBuff = new StringBuilder();
+  @Getter
+  @Setter
+  private Map<String, Long> witnessMap = new HashMap<>();
+
 
   public BlockCapsule(long number, Sha256Hash hash, long when, ByteString witnessAddress) {
     // blockheader raw
