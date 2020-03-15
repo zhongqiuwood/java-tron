@@ -31,17 +31,15 @@ public class ContractScenario005 {
   private final String testKey003 = Configuration.getByPath("testng.conf")
       .getString("foundationAccount.key1");
   private final byte[] toAddress = PublicMethed.getFinalAddress(testKey003);
-
+  ECKey ecKey1 = new ECKey(Utils.getRandom());
+  byte[] contract005Address = ecKey1.getAddress();
+  String contract005Key = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
   private ManagedChannel channelFull = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull = null;
   private String fullnode = Configuration.getByPath("testng.conf")
       .getStringList("fullnode.ip.list").get(0);
   private Long maxFeeLimit = Configuration.getByPath("testng.conf")
       .getLong("defaultParameter.maxFeeLimit");
-
-  ECKey ecKey1 = new ECKey(Utils.getRandom());
-  byte[] contract005Address = ecKey1.getAddress();
-  String contract005Key = ByteArray.toHexString(ecKey1.getPrivKeyBytes());
 
   @BeforeSuite
   public void beforeSuite() {
@@ -62,7 +60,7 @@ public class ContractScenario005 {
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
   }
 
-  @Test(enabled = true)
+  @Test(enabled = false)
   public void deployIcoContract() {
     Assert.assertTrue(PublicMethed.sendcoin(contract005Address, 200000000L, fromAddress,
         testKey002, blockingStubFull));

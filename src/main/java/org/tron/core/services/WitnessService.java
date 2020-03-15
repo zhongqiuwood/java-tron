@@ -1,5 +1,6 @@
 package org.tron.core.services;
 
+import static org.tron.common.utils.ByteArray.fromHexString;
 import static org.tron.core.witness.BlockProductionCondition.NOT_MY_TURN;
 
 import com.google.common.cache.Cache;
@@ -7,6 +8,7 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.collect.Maps;
 import com.google.protobuf.ByteString;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -14,6 +16,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.joda.time.DateTime;
+import org.spongycastle.util.encoders.Hex;
 import org.tron.common.application.Application;
 import org.tron.common.application.Service;
 import org.tron.common.application.TronApplicationContext;
@@ -380,29 +383,40 @@ public class WitnessService implements Service {
    */
   @Override
   public void init() {
-
-    if (Args.getInstance().getLocalWitnesses().getPrivateKeys().size() == 0) {
+    List<String> privateKeys = Args.getInstance().getLocalWitnesses().getPrivateKeys();
+    if (privateKeys.size() == 0) {
       return;
     }
 
-    byte[] privateKey = ByteArray
-        .fromHexString(Args.getInstance().getLocalWitnesses().getPrivateKey());
-    byte[] witnessAccountAddress = Args.getInstance().getLocalWitnesses()
-        .getWitnessAccountAddress();
-    //This address does not need to have an account
-    byte[] privateKeyAccountAddress = ECKey.fromPrivate(privateKey).getAddress();
-
-    WitnessCapsule witnessCapsule = this.tronApp.getDbManager().getWitnessStore()
-        .get(witnessAccountAddress);
-    // need handle init witness
-    if (null == witnessCapsule) {
-      logger.warn("WitnessCapsule[" + witnessAccountAddress + "] is not in witnessStore");
-      witnessCapsule = new WitnessCapsule(ByteString.copyFrom(witnessAccountAddress));
+    if (privateKeys.size() == 1) {
+      byte[] privateKey = ByteArray.fromHexString(privateKeys.get(0));
+      byte[] wAddress = Args.getInstance().getLocalWitnesses().getWitnessAccountAddress();
+      byte[] pAddress = ECKey.fromPrivate(privateKey).getAddress();
+      WitnessCapsule witnessCapsule = this.tronApp.getDbManager().getWitnessStore().get(wAddress);
+      if (null == witnessCapsule) {
+        logger.warn("WitnessCapsule is null, witness: {}", wAddress);
+        witnessCapsule = new WitnessCapsule(ByteString.copyFrom(wAddress));
+      }
+      this.privateKeyMap.put(witnessCapsule.getAddress(), privateKey);
+      this.localWitnessStateMap.put(witnessCapsule.getAddress(), witnessCapsule);
+      this.privateKeyToAddressMap.put(privateKey, pAddress);
+      return;
     }
 
-    this.privateKeyMap.put(witnessCapsule.getAddress(), privateKey);
-    this.localWitnessStateMap.put(witnessCapsule.getAddress(), witnessCapsule);
-    this.privateKeyToAddressMap.put(privateKey, privateKeyAccountAddress);
+    for (String pKey : privateKeys) {
+      byte[] privateKey = fromHexString(pKey);
+      byte[] address = ECKey.fromPrivate(privateKey).getAddress();
+      WitnessCapsule witnessCapsule = this.tronApp.getDbManager().getWitnessStore().get(address);
+      if (null == witnessCapsule) {
+        logger.info("WitnessCapsule is null, privateKey: {}, witness: {}", pKey,
+            Hex.toHexString(address));
+        witnessCapsule = new WitnessCapsule(ByteString.copyFrom(address));
+      }
+      this.privateKeyMap.put(witnessCapsule.getAddress(), privateKey);
+      this.localWitnessStateMap.put(witnessCapsule.getAddress(), witnessCapsule);
+      this.privateKeyToAddressMap.put(privateKey, address);
+    }
+    logger.info("PrivateKeys size = {}", privateKeys.size());
   }
 
   @Override
