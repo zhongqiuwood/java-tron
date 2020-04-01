@@ -96,7 +96,12 @@ public class VM {
     return energyCost;
   }
 
+  public long timeAll = 0;
+  public long count = 0;
+  public byte targetOp = 0x00;
   public void step(Program program) {
+//    int isTargetOp = 0;
+    long startTime = System.nanoTime();
     if (config.vmTrace()) {
       program.saveOpTrace();
     }
@@ -355,6 +360,7 @@ public class VM {
           word1.mul(word2);
           program.stackPush(word1);
           program.step();
+//          isTargetOp = 1;
         }
         break;
         case SUB: {
@@ -368,6 +374,7 @@ public class VM {
           word1.sub(word2);
           program.stackPush(word1);
           program.step();
+//          isTargetOp = 1;
         }
         break;
         case DIV: {
@@ -460,6 +467,7 @@ public class VM {
 
           program.stackPush(word1);
           program.step();
+//          isTargetOp = 1;
         }
         break;
         case LT: {
@@ -479,6 +487,7 @@ public class VM {
           }
           program.stackPush(word1);
           program.step();
+//          isTargetOp = 1;
         }
         break;
         case SLT: {
@@ -587,6 +596,7 @@ public class VM {
           word1.and(word2);
           program.stackPush(word1);
           program.step();
+//          isTargetOp = 1;
         }
         break;
         case OR: {
@@ -600,6 +610,7 @@ public class VM {
           word1.or(word2);
           program.stackPush(word1);
           program.step();
+//          isTargetOp = 1;
         }
         break;
         case XOR: {
@@ -634,6 +645,7 @@ public class VM {
 
           program.stackPush(result);
           program.step();
+//          isTargetOp = 1;
         }
         break;
         case SHL: {
@@ -1454,6 +1466,15 @@ public class VM {
       throw e;
     } finally {
       program.fullTrace();
+//      timeAll += isTargetOp * (System.nanoTime() - startTime);
+//      if(isTargetOp == 1){
+//        count++;
+//      }
+      long endTime = System.nanoTime();
+      if(program.getCurrentOp() == targetOp){
+        timeAll += endTime - startTime;
+        count++;
+      }
     }
   }
 

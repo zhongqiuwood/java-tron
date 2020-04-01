@@ -46,7 +46,7 @@ public class ProgramInvokeMockImpl implements ProgramInvoke {
   private byte[] ownerAddress = Hex.decode("cd2a3d9f938e13cd947ec05abc7fe734df8dd826");
   private boolean isConstantCall;
   private boolean isStaticCall;
-  private long energyLimit = 50;
+  private long energyLimit = 500000000000L;
 
   public ProgramInvokeMockImpl(byte[] msgDataRaw) {
     this();
