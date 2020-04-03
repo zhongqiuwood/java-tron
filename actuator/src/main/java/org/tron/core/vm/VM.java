@@ -21,6 +21,7 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.tuple.Pair;
 import org.spongycastle.util.encoders.Hex;
 import org.springframework.util.StringUtils;
 import org.tron.common.runtime.vm.DataWord;
@@ -101,7 +102,9 @@ public class VM {
   public byte targetOp = 0x00;
   public void step(Program program) {
 //    int isTargetOp = 0;
-    long startTime = System.nanoTime();
+    long startTime = 0;
+    byte currentOp = program.getCurrentOp();
+    startTime = System.nanoTime();
     if (config.vmTrace()) {
       program.saveOpTrace();
     }
@@ -331,8 +334,18 @@ public class VM {
          * Stop and Arithmetic Operations
          */
         case STOP: {
-          program.setHReturn(EMPTY_BYTE_ARRAY);
-          program.stop();
+//          program.setHReturn(EMPTY_BYTE_ARRAY);
+//          program.stop();
+
+          Pair<Boolean, byte[]> out = PrecompiledContracts.getContractForAddress(new DataWord("0000000000000000000000000000000000000000000000000000000000000001"))
+                  .execute(new byte[]{0x5b, 0x60, 0x10, 0x60, 0x10, 0x60, 0x10, 0x60, 0x00,
+                  0x7f, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01,
+                  0x00, 0x56});
+
+          program.step();
         }
         break;
         case ADD: {
@@ -1471,8 +1484,10 @@ public class VM {
 //        count++;
 //      }
       long endTime = System.nanoTime();
-      if(program.getCurrentOp() == targetOp){
-        timeAll += endTime - startTime;
+      if(currentOp == targetOp){
+//        long runTime = 0xffffffffffffffffL - startTime + endTime;
+        long runTime = endTime - startTime;
+        timeAll += runTime;
         count++;
       }
     }
