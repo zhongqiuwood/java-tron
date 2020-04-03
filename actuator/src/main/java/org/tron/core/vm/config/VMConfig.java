@@ -38,7 +38,7 @@ public class VMConfig {
   private static boolean ALLOW_TVM_TRANSFER_TRC10 = false;
 
   @Setter
-  private static boolean ALLOW_TVM_CONSTANTINOPLE = false;
+  private static boolean ALLOW_TVM_CONSTANTINOPLE = true;
 
   @Setter
   private static boolean ALLOW_MULTI_SIGN = false;
