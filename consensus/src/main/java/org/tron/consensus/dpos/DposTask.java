@@ -45,6 +45,11 @@ public class DposTask {
     }
 
     Runnable runnable = () -> {
+      try {
+        Thread.sleep(30000);
+      }catch (Exception e) {
+
+      }
       while (isRunning) {
         try {
           if (dposService.isNeedSyncCheck()) {
