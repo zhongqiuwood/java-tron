@@ -334,16 +334,16 @@ public class VM {
          * Stop and Arithmetic Operations
          */
         case STOP: {
-//          program.setHReturn(EMPTY_BYTE_ARRAY);
-//          program.stop();
+         program.setHReturn(EMPTY_BYTE_ARRAY);
+         program.stop();
 
-          Pair<Boolean, byte[]> out = PrecompiledContracts.getContractForAddress(new DataWord("0000000000000000000000000000000000000000000000000000000000000001"))
+          /*Pair<Boolean, byte[]> out = PrecompiledContracts.getContractForAddress(new DataWord("0000000000000000000000000000000000000000000000000000000000000001"))
                   .execute(new byte[]{0x5b, 0x60, 0x10, 0x60, 0x10, 0x60, 0x10, 0x60, 0x00,
                   0x7f, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
                   0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
                   0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
                   0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01,
-                  0x00, 0x56});
+                  0x00, 0x56});*/
 
           program.step();
         }
