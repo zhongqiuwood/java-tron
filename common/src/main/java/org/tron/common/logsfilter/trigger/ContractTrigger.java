@@ -79,20 +79,4 @@ public class ContractTrigger extends Trigger {
   @Getter
   @Setter
   private ABI abi;
-  public ContractTrigger() {
-  }
-
-  public ContractTrigger(ContractTrigger contractTrigger) {
-    this.uniqueId = contractTrigger.uniqueId;
-    this.transactionId = contractTrigger.transactionId;
-    this.contractAddress = contractTrigger.contractAddress;
-    this.callerAddress = contractTrigger.callerAddress;
-    this.originAddress = contractTrigger.originAddress;
-    this.creatorAddress = contractTrigger.creatorAddress;
-    this.blockNumber = contractTrigger.blockNumber;
-    this.removed = contractTrigger.removed;
-    this.latestSolidifiedBlockNumber = contractTrigger.latestSolidifiedBlockNumber;
-    this.logInfo = contractTrigger.logInfo;
-    this.rawData = contractTrigger.rawData;
-  }
 }

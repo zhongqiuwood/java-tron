@@ -221,13 +221,6 @@ public class Manager {
   private BlockingQueue<TransactionCapsule> rePushTransactions;
   private BlockingQueue<TriggerCapsule> triggerCapsuleQueue;
 
-
-
-  @Autowired(required = false)
-  private Map<Long, List<SolidityLogCapsule>> contractLogTriggerSet;
-  @Autowired(required = false)
-  private Map<Long, List<SolidityEventTrigger>> contractEventTriggerSet;
-
   /**
    * Cycle thread to rePush Transactions
    */
@@ -373,8 +366,6 @@ public class Manager {
     this.pendingTransactions = Collections.synchronizedList(Lists.newArrayList());
     this.rePushTransactions = new LinkedBlockingQueue<>();
     this.triggerCapsuleQueue = new LinkedBlockingQueue<>();
-    contractLogTriggerSet = new ConcurrentHashMap<>();
-    contractEventTriggerSet = new ConcurrentHashMap<>();
     chainBaseManager.setMerkleContainer(getMerkleContainer());
     chainBaseManager.setDelegationService(delegationService);
 
@@ -1525,18 +1516,6 @@ public class Manager {
   }
 
   private void postSolitityEventTrigger(Long blockNum) {
-    List<SolidityLogCapsule> solitityEventList = contractLogTriggerSet.get(blockNum);
-    for (SolidityLogCapsule solitityEvent : solitityEventList) {
-      if(chainBaseManager.getTransactionStore()
-          .getUnchecked(solitityEvent.getSolidityLogTrigger()
-              .getTransactionId().getBytes()) != null) {
-        boolean result = triggerCapsuleQueue.offer(solitityEvent);
-        if (!result) {
-          logger.info("too many trigger, lost solidified event trigger");
-        }
-      }
-    }
-
   }
 
   private void postSolidityTrigger(final long latestSolidifiedBlockNumber) {
@@ -1547,13 +1526,6 @@ public class Manager {
       if (!result) {
         logger.info("too many trigger, lost solidified trigger, "
             + "block number: {}", latestSolidifiedBlockNumber);
-      }
-      if (EventPluginLoader.getInstance().isSolidityEventTriggerEnable()) {
-
-      }
-
-      if (EventPluginLoader.getInstance().isSolidityLogTriggerEnable()) {
-
       }
     }
   }

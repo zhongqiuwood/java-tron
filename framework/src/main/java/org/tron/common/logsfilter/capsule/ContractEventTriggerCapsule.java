@@ -12,7 +12,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.tron.common.logsfilter.ContractEventParserAbi;
 import org.tron.common.logsfilter.EventPluginLoader;
 import org.tron.common.logsfilter.trigger.ContractEventTrigger;
-import org.tron.common.logsfilter.trigger.SolidityEventTrigger;
 import org.tron.common.runtime.LogEventWrapper;
 import org.tron.protos.contract.SmartContractOuterClass.SmartContract.ABI.Entry;
 
@@ -30,8 +29,6 @@ public class ContractEventTriggerCapsule extends TriggerCapsule {
   @Getter
   @Setter
   private Entry abiEntry;
-  @Autowired
-  private Map<Long, List<SolidityEventTrigger>> contractEventTriggerSet = new HashMap<>();
 
   public ContractEventTriggerCapsule(LogEventWrapper log) {
     this.contractEventTrigger = new ContractEventTrigger();
@@ -65,9 +62,6 @@ public class ContractEventTriggerCapsule extends TriggerCapsule {
 
     if (matchFilter(contractEventTrigger)) {
       EventPluginLoader.getInstance().postContractEventTrigger(contractEventTrigger);
-      contractEventTriggerSet.computeIfAbsent(contractEventTrigger
-          .getBlockNumber(), listBlk -> new ArrayList<>())
-          .add(new SolidityEventTrigger(contractEventTrigger));
     }
   }
 }

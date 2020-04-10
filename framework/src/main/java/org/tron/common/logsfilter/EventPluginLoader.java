@@ -19,8 +19,6 @@ import org.tron.common.logsfilter.trigger.BlockLogTrigger;
 import org.tron.common.logsfilter.trigger.ContractEventTrigger;
 import org.tron.common.logsfilter.trigger.ContractLogTrigger;
 import org.tron.common.logsfilter.trigger.ContractTrigger;
-import org.tron.common.logsfilter.trigger.SolidityEventTrigger;
-import org.tron.common.logsfilter.trigger.SolidityLogTrigger;
 import org.tron.common.logsfilter.trigger.SolidityTrigger;
 import org.tron.common.logsfilter.trigger.TransactionLogTrigger;
 import org.tron.common.logsfilter.trigger.Trigger;
@@ -339,7 +337,7 @@ public class EventPluginLoader {
   }
 
   public synchronized boolean isSolidityLogTriggerEnable() {
-    return isSolidityLogTriggerEnable();
+    return solidityLogTriggerEnable;
   }
 
   public synchronized boolean isTransactionLogTriggerEnable() {
@@ -419,7 +417,7 @@ public class EventPluginLoader {
     }
   }
 
-  public void postSolidityLogTrigger(SolidityLogTrigger trigger) {
+  public void postSolidityLogTrigger(ContractLogTrigger trigger) {
     if (useNativeQueue) {
       NativeMessageQueue.getInstance()
           .publishTrigger(toJsonString(trigger), trigger.getTriggerName());
@@ -429,7 +427,7 @@ public class EventPluginLoader {
     }
   }
 
-  public void postSolidityEventTrigger(SolidityEventTrigger trigger) {
+  public void postSolidityEventTrigger(ContractEventTrigger trigger) {
     if (useNativeQueue) {
       NativeMessageQueue.getInstance()
           .publishTrigger(toJsonString(trigger), trigger.getTriggerName());

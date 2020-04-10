@@ -1,6 +1,5 @@
 package org.tron.core.db;
 
-
 import static org.tron.core.config.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
 
 import org.tron.common.utils.Commons;
