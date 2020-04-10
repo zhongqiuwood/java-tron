@@ -101,7 +101,6 @@ public class VM {
   public long count = 0;
   public byte targetOp = 0x00;
   public void step(Program program) {
-//    int isTargetOp = 0;
     long startTime = 0;
     byte currentOp = program.getCurrentOp();
     startTime = System.nanoTime();
@@ -334,18 +333,18 @@ public class VM {
          * Stop and Arithmetic Operations
          */
         case STOP: {
-         program.setHReturn(EMPTY_BYTE_ARRAY);
-         program.stop();
+          program.setHReturn(EMPTY_BYTE_ARRAY);
+          program.stop();
 
-          /*Pair<Boolean, byte[]> out = PrecompiledContracts.getContractForAddress(new DataWord("0000000000000000000000000000000000000000000000000000000000000001"))
-                  .execute(new byte[]{0x5b, 0x60, 0x10, 0x60, 0x10, 0x60, 0x10, 0x60, 0x00,
-                  0x7f, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-                  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01,
-                  0x00, 0x56});*/
-
-          program.step();
+//          Pair<Boolean, byte[]> out = PrecompiledContracts.getContractForAddress(new DataWord("0000000000000000000000000000000000000000000000000000000000000001"))
+//                  .execute(new byte[]{0x5b, 0x60, 0x10, 0x60, 0x10, 0x60, 0x10, 0x60, 0x00,
+//                  0x7f, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+//                  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+//                  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+//                  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01,
+//                  0x00, 0x56});
+//
+//          program.step();
         }
         break;
         case ADD: {
@@ -373,7 +372,6 @@ public class VM {
           word1.mul(word2);
           program.stackPush(word1);
           program.step();
-//          isTargetOp = 1;
         }
         break;
         case SUB: {
@@ -387,7 +385,6 @@ public class VM {
           word1.sub(word2);
           program.stackPush(word1);
           program.step();
-//          isTargetOp = 1;
         }
         break;
         case DIV: {
@@ -480,7 +477,6 @@ public class VM {
 
           program.stackPush(word1);
           program.step();
-//          isTargetOp = 1;
         }
         break;
         case LT: {
@@ -500,7 +496,6 @@ public class VM {
           }
           program.stackPush(word1);
           program.step();
-//          isTargetOp = 1;
         }
         break;
         case SLT: {
@@ -609,7 +604,6 @@ public class VM {
           word1.and(word2);
           program.stackPush(word1);
           program.step();
-//          isTargetOp = 1;
         }
         break;
         case OR: {
@@ -623,7 +617,6 @@ public class VM {
           word1.or(word2);
           program.stackPush(word1);
           program.step();
-//          isTargetOp = 1;
         }
         break;
         case XOR: {
@@ -658,7 +651,6 @@ public class VM {
 
           program.stackPush(result);
           program.step();
-//          isTargetOp = 1;
         }
         break;
         case SHL: {
@@ -1479,10 +1471,6 @@ public class VM {
       throw e;
     } finally {
       program.fullTrace();
-//      timeAll += isTargetOp * (System.nanoTime() - startTime);
-//      if(isTargetOp == 1){
-//        count++;
-//      }
       long endTime = System.nanoTime();
       if(currentOp == targetOp){
 //        long runTime = 0xffffffffffffffffL - startTime + endTime;
