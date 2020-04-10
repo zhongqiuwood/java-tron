@@ -1516,6 +1516,16 @@ public class Manager {
   }
 
   private void postSolitityEventTrigger(Long blockNum) {
+    try {
+      BlockCapsule solidityBlock = chainBaseManager.getBlockByNum(
+          blockNum);
+      for (TransactionCapsule trx : solidityBlock.getTransactions()) {
+        postContractTrigger(trx.getTrxTrace(), false);
+      }
+    } catch (ItemNotFoundException | BadItemException e) {
+      logger.info("load block by number failed, caused by {}", e.getMessage());
+    }
+
   }
 
   private void postSolidityTrigger(final long latestSolidifiedBlockNumber) {
@@ -1527,6 +1537,14 @@ public class Manager {
         logger.info("too many trigger, lost solidified trigger, "
             + "block number: {}", latestSolidifiedBlockNumber);
       }
+    }
+
+    if (eventPluginLoaded && EventPluginLoader.getInstance().isSolidityLogTriggerEnable()) {
+
+    }
+
+    if (eventPluginLoaded && EventPluginLoader.getInstance().isSolidityEventTriggerEnable()) {
+      postSolitityEventTrigger(latestSolidifiedBlockNumber);
     }
   }
 
