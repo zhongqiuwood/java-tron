@@ -15,15 +15,18 @@ import com.google.protobuf.ByteString;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -48,10 +51,15 @@ import org.tron.common.logsfilter.EventPluginLoader;
 import org.tron.common.logsfilter.FilterQuery;
 import org.tron.common.logsfilter.capsule.BlockLogTriggerCapsule;
 import org.tron.common.logsfilter.capsule.ContractTriggerCapsule;
+import org.tron.common.logsfilter.capsule.SolidityLogCapsule;
 import org.tron.common.logsfilter.capsule.SolidityTriggerCapsule;
 import org.tron.common.logsfilter.capsule.TransactionLogTriggerCapsule;
 import org.tron.common.logsfilter.capsule.TriggerCapsule;
+import org.tron.common.logsfilter.trigger.ContractEventTrigger;
+import org.tron.common.logsfilter.trigger.ContractLogTrigger;
 import org.tron.common.logsfilter.trigger.ContractTrigger;
+import org.tron.common.logsfilter.trigger.SolidityEventTrigger;
+import org.tron.common.logsfilter.trigger.SolidityLogTrigger;
 import org.tron.common.overlay.message.Message;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.runtime.RuntimeImpl;
@@ -83,6 +91,7 @@ import org.tron.core.db.accountstate.TrieService;
 import org.tron.core.db.accountstate.callback.AccountStateCallBack;
 import org.tron.core.db.api.AssetUpdateHelper;
 import org.tron.core.db2.ISession;
+import org.tron.core.db2.common.WrappedByteArray;
 import org.tron.core.db2.core.ITronChainBase;
 import org.tron.core.db2.core.SnapshotManager;
 import org.tron.core.exception.AccountResourceInsufficientException;
@@ -211,6 +220,13 @@ public class Manager {
   // the capacity is equal to Integer.MAX_VALUE default
   private BlockingQueue<TransactionCapsule> rePushTransactions;
   private BlockingQueue<TriggerCapsule> triggerCapsuleQueue;
+
+
+
+  @Autowired(required = false)
+  private Map<Long, List<SolidityLogCapsule>> contractLogTriggerSet;
+  @Autowired(required = false)
+  private Map<Long, List<SolidityEventTrigger>> contractEventTriggerSet;
 
   /**
    * Cycle thread to rePush Transactions
@@ -357,6 +373,8 @@ public class Manager {
     this.pendingTransactions = Collections.synchronizedList(Lists.newArrayList());
     this.rePushTransactions = new LinkedBlockingQueue<>();
     this.triggerCapsuleQueue = new LinkedBlockingQueue<>();
+    contractLogTriggerSet = new ConcurrentHashMap<>();
+    contractEventTriggerSet = new ConcurrentHashMap<>();
     chainBaseManager.setMerkleContainer(getMerkleContainer());
     chainBaseManager.setDelegationService(delegationService);
 
@@ -395,6 +413,7 @@ public class Manager {
         .newFixedThreadPool(Args.getInstance().getValidateSignThreadNum());
     Thread rePushThread = new Thread(rePushLoop);
     rePushThread.start();
+
     // add contract event listener for subscribing
     if (Args.getInstance().isEventSubscribe()) {
       startEventSubscribing();
@@ -1505,14 +1524,36 @@ public class Manager {
     }
   }
 
+  private void postSolitityEventTrigger(Long blockNum) {
+    List<SolidityLogCapsule> solitityEventList = contractLogTriggerSet.get(blockNum);
+    for (SolidityLogCapsule solitityEvent : solitityEventList) {
+      if(chainBaseManager.getTransactionStore()
+          .getUnchecked(solitityEvent.getSolidityLogTrigger()
+              .getTransactionId().getBytes()) != null) {
+        boolean result = triggerCapsuleQueue.offer(solitityEvent);
+        if (!result) {
+          logger.info("too many trigger, lost solidified event trigger");
+        }
+      }
+    }
+
+  }
+
   private void postSolidityTrigger(final long latestSolidifiedBlockNumber) {
-    if (eventPluginLoaded && EventPluginLoader.getInstance().isSolidityLogTriggerEnable()) {
+    if (eventPluginLoaded && EventPluginLoader.getInstance().isSolidityTriggerEnable()) {
       SolidityTriggerCapsule solidityTriggerCapsule
           = new SolidityTriggerCapsule(latestSolidifiedBlockNumber);
       boolean result = triggerCapsuleQueue.offer(solidityTriggerCapsule);
       if (!result) {
         logger.info("too many trigger, lost solidified trigger, "
             + "block number: {}", latestSolidifiedBlockNumber);
+      }
+      if (EventPluginLoader.getInstance().isSolidityEventTriggerEnable()) {
+
+      }
+
+      if (EventPluginLoader.getInstance().isSolidityLogTriggerEnable()) {
+
       }
     }
   }
