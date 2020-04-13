@@ -14,6 +14,7 @@ import org.tron.common.logsfilter.EventPluginLoader;
 import org.tron.common.logsfilter.trigger.ContractEventTrigger;
 import org.tron.common.logsfilter.trigger.ContractLogTrigger;
 import org.tron.common.logsfilter.trigger.ContractTrigger;
+import org.tron.common.logsfilter.trigger.Trigger;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.runtime.vm.LogInfo;
 import org.tron.core.config.args.Args;
@@ -24,6 +25,10 @@ public class ContractTriggerCapsule extends TriggerCapsule {
   @Getter
   @Setter
   private ContractTrigger contractTrigger;
+
+  @Getter
+  @Setter
+  private boolean isSolidity = false;
 
   public ContractTriggerCapsule(ContractTrigger contractTrigger) {
     this.contractTrigger = contractTrigger;
@@ -103,6 +108,9 @@ public class ContractTriggerCapsule extends TriggerCapsule {
           .setTopicMap(ContractEventParserAbi.parseTopics(topicList, eventEntry));
       ((ContractEventTrigger) event)
           .setDataMap(ContractEventParserAbi.parseEventData(data, topicList, eventEntry));
+      if (isSolidity == true) {
+        contractTrigger.setTriggerName(Trigger.CONTRACTEVENT_TRIGGER_NAME);
+      }
     } else {
       if (!EventPluginLoader.getInstance().isContractLogTriggerEnable()) {
         return;
@@ -110,6 +118,9 @@ public class ContractTriggerCapsule extends TriggerCapsule {
       event = new ContractLogTrigger();
       ((ContractLogTrigger) event).setTopicList(logInfo.getHexTopics());
       ((ContractLogTrigger) event).setData(logInfo.getHexData());
+      if (isSolidity == true) {
+        contractTrigger.setTriggerName(Trigger.SOLIDITYLOG_TRIGGER_NAME);
+      }
     }
 
     RawData rawData = new RawData(logInfo.getAddress(), logInfo.getTopics(), logInfo.getData());
