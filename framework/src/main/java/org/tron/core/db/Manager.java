@@ -1135,7 +1135,9 @@ public class Manager {
           applyBlock(newBlock);
           tmpSession.commit();
           // if event subscribe is enabled, post solidity trigger to queue
-          postSolidityTrigger(getDynamicPropertiesStore().getLatestSolidifiedBlockNum());
+          if (!Args.getInstance().isSolidityNode()) {
+            postSolidityTrigger(getDynamicPropertiesStore().getLatestSolidifiedBlockNum());
+          }
           // if event subscribe is enabled, post block trigger to queue
           postBlockTrigger(newBlock);
         } catch (Throwable throwable) {
