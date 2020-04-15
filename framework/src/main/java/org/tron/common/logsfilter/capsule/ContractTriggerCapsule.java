@@ -109,7 +109,7 @@ public class ContractTriggerCapsule extends TriggerCapsule {
       ((ContractEventTrigger) event)
           .setDataMap(ContractEventParserAbi.parseEventData(data, topicList, eventEntry));
       if (isSolidity == true) {
-        contractTrigger.setTriggerName(Trigger.CONTRACTEVENT_TRIGGER_NAME);
+        contractTrigger.setTriggerName(Trigger.SOLIDITYEVENT_TRIGGER_NAME);
       }
     } else {
       if (!EventPluginLoader.getInstance().isContractLogTriggerEnable()) {
