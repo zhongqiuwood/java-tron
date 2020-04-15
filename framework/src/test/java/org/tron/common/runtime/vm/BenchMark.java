@@ -362,7 +362,7 @@ public class BenchMark {
                 InternalTransaction interTrx = new InternalTransaction(trx, InternalTransaction.TrxType.TRX_UNKNOWN_TYPE);
                 program = new Program(entry.getValue(), invoke, interTrx);
 
-                while (vm.timeAll < billion) {
+                while (vm.timeAll < billion20) {
                     vm.step(program);
                 }
 
