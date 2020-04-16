@@ -93,9 +93,6 @@ public class ContractTriggerCapsule extends TriggerCapsule {
     }
 
     if (isEvent) {
-      if (!EventPluginLoader.getInstance().isContractEventTriggerEnable()) {
-        return;
-      }
       event = new ContractEventTrigger();
       ((ContractEventTrigger) event).setEventSignature(eventSignature);
       ((ContractEventTrigger) event).setEventSignatureFull(eventSignatureFull);
@@ -109,16 +106,15 @@ public class ContractTriggerCapsule extends TriggerCapsule {
       ((ContractEventTrigger) event)
           .setDataMap(ContractEventParserAbi.parseEventData(data, topicList, eventEntry));
       if (isSolidity == true) {
+        System.out.println("===wubin1");
         contractTrigger.setTriggerName(Trigger.SOLIDITYEVENT_TRIGGER_NAME);
       }
     } else {
-      if (!EventPluginLoader.getInstance().isContractLogTriggerEnable()) {
-        return;
-      }
       event = new ContractLogTrigger();
       ((ContractLogTrigger) event).setTopicList(logInfo.getHexTopics());
       ((ContractLogTrigger) event).setData(logInfo.getHexData());
       if (isSolidity == true) {
+        System.out.println("===wubin2");
         contractTrigger.setTriggerName(Trigger.SOLIDITYLOG_TRIGGER_NAME);
       }
     }

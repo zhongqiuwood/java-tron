@@ -1111,7 +1111,7 @@ public class Manager {
         .buildTransactionInfoInstance(trxCap, blockCap, trace);
 
     // if event subscribe is enabled, post contract triggers to queue
-    postContractTrigger(trace, false, false);
+    postContractTrigger(trace, false);
     Contract contract = trxCap.getInstance().getRawData().getContract(0);
     if (isMultiSignTransaction(trxCap.getInstance())) {
       ownerAddressSet.add(ByteArray.toHexString(TransactionCapsule.getOwner(contract)));
@@ -1366,7 +1366,7 @@ public class Manager {
       BlockCapsule solidityBlock = chainBaseManager.getBlockByNum(
           blockNum);
       for (TransactionCapsule trx : solidityBlock.getTransactions()) {
-        postContractTrigger(trx.getTrxTrace(), false, true);
+        postSolidityContractTrigger(trx.getTrxTrace(), false);
       }
     } catch (ItemNotFoundException | BadItemException e) {
       logger.info("load block by number failed, caused by {}", e.getMessage());
@@ -1501,7 +1501,7 @@ public class Manager {
 
     try {
       eventPluginLoaded = EventPluginLoader.getInstance()
-          .start(Args.getInstance().getEventPluginConfig());
+            .start(Args.getInstance().getEventPluginConfig());
 
       if (!eventPluginLoaded) {
         logger.error("failed to load eventPlugin");
@@ -1527,6 +1527,7 @@ public class Manager {
             + "block number: {}", latestSolidifiedBlockNumber);
       }
     }
+    System.out.printf("===wubin1 %d ", eventPluginLoaded);
     if (eventPluginLoaded && (EventPluginLoader.getInstance().isSolidityLogTriggerEnable()
         || EventPluginLoader.getInstance().isSolidityEventTriggerEnable())) {
       postSolitityContractTrigger(latestSolidifiedBlockNumber);
@@ -1571,7 +1572,8 @@ public class Manager {
         BlockCapsule oldHeadBlock = chainBaseManager.getBlockById(
             getDynamicPropertiesStore().getLatestBlockHeaderHash());
         for (TransactionCapsule trx : oldHeadBlock.getTransactions()) {
-          postContractTrigger(trx.getTrxTrace(), true, false);
+          System.out.println("=====wubin");
+          postContractTrigger(trx.getTrxTrace(), true);
         }
       } catch (BadItemException | ItemNotFoundException e) {
         logger.error("block header hash does not exist or is bad: {}",
@@ -1580,7 +1582,26 @@ public class Manager {
     }
   }
 
-  private void postContractTrigger(final TransactionTrace trace, boolean remove, boolean isSolidity) {
+  private void postSolidityContractTrigger(final TransactionTrace trace, boolean remove) {
+    if (eventPluginLoaded
+        && (EventPluginLoader.getInstance().isSolidityEventTriggerEnable()
+        || EventPluginLoader.getInstance().isSolidityLogTriggerEnable())) {
+      // be careful, trace.getRuntimeResult().getTriggerList() should never return null
+      for (ContractTrigger trigger : trace.getRuntimeResult().getTriggerList()) {
+        ContractTriggerCapsule contractTriggerCapsule = new ContractTriggerCapsule(trigger);
+        contractTriggerCapsule.getContractTrigger().setRemoved(remove);
+        contractTriggerCapsule.setLatestSolidifiedBlockNumber(getDynamicPropertiesStore()
+            .getLatestSolidifiedBlockNum());
+          contractTriggerCapsule.setSolidity(true);
+        if (!triggerCapsuleQueue.offer(contractTriggerCapsule)) {
+          logger
+              .info("too many triggers, contract log trigger lost: {}", trigger.getTransactionId());
+        }
+      }
+    }
+  }
+
+  private void postContractTrigger(final TransactionTrace trace, boolean remove) {
     if (eventPluginLoaded
         && (EventPluginLoader.getInstance().isContractEventTriggerEnable()
         || EventPluginLoader.getInstance().isContractLogTriggerEnable())) {
@@ -1590,9 +1611,6 @@ public class Manager {
         contractTriggerCapsule.getContractTrigger().setRemoved(remove);
         contractTriggerCapsule.setLatestSolidifiedBlockNumber(getDynamicPropertiesStore()
             .getLatestSolidifiedBlockNum());
-        if (isSolidity) {
-          contractTriggerCapsule.setSolidity(true);
-        }
         if (!triggerCapsuleQueue.offer(contractTriggerCapsule)) {
           logger
               .info("too many triggers, contract log trigger lost: {}", trigger.getTransactionId());
