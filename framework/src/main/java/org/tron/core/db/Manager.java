@@ -1553,7 +1553,10 @@ public class Manager {
     if (eventPluginLoaded && EventPluginLoader.getInstance().isSolidityLogTriggerEnable()) {
       postSolitityLogContractTrigger(latestSolidifiedBlockNumber);
     }
-
+    if (eventPluginLoaded && EventPluginLoader.getInstance().isSolidityEventTriggerEnable()) {
+      logger.error("===wubin5");
+      postSolitityEventContractTrigger(latestSolidifiedBlockNumber);
+    }
   }
 
   private void postBlockTrigger(final BlockCapsule newBlock) {
