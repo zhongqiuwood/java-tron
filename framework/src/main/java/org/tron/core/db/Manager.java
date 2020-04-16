@@ -24,6 +24,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -47,11 +48,13 @@ import org.tron.common.args.GenesisBlock;
 import org.tron.common.logsfilter.EventPluginLoader;
 import org.tron.common.logsfilter.FilterQuery;
 import org.tron.common.logsfilter.capsule.BlockLogTriggerCapsule;
+import org.tron.common.logsfilter.capsule.ContractLogTriggerCapsule;
 import org.tron.common.logsfilter.capsule.ContractTriggerCapsule;
 import org.tron.common.logsfilter.capsule.SolidityTriggerCapsule;
 import org.tron.common.logsfilter.capsule.TransactionLogTriggerCapsule;
 import org.tron.common.logsfilter.capsule.TriggerCapsule;
 import org.tron.common.logsfilter.trigger.ContractTrigger;
+import org.tron.common.logsfilter.trigger.Trigger;
 import org.tron.common.overlay.message.Message;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.runtime.RuntimeImpl;
@@ -211,6 +214,11 @@ public class Manager {
   // the capacity is equal to Integer.MAX_VALUE default
   private BlockingQueue<TransactionCapsule> rePushTransactions;
   private BlockingQueue<TriggerCapsule> triggerCapsuleQueue;
+  @Autowired(required = false)
+  private ConcurrentHashMap<Long, List<ContractLogTriggerCapsule>> solidityContractLogTriggerList =  new ConcurrentHashMap<>();
+
+  @Autowired(required = false)
+  private ConcurrentHashMap<Long, List<ContractTriggerCapsule>> solidityContractEventTriggerList =  new ConcurrentHashMap<>();
 
   /**
    * Cycle thread to rePush Transactions
@@ -1361,16 +1369,15 @@ public class Manager {
     }
   }
 
-  private void postSolitityContractTrigger(Long blockNum) {
-    try {
-      BlockCapsule solidityBlock = chainBaseManager.getBlockByNum(
-          blockNum);
-      for (TransactionCapsule trx : solidityBlock.getTransactions()) {
-        postSolidityContractTrigger(trx.getTrxTrace(), false);
+  private void postSolitityLogContractTrigger(Long blockNum) {
+    for (ContractLogTriggerCapsule logTriggerCapsule : solidityContractLogTriggerList.get(blockNum)) {
+      if (chainBaseManager.getTransactionStore().getUnchecked(logTriggerCapsule
+          .getContractLogTrigger().getTransactionId().getBytes()) != null) {
+        logTriggerCapsule.getContractLogTrigger().setTriggerName(Trigger.SOLIDITYLOG_TRIGGER_NAME);
+        triggerCapsuleQueue.offer(logTriggerCapsule);
       }
-    } catch (ItemNotFoundException | BadItemException e) {
-      logger.info("load block by number failed, caused by {}", e.getMessage());
     }
+    solidityContractLogTriggerList.remove(blockNum);
   }
 
   private void updateTransHashCache(BlockCapsule block) {
@@ -1527,11 +1534,11 @@ public class Manager {
             + "block number: {}", latestSolidifiedBlockNumber);
       }
     }
-    logger.info("===wubin1 {} ", eventPluginLoaded);
-    if (eventPluginLoaded && (EventPluginLoader.getInstance().isSolidityLogTriggerEnable()
-        || EventPluginLoader.getInstance().isSolidityEventTriggerEnable())) {
-      postSolitityContractTrigger(latestSolidifiedBlockNumber);
+    logger.error("===wubin1 {} ", eventPluginLoaded);
+    if (eventPluginLoaded && EventPluginLoader.getInstance().isSolidityLogTriggerEnable()) {
+      postSolitityLogContractTrigger(latestSolidifiedBlockNumber);
     }
+
   }
 
   private void postBlockTrigger(final BlockCapsule newBlock) {
@@ -1572,7 +1579,6 @@ public class Manager {
         BlockCapsule oldHeadBlock = chainBaseManager.getBlockById(
             getDynamicPropertiesStore().getLatestBlockHeaderHash());
         for (TransactionCapsule trx : oldHeadBlock.getTransactions()) {
-          logger.info("=====wubin");
           postContractTrigger(trx.getTrxTrace(), true);
         }
       } catch (BadItemException | ItemNotFoundException e) {
