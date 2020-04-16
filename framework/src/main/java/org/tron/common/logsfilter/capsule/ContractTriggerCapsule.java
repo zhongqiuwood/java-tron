@@ -108,18 +108,10 @@ public class ContractTriggerCapsule extends TriggerCapsule {
           .setTopicMap(ContractEventParserAbi.parseTopics(topicList, eventEntry));
       ((ContractEventTrigger) event)
           .setDataMap(ContractEventParserAbi.parseEventData(data, topicList, eventEntry));
-      if (isSolidity == true) {
-        logger.info("===wubin1");
-        contractTrigger.setTriggerName(Trigger.SOLIDITYEVENT_TRIGGER_NAME);
-      }
     } else {
       event = new ContractLogTrigger();
       ((ContractLogTrigger) event).setTopicList(logInfo.getHexTopics());
       ((ContractLogTrigger) event).setData(logInfo.getHexData());
-      if (isSolidity == true) {
-        logger.info("===wubin2");
-        contractTrigger.setTriggerName(Trigger.SOLIDITYLOG_TRIGGER_NAME);
-      }
     }
 
     RawData rawData = new RawData(logInfo.getAddress(), logInfo.getTopics(), logInfo.getData());

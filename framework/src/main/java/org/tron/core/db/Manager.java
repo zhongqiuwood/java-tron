@@ -1371,6 +1371,7 @@ public class Manager {
 
   private void postSolitityLogContractTrigger(Long blockNum) {
     if (solidityContractLogTriggerList.get(blockNum) == null) return;
+    logger.error("===wubin2");
     for (ContractLogTriggerCapsule logTriggerCapsule : solidityContractLogTriggerList.get(blockNum)) {
       if (chainBaseManager.getTransactionStore().getUnchecked(logTriggerCapsule
           .getContractLogTrigger().getTransactionId().getBytes()) != null) {
