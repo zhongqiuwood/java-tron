@@ -2,13 +2,16 @@ package org.tron.common.logsfilter.capsule;
 
 import static org.tron.common.logsfilter.EventPluginLoader.matchFilter;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.pf4j.util.StringUtils;
 import org.spongycastle.util.encoders.Hex;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.common.crypto.Hash;
 import org.tron.common.logsfilter.ContractEventParserAbi;
@@ -32,6 +35,12 @@ public class ContractTriggerCapsule extends TriggerCapsule {
   @Getter
   @Setter
   private boolean isSolidity = false;
+
+  @Autowired(required = false)
+  private ConcurrentHashMap<Long, List<ContractTriggerCapsule>> solidityContractLogTriggerList;
+
+  @Autowired(required = false)
+  private ConcurrentHashMap<Long, List<ContractTriggerCapsule>> solidityContractEventTriggerList;
 
   public ContractTriggerCapsule(ContractTrigger contractTrigger) {
     this.contractTrigger = contractTrigger;
@@ -132,8 +141,17 @@ public class ContractTriggerCapsule extends TriggerCapsule {
     if (matchFilter(contractTrigger)) {
       if (isEvent) {
         EventPluginLoader.getInstance().postContractEventTrigger((ContractEventTrigger) event);
+        if (event.getTriggerName() == Trigger.CONTRACTEVENT_TRIGGER_NAME) {
+          logger.error("wubinxxxxc");
+          solidityContractEventTriggerList.computeIfAbsent(event
+              .getBlockNumber(), listBlk -> new ArrayList<>()).add(this);
+        }
       } else {
         EventPluginLoader.getInstance().postContractLogTrigger((ContractLogTrigger) event);
+        if (event.getTriggerName() == Trigger.CONTRACTLOG_TRIGGER_NAME) {
+          solidityContractLogTriggerList.computeIfAbsent(event
+              .getBlockNumber(), listBlk -> new ArrayList<>()).add(this);
+        }
       }
     }
   }

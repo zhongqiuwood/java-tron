@@ -17,8 +17,6 @@ public class ContractLogTriggerCapsule extends TriggerCapsule {
   @Getter
   @Setter
   private ContractLogTrigger contractLogTrigger;
-  @Autowired(required = false)
-  private ConcurrentHashMap<Long, List<ContractLogTriggerCapsule>> solidityContractLogTriggerList;
 
   public ContractLogTriggerCapsule(ContractLogTrigger contractLogTrigger) {
     this.contractLogTrigger = contractLogTrigger;
@@ -32,10 +30,6 @@ public class ContractLogTriggerCapsule extends TriggerCapsule {
   public void processTrigger() {
     if (matchFilter(contractLogTrigger)) {
       EventPluginLoader.getInstance().postContractLogTrigger(contractLogTrigger);
-      if (contractLogTrigger.getTriggerName() == Trigger.CONTRACTLOG_TRIGGER_NAME) {
-        solidityContractLogTriggerList.computeIfAbsent(contractLogTrigger
-            .getBlockNumber(), listBlk -> new ArrayList<>()).add(this);
-      }
     }
   }
 }

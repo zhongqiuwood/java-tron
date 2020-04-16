@@ -32,8 +32,6 @@ public class ContractEventTriggerCapsule extends TriggerCapsule {
   @Setter
   private Entry abiEntry;
 
-  @Autowired(required = false)
-  private ConcurrentHashMap<Long, List<ContractEventTriggerCapsule>> solidityContractEventTriggerList;
 
   public ContractEventTriggerCapsule(LogEventWrapper log) {
     this.contractEventTrigger = new ContractEventTrigger();
@@ -68,11 +66,6 @@ public class ContractEventTriggerCapsule extends TriggerCapsule {
 
     if (matchFilter(contractEventTrigger)) {
       EventPluginLoader.getInstance().postContractEventTrigger(contractEventTrigger);
-      if (contractEventTrigger.getTriggerName() == Trigger.CONTRACTEVENT_TRIGGER_NAME) {
-        logger.error("wubinxxxxc");
-        solidityContractEventTriggerList.computeIfAbsent(contractEventTrigger
-            .getBlockNumber(), listBlk -> new ArrayList<>()).add(this);
-      }
     }
   }
 }
