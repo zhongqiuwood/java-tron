@@ -64,6 +64,8 @@ public class ContractEventTriggerCapsule extends TriggerCapsule {
     contractEventTrigger.setTopicMap(ContractEventParserAbi.parseTopics(topicList, abiEntry));
     contractEventTrigger
         .setDataMap(ContractEventParserAbi.parseEventData(data, topicList, abiEntry));
+    logger.error("wubinbbb");
+
     if (matchFilter(contractEventTrigger)) {
       EventPluginLoader.getInstance().postContractEventTrigger(contractEventTrigger);
       if (contractEventTrigger.getTriggerName() == Trigger.CONTRACTEVENT_TRIGGER_NAME) {
