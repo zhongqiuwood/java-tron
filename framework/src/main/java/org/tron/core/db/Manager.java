@@ -216,10 +216,10 @@ public class Manager {
   private BlockingQueue<TransactionCapsule> rePushTransactions;
   private BlockingQueue<TriggerCapsule> triggerCapsuleQueue;
   @Autowired(required = false)
-  private ConcurrentHashMap<Long, List<ContractLogTriggerCapsule>> solidityContractLogTriggerList =  new ConcurrentHashMap<>();
+  private ConcurrentHashMap<Long, List<ContractTriggerCapsule>> solidityContractLogTriggerList =  new ConcurrentHashMap<>();
 
   @Autowired(required = false)
-  private ConcurrentHashMap<Long, List<ContractEventTriggerCapsule>> solidityContractEventTriggerList =  new ConcurrentHashMap<>();
+  private ConcurrentHashMap<Long, List<ContractTriggerCapsule>> solidityContractEventTriggerList =  new ConcurrentHashMap<>();
 
   /**
    * Cycle thread to rePush Transactions
