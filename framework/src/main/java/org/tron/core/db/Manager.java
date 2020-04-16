@@ -48,6 +48,7 @@ import org.tron.common.args.GenesisBlock;
 import org.tron.common.logsfilter.EventPluginLoader;
 import org.tron.common.logsfilter.FilterQuery;
 import org.tron.common.logsfilter.capsule.BlockLogTriggerCapsule;
+import org.tron.common.logsfilter.capsule.ContractEventTriggerCapsule;
 import org.tron.common.logsfilter.capsule.ContractLogTriggerCapsule;
 import org.tron.common.logsfilter.capsule.ContractTriggerCapsule;
 import org.tron.common.logsfilter.capsule.SolidityTriggerCapsule;
@@ -218,7 +219,7 @@ public class Manager {
   private ConcurrentHashMap<Long, List<ContractLogTriggerCapsule>> solidityContractLogTriggerList =  new ConcurrentHashMap<>();
 
   @Autowired(required = false)
-  private ConcurrentHashMap<Long, List<ContractTriggerCapsule>> solidityContractEventTriggerList =  new ConcurrentHashMap<>();
+  private ConcurrentHashMap<Long, List<ContractEventTriggerCapsule>> solidityContractEventTriggerList =  new ConcurrentHashMap<>();
 
   /**
    * Cycle thread to rePush Transactions
@@ -1377,6 +1378,18 @@ public class Manager {
           .getContractLogTrigger().getTransactionId().getBytes()) != null) {
         logTriggerCapsule.getContractLogTrigger().setTriggerName(Trigger.SOLIDITYLOG_TRIGGER_NAME);
         triggerCapsuleQueue.offer(logTriggerCapsule);
+      }
+    }
+    solidityContractLogTriggerList.remove(blockNum);
+  }
+
+  private void postSolitityEventContractTrigger(Long blockNum) {
+    if (solidityContractEventTriggerList.get(blockNum) == null) return;
+    for (ContractEventTriggerCapsule eventTriggerCapsule : solidityContractEventTriggerList.get(blockNum)) {
+      if (chainBaseManager.getTransactionStore().getUnchecked(eventTriggerCapsule
+          .getContractEventTrigger().getTransactionId().getBytes()) != null) {
+        eventTriggerCapsule.getContractEventTrigger().setTriggerName(Trigger.SOLIDITYEVENT_TRIGGER_NAME);
+        triggerCapsuleQueue.offer(eventTriggerCapsule);
       }
     }
     solidityContractLogTriggerList.remove(blockNum);

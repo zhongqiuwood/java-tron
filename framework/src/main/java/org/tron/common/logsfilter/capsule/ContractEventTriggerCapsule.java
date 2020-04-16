@@ -2,12 +2,16 @@ package org.tron.common.logsfilter.capsule;
 
 import static org.tron.common.logsfilter.EventPluginLoader.matchFilter;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 import lombok.Getter;
 import lombok.Setter;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.tron.common.logsfilter.ContractEventParserAbi;
 import org.tron.common.logsfilter.EventPluginLoader;
 import org.tron.common.logsfilter.trigger.ContractEventTrigger;
+import org.tron.common.logsfilter.trigger.Trigger;
 import org.tron.common.runtime.LogEventWrapper;
 import org.tron.protos.contract.SmartContractOuterClass.SmartContract.ABI.Entry;
 
@@ -25,6 +29,9 @@ public class ContractEventTriggerCapsule extends TriggerCapsule {
   @Getter
   @Setter
   private Entry abiEntry;
+
+  @Autowired(required = false)
+  private ConcurrentHashMap<Long, List<ContractEventTriggerCapsule>> solidityContractEventTriggerList;
 
   public ContractEventTriggerCapsule(LogEventWrapper log) {
     this.contractEventTrigger = new ContractEventTrigger();
@@ -55,9 +62,12 @@ public class ContractEventTriggerCapsule extends TriggerCapsule {
     contractEventTrigger.setTopicMap(ContractEventParserAbi.parseTopics(topicList, abiEntry));
     contractEventTrigger
         .setDataMap(ContractEventParserAbi.parseEventData(data, topicList, abiEntry));
-
     if (matchFilter(contractEventTrigger)) {
       EventPluginLoader.getInstance().postContractEventTrigger(contractEventTrigger);
+      if (contractEventTrigger.getTriggerName() == Trigger.CONTRACTEVENT_TRIGGER_NAME) {
+        solidityContractEventTriggerList.computeIfAbsent(contractEventTrigger
+            .getBlockNumber(), listBlk -> new ArrayList<>()).add(this);
+      }
     }
   }
 }
