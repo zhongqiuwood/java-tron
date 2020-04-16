@@ -1385,6 +1385,7 @@ public class Manager {
 
   private void postSolitityEventContractTrigger(Long blockNum) {
     if (solidityContractEventTriggerList.get(blockNum) == null) return;
+    logger.error("wubin99");
     for (ContractEventTriggerCapsule eventTriggerCapsule : solidityContractEventTriggerList.get(blockNum)) {
       if (chainBaseManager.getTransactionStore().getUnchecked(eventTriggerCapsule
           .getContractEventTrigger().getTransactionId().getBytes()) != null) {
