@@ -1373,10 +1373,10 @@ public class Manager {
   private void postSolitityLogContractTrigger(Long blockNum) {
     if (solidityContractLogTriggerList.get(blockNum) == null) return;
     logger.error("===wubin2");
-    for (ContractLogTriggerCapsule logTriggerCapsule : solidityContractLogTriggerList.get(blockNum)) {
+    for (ContractTriggerCapsule logTriggerCapsule : solidityContractLogTriggerList.get(blockNum)) {
       if (chainBaseManager.getTransactionStore().getUnchecked(logTriggerCapsule
-          .getContractLogTrigger().getTransactionId().getBytes()) != null) {
-        logTriggerCapsule.getContractLogTrigger().setTriggerName(Trigger.SOLIDITYLOG_TRIGGER_NAME);
+          .getContractTrigger().getTransactionId().getBytes()) != null) {
+        logTriggerCapsule.getContractTrigger().setTriggerName(Trigger.SOLIDITYLOG_TRIGGER_NAME);
         triggerCapsuleQueue.offer(logTriggerCapsule);
       }
     }
@@ -1386,10 +1386,10 @@ public class Manager {
   private void postSolitityEventContractTrigger(Long blockNum) {
     if (solidityContractEventTriggerList.get(blockNum) == null) return;
     logger.error("wubin99");
-    for (ContractEventTriggerCapsule eventTriggerCapsule : solidityContractEventTriggerList.get(blockNum)) {
+    for (ContractTriggerCapsule eventTriggerCapsule : solidityContractEventTriggerList.get(blockNum)) {
       if (chainBaseManager.getTransactionStore().getUnchecked(eventTriggerCapsule
-          .getContractEventTrigger().getTransactionId().getBytes()) != null) {
-        eventTriggerCapsule.getContractEventTrigger().setTriggerName(Trigger.SOLIDITYEVENT_TRIGGER_NAME);
+          .getContractTrigger().getTransactionId().getBytes()) != null) {
+        eventTriggerCapsule.getContractTrigger().setTriggerName(Trigger.SOLIDITYEVENT_TRIGGER_NAME);
         triggerCapsuleQueue.offer(eventTriggerCapsule);
       }
     }
