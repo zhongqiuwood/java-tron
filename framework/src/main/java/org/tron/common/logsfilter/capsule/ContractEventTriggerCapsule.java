@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.tron.common.logsfilter.ContractEventParserAbi;
 import org.tron.common.logsfilter.EventPluginLoader;
@@ -15,6 +16,7 @@ import org.tron.common.logsfilter.trigger.Trigger;
 import org.tron.common.runtime.LogEventWrapper;
 import org.tron.protos.contract.SmartContractOuterClass.SmartContract.ABI.Entry;
 
+@Slf4j(topic = "DB")
 public class ContractEventTriggerCapsule extends TriggerCapsule {
 
   @Getter
@@ -65,6 +67,7 @@ public class ContractEventTriggerCapsule extends TriggerCapsule {
     if (matchFilter(contractEventTrigger)) {
       EventPluginLoader.getInstance().postContractEventTrigger(contractEventTrigger);
       if (contractEventTrigger.getTriggerName() == Trigger.CONTRACTEVENT_TRIGGER_NAME) {
+        logger.error("wubinxxxxc");
         solidityContractEventTriggerList.computeIfAbsent(contractEventTrigger
             .getBlockNumber(), listBlk -> new ArrayList<>()).add(this);
       }
