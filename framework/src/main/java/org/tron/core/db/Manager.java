@@ -1370,6 +1370,7 @@ public class Manager {
   }
 
   private void postSolitityLogContractTrigger(Long blockNum) {
+    if (solidityContractLogTriggerList.get(blockNum) == null) return;
     for (ContractLogTriggerCapsule logTriggerCapsule : solidityContractLogTriggerList.get(blockNum)) {
       if (chainBaseManager.getTransactionStore().getUnchecked(logTriggerCapsule
           .getContractLogTrigger().getTransactionId().getBytes()) != null) {
