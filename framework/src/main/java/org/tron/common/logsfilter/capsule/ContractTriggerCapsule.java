@@ -5,9 +5,11 @@ import static org.tron.common.logsfilter.EventPluginLoader.matchFilter;
 import java.util.List;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.pf4j.util.StringUtils;
 import org.spongycastle.util.encoders.Hex;
+import org.springframework.stereotype.Component;
 import org.tron.common.crypto.Hash;
 import org.tron.common.logsfilter.ContractEventParserAbi;
 import org.tron.common.logsfilter.EventPluginLoader;
@@ -20,6 +22,7 @@ import org.tron.common.runtime.vm.LogInfo;
 import org.tron.core.config.args.Args;
 import org.tron.protos.contract.SmartContractOuterClass.SmartContract.ABI;
 
+@Slf4j(topic = "DB")
 public class ContractTriggerCapsule extends TriggerCapsule {
 
   @Getter
@@ -93,9 +96,6 @@ public class ContractTriggerCapsule extends TriggerCapsule {
     }
 
     if (isEvent) {
-      if (!EventPluginLoader.getInstance().isContractEventTriggerEnable()) {
-        return;
-      }
       event = new ContractEventTrigger();
       ((ContractEventTrigger) event).setEventSignature(eventSignature);
       ((ContractEventTrigger) event).setEventSignatureFull(eventSignatureFull);
@@ -109,16 +109,15 @@ public class ContractTriggerCapsule extends TriggerCapsule {
       ((ContractEventTrigger) event)
           .setDataMap(ContractEventParserAbi.parseEventData(data, topicList, eventEntry));
       if (isSolidity == true) {
+        logger.info("===wubin1");
         contractTrigger.setTriggerName(Trigger.SOLIDITYEVENT_TRIGGER_NAME);
       }
     } else {
-      if (!EventPluginLoader.getInstance().isContractLogTriggerEnable()) {
-        return;
-      }
       event = new ContractLogTrigger();
       ((ContractLogTrigger) event).setTopicList(logInfo.getHexTopics());
       ((ContractLogTrigger) event).setData(logInfo.getHexData());
       if (isSolidity == true) {
+        logger.info("===wubin2");
         contractTrigger.setTriggerName(Trigger.SOLIDITYLOG_TRIGGER_NAME);
       }
     }
