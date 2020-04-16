@@ -36,12 +36,6 @@ public class ContractTriggerCapsule extends TriggerCapsule {
   @Setter
   private boolean isSolidity = false;
 
-  @Autowired(required = false)
-  private ConcurrentHashMap<Long, List<ContractTriggerCapsule>> solidityContractLogTriggerList;
-
-  @Autowired(required = false)
-  private ConcurrentHashMap<Long, List<ContractTriggerCapsule>> solidityContractEventTriggerList;
-
   public ContractTriggerCapsule(ContractTrigger contractTrigger) {
     this.contractTrigger = contractTrigger;
   }
@@ -143,13 +137,13 @@ public class ContractTriggerCapsule extends TriggerCapsule {
         EventPluginLoader.getInstance().postContractEventTrigger((ContractEventTrigger) event);
         if (event.getTriggerName() == Trigger.CONTRACTEVENT_TRIGGER_NAME) {
           logger.error("wubinxxxxc");
-          solidityContractEventTriggerList.computeIfAbsent(event
+          Args.getSolidityContractEventTriggerList().computeIfAbsent(event
               .getBlockNumber(), listBlk -> new ArrayList<>()).add(this);
         }
       } else {
         EventPluginLoader.getInstance().postContractLogTrigger((ContractLogTrigger) event);
         if (event.getTriggerName() == Trigger.CONTRACTLOG_TRIGGER_NAME) {
-          solidityContractLogTriggerList.computeIfAbsent(event
+          Args.getSolidityContractLogTriggerList().computeIfAbsent(event
               .getBlockNumber(), listBlk -> new ArrayList<>()).add(this);
         }
       }

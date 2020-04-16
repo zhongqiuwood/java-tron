@@ -215,11 +215,6 @@ public class Manager {
   // the capacity is equal to Integer.MAX_VALUE default
   private BlockingQueue<TransactionCapsule> rePushTransactions;
   private BlockingQueue<TriggerCapsule> triggerCapsuleQueue;
-  @Autowired(required = false)
-  private ConcurrentHashMap<Long, List<ContractTriggerCapsule>> solidityContractLogTriggerList =  new ConcurrentHashMap<>();
-
-  @Autowired(required = false)
-  private ConcurrentHashMap<Long, List<ContractTriggerCapsule>> solidityContractEventTriggerList =  new ConcurrentHashMap<>();
 
   /**
    * Cycle thread to rePush Transactions
@@ -1371,29 +1366,29 @@ public class Manager {
   }
 
   private void postSolitityLogContractTrigger(Long blockNum) {
-    if (solidityContractLogTriggerList.get(blockNum) == null) return;
+    if (Args.getSolidityContractLogTriggerList().get(blockNum) == null) return;
     logger.error("===wubin2");
-    for (ContractTriggerCapsule logTriggerCapsule : solidityContractLogTriggerList.get(blockNum)) {
+    for (ContractTriggerCapsule logTriggerCapsule : Args.getSolidityContractLogTriggerList().get(blockNum)) {
       if (chainBaseManager.getTransactionStore().getUnchecked(logTriggerCapsule
           .getContractTrigger().getTransactionId().getBytes()) != null) {
         logTriggerCapsule.getContractTrigger().setTriggerName(Trigger.SOLIDITYLOG_TRIGGER_NAME);
         triggerCapsuleQueue.offer(logTriggerCapsule);
       }
     }
-    solidityContractLogTriggerList.remove(blockNum);
+    Args.getSolidityContractLogTriggerList().remove(blockNum);
   }
 
   private void postSolitityEventContractTrigger(Long blockNum) {
-    if (solidityContractEventTriggerList.get(blockNum) == null) return;
+    if (Args.getSolidityContractEventTriggerList().get(blockNum) == null) return;
     logger.error("wubin99");
-    for (ContractTriggerCapsule eventTriggerCapsule : solidityContractEventTriggerList.get(blockNum)) {
+    for (ContractTriggerCapsule eventTriggerCapsule : Args.getSolidityContractEventTriggerList().get(blockNum)) {
       if (chainBaseManager.getTransactionStore().getUnchecked(eventTriggerCapsule
           .getContractTrigger().getTransactionId().getBytes()) != null) {
         eventTriggerCapsule.getContractTrigger().setTriggerName(Trigger.SOLIDITYEVENT_TRIGGER_NAME);
         triggerCapsuleQueue.offer(eventTriggerCapsule);
       }
     }
-    solidityContractLogTriggerList.remove(blockNum);
+    Args.getSolidityContractEventTriggerList().remove(blockNum);
   }
 
   private void updateTransHashCache(BlockCapsule block) {
