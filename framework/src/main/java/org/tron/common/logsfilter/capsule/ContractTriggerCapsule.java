@@ -135,17 +135,13 @@ public class ContractTriggerCapsule extends TriggerCapsule {
     if (matchFilter(contractTrigger)) {
       if (isEvent) {
         EventPluginLoader.getInstance().postContractEventTrigger((ContractEventTrigger) event);
-        if (event.getTriggerName() == Trigger.CONTRACTEVENT_TRIGGER_NAME) {
-          logger.error("wubinxxxxc");
           Args.getSolidityContractEventTriggerList().computeIfAbsent(event
-              .getBlockNumber(), listBlk -> new ArrayList<>()).add(this);
-        }
+              .getBlockNumber(), listBlk -> new ArrayList<>()).add((ContractEventTrigger) event);
+
       } else {
         EventPluginLoader.getInstance().postContractLogTrigger((ContractLogTrigger) event);
-        if (event.getTriggerName() == Trigger.CONTRACTLOG_TRIGGER_NAME) {
           Args.getSolidityContractLogTriggerList().computeIfAbsent(event
-              .getBlockNumber(), listBlk -> new ArrayList<>()).add(this);
-        }
+              .getBlockNumber(), listBlk -> new ArrayList<>()).add((ContractLogTrigger) event);
       }
     }
   }

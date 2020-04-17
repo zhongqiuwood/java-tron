@@ -54,6 +54,8 @@ import org.tron.common.logsfilter.capsule.ContractTriggerCapsule;
 import org.tron.common.logsfilter.capsule.SolidityTriggerCapsule;
 import org.tron.common.logsfilter.capsule.TransactionLogTriggerCapsule;
 import org.tron.common.logsfilter.capsule.TriggerCapsule;
+import org.tron.common.logsfilter.trigger.ContractEventTrigger;
+import org.tron.common.logsfilter.trigger.ContractLogTrigger;
 import org.tron.common.logsfilter.trigger.ContractTrigger;
 import org.tron.common.logsfilter.trigger.Trigger;
 import org.tron.common.overlay.message.Message;
@@ -1368,11 +1370,11 @@ public class Manager {
   private void postSolitityLogContractTrigger(Long blockNum) {
     if (Args.getSolidityContractLogTriggerList().get(blockNum) == null) return;
     logger.error("===wubin2");
-    for (ContractTriggerCapsule logTriggerCapsule : Args.getSolidityContractLogTriggerList().get(blockNum)) {
+    for (ContractLogTrigger logTriggerCapsule : Args.getSolidityContractLogTriggerList().get(blockNum)) {
       if (chainBaseManager.getTransactionStore().getUnchecked(logTriggerCapsule
-          .getContractTrigger().getTransactionId().getBytes()) != null) {
-        logTriggerCapsule.getContractTrigger().setTriggerName(Trigger.SOLIDITYLOG_TRIGGER_NAME);
-        triggerCapsuleQueue.offer(logTriggerCapsule);
+          .getTransactionId().getBytes()) != null) {
+        logTriggerCapsule.setTriggerName(Trigger.SOLIDITYLOG_TRIGGER_NAME);
+        EventPluginLoader.getInstance().postContractLogTrigger(logTriggerCapsule);
       }
     }
     Args.getSolidityContractLogTriggerList().remove(blockNum);
@@ -1381,11 +1383,12 @@ public class Manager {
   private void postSolitityEventContractTrigger(Long blockNum) {
     if (Args.getSolidityContractEventTriggerList().get(blockNum) == null) return;
     logger.error("wubin99");
-    for (ContractTriggerCapsule eventTriggerCapsule : Args.getSolidityContractEventTriggerList().get(blockNum)) {
+    for (ContractEventTrigger eventTriggerCapsule : Args.getSolidityContractEventTriggerList().get(blockNum)) {
       if (chainBaseManager.getTransactionStore().getUnchecked(eventTriggerCapsule
-          .getContractTrigger().getTransactionId().getBytes()) != null) {
-        eventTriggerCapsule.getContractTrigger().setTriggerName(Trigger.SOLIDITYEVENT_TRIGGER_NAME);
-        triggerCapsuleQueue.offer(eventTriggerCapsule);
+          .getTransactionId().getBytes()) != null) {
+        logger.error("wubinbb");
+        eventTriggerCapsule.setTriggerName(Trigger.SOLIDITYEVENT_TRIGGER_NAME);
+        EventPluginLoader.getInstance().postContractEventTrigger(eventTriggerCapsule);
       }
     }
     Args.getSolidityContractEventTriggerList().remove(blockNum);

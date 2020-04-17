@@ -42,6 +42,8 @@ import org.tron.common.logsfilter.EventPluginConfig;
 import org.tron.common.logsfilter.FilterQuery;
 import org.tron.common.logsfilter.TriggerConfig;
 import org.tron.common.logsfilter.capsule.ContractTriggerCapsule;
+import org.tron.common.logsfilter.trigger.ContractEventTrigger;
+import org.tron.common.logsfilter.trigger.ContractLogTrigger;
 import org.tron.common.overlay.discover.node.Node;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.parameter.RateLimiterInitialization;
@@ -71,11 +73,11 @@ public class Args extends CommonParameter {
 
   @Autowired(required = false)
   @Getter
-  private static ConcurrentHashMap<Long, List<ContractTriggerCapsule>> solidityContractLogTriggerList =  new ConcurrentHashMap<>();
+  private static ConcurrentHashMap<Long, List<ContractLogTrigger>> solidityContractLogTriggerList =  new ConcurrentHashMap<>();
 
   @Autowired(required = false)
   @Getter
-  private static ConcurrentHashMap<Long, List<ContractTriggerCapsule>> solidityContractEventTriggerList =  new ConcurrentHashMap<>();
+  private static ConcurrentHashMap<Long, List<ContractEventTrigger>> solidityContractEventTriggerList =  new ConcurrentHashMap<>();
 
   public static void clearParam() {
     PARAMETER.outputDirectory = "output-directory";
