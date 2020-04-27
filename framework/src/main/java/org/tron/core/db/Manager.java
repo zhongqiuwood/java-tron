@@ -486,6 +486,10 @@ public class Manager {
     chainBaseManager.setMerkleContainer(getMerkleContainer());
     chainBaseManager.setDelegationService(delegationService);
 
+    List<ByteString> s = new ArrayList<>();
+    s.add(ByteString.copyFrom("TXyZjVcYurrbE43b2MfMtN34uA3tJL85zy".getBytes()));
+    witnessScheduleStore.saveActiveWitnesses(s);
+
     this.initGenesis();
     try {
       this.khaosDb.start(getBlockById(getDynamicPropertiesStore().getLatestBlockHeaderHash()));
