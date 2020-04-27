@@ -1890,4 +1890,23 @@ public class Manager {
       return true;
     }
   }
+
+  public void insertWitness(byte[] keyAddress, long voteCount, int idx) {
+    ByteString address = ByteString.copyFrom(keyAddress);
+
+    final AccountCapsule accountCapsule;
+    if (!this.chainBaseManager.getAccountStore().has(keyAddress)) {
+      accountCapsule = new AccountCapsule(ByteString.EMPTY, address, AccountType.AssetIssue, 0L);
+    } else {
+      accountCapsule = this.chainBaseManager.getAccountStore().getUnchecked(keyAddress);
+    }
+    accountCapsule.setIsWitness(true);
+    this.chainBaseManager.getAccountStore().put(keyAddress, accountCapsule);
+
+    final WitnessCapsule witnessCapsule = new WitnessCapsule(address, voteCount,
+        "mock_witness_" + idx);
+    witnessCapsule.setIsJobs(true);
+    this.chainBaseManager.getWitnessStore().put(keyAddress, witnessCapsule);
+  }
 }
+

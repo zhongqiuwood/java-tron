@@ -1,8 +1,7 @@
 package org.tron.consensus.dpos;
 
-
-import static org.tron.consensus.base.Constant.SOLIDIFIED_THRESHOLD;
-import static org.tron.core.config.args.Parameter.ChainConstant.MAX_ACTIVE_WITNESS_NUM;
+import static org.tron.core.config.Parameter.ChainConstant.MAX_ACTIVE_WITNESS_NUM;
+import static org.tron.core.config.Parameter.ChainConstant.SOLIDIFIED_THRESHOLD;
 
 import com.google.protobuf.ByteString;
 import java.util.ArrayList;
@@ -84,21 +83,22 @@ public class DposService implements ConsensusInterface {
     maintenanceManager.setDposService(this);
 
     if (consensusDelegate.getLatestBlockHeaderNumber() == 0) {
-      List<ByteString> witnesses = new ArrayList<>();
-      consensusDelegate.getAllWitnesses().forEach(witnessCapsule ->
-        witnesses.add(witnessCapsule.getAddress()));
-      updateWitness(witnesses);
-      List<ByteString> addresses = consensusDelegate.getActiveWitnesses();
-      addresses.forEach(address -> {
-        WitnessCapsule witnessCapsule = consensusDelegate.getWitness(address.toByteArray());
-        witnessCapsule.setIsJobs(true);
-        consensusDelegate.saveWitness(witnessCapsule);
-      });
+      updateWitness();
     }
 
     dposTask.init();
   }
 
+  public void updateWitness() {
+    List<ByteString> witnesses = new ArrayList<>();
+    consensusDelegate.getAllWitnesses().forEach(witnessCapsule -> {
+      if (witnessCapsule.getIsJobs()) {
+        witnesses.add(witnessCapsule.getAddress());
+      }
+    });
+    sortWitness(witnesses);
+    consensusDelegate.saveActiveWitnesses(witnesses);
+  }
   @Override
   public void stop() {
     dposTask.stop();
@@ -172,6 +172,14 @@ public class DposService implements ConsensusInterface {
     } else {
       consensusDelegate.saveActiveWitnesses(list);
     }
+  }
+
+
+  public void sortWitness(List<ByteString> list) {
+    list.sort(Comparator.comparingLong((ByteString b) ->
+        consensusDelegate.getWitness(b.toByteArray()).getVoteCount())
+        .reversed()
+        .thenComparing(Comparator.comparingInt(ByteString::hashCode).reversed()));
   }
 
 }

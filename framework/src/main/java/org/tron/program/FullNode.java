@@ -2,6 +2,8 @@ package org.tron.program;
 
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.joran.JoranConfigurator;
+import com.google.protobuf.ByteString;
+import io.netty.handler.ssl.ApplicationProtocolConfig.Protocol;
 import java.io.File;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.LoggerFactory;
@@ -9,13 +11,18 @@ import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
+import org.tron.common.utils.Commons;
+import org.tron.consensus.dpos.DposService;
 import org.tron.core.Constant;
+import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
+import org.tron.core.db.Manager;
 import org.tron.core.services.RpcApiService;
 import org.tron.core.services.http.FullNodeHttpApiService;
 import org.tron.core.services.interfaceOnSolidity.RpcApiServiceOnSolidity;
 import org.tron.core.services.interfaceOnSolidity.http.solidity.HttpApiOnSolidityService;
+import org.tron.protos.Protocol.AccountType;
 
 @Slf4j(topic = "app")
 public class FullNode {
@@ -67,7 +74,8 @@ public class FullNode {
     Application appT = ApplicationFactory.create(context);
     shutdown(appT);
 
-    // grpc api server
+    mockWitness(context);
+
     RpcApiService rpcApiService = context.getBean(RpcApiService.class);
     appT.addService(rpcApiService);
 
@@ -99,5 +107,32 @@ public class FullNode {
   public static void shutdown(final Application app) {
     logger.info("********register application shutdown hook********");
     Runtime.getRuntime().addShutdownHook(new Thread(app::shutdown));
+  }
+
+
+  private static void mockWitness(TronApplicationContext context) {
+    Manager manager = context.getBean(Manager.class);
+
+    int idx = 0;
+    String acc = "TXyZjVcYurrbE43b2MfMtN34uA3tJL85zy";
+      byte[] address = Commons.decodeFromBase58Check(acc);
+
+      AccountCapsule account = new AccountCapsule(ByteString.copyFrom(address),
+          AccountType.Normal);
+
+      long voteCount = 1000_000;
+      if (idx == 0) {
+        voteCount = 3000_000;
+      } else if (idx == 4) {
+        voteCount = 5000_000;
+      }
+      voteCount = 5000_000 + voteCount * 4000;
+
+      account.addVotes(ByteString.copyFrom(address), voteCount);
+      context.getBean(Manager.class).getAccountStore().put(address, account);
+      manager.insertWitness(address, voteCount, idx++);
+      DposService dposService = context.getBean(DposService.class);
+      dposService.updateWitness();
+
   }
 }
