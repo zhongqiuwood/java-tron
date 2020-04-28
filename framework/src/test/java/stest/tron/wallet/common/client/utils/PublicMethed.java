@@ -4768,7 +4768,7 @@ public class PublicMethed {
     logger.debug("solFile: " + solFile);
     logger.debug("outputPath: " + outputPath);
     String cmd =
-        compile + " --optimize --bin --abi --overwrite --evm-version byzantium" + absolutePath + "/" + solFile + " -o "
+        compile + " --optimize --bin --abi --overwrite --evm-version byzantium " + absolutePath + "/" + solFile + " -o "
             + absolutePath + "/" + outputPath;
     logger.debug("cmd: " + cmd);
 
