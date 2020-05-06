@@ -105,7 +105,8 @@ public class VMConfig {
   }
 
   public static boolean allowShieldedTRC20Transaction() {
-    return ALLOW_SHIELDED_TRC20_TRANSACTION;
+    // return ALLOW_SHIELDED_TRC20_TRANSACTION;
+    return false;
   }
 
   private static class SystemPropertiesInstance {
