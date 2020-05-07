@@ -1560,7 +1560,8 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   }
 
   public boolean supportShieldedTransaction() {
-    return getAllowShieldedTransaction() == 1L;
+    // return getAllowShieldedTransaction() == 1L;
+    return true;
   }
 
   public boolean supportShieldedTRC20ContractTransaction() {
