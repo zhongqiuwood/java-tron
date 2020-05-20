@@ -30,6 +30,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Arrays;
 import java.util.Map;
+import java.util.Objects;
 import java.util.zip.Deflater;
 import java.util.zip.DeflaterOutputStream;
 import java.util.zip.Inflater;
@@ -40,6 +41,7 @@ import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.Commons;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.exception.ContractValidateException;
+import org.tron.core.utils.TransactionUtil;
 import org.tron.core.vm.config.VMConfig;
 import org.tron.core.vm.repository.Repository;
 
@@ -279,6 +281,50 @@ public final class VMUtils {
     } else {
       throw new ContractValidateException(
           "Validate InternalTransfer error, no ToAccount. And not allowed to create account in smart contract.");
+    }
+
+    return true;
+  }
+
+  public static boolean validateForSmartContract(Repository deposit, byte[] ownerAddress,
+      String name, String abbr, int precision, long totalSupply) throws ContractValidateException {
+
+    if (!Commons.addressValid(ownerAddress)) {
+      throw new ContractValidateException("Invalid ownerAddress");
+    }
+
+    if (!TransactionUtil.validAssetName(name.getBytes())) {
+      throw new ContractValidateException("Invalid assetName");
+    }
+
+    name = name.toLowerCase();
+    if (name.equals("trx")) {
+      throw new ContractValidateException("assetName can't be trx");
+    }
+
+    if (precision < 0 || precision > 6) {
+      throw new ContractValidateException("precision cannot exceed 6");
+    }
+
+    if (Objects.nonNull(abbr) && !TransactionUtil.validAssetName(abbr.getBytes())) {
+      throw new ContractValidateException("Invalid abbreviation for token");
+    }
+
+    if (totalSupply <= 0) {
+      throw new ContractValidateException("TotalSupply must greater than 0!");
+    }
+
+    AccountCapsule accountCapsule = deposit.getAccount(ownerAddress);
+    if (accountCapsule == null) {
+      throw new ContractValidateException("Account not exists");
+    }
+
+    if (!accountCapsule.getAssetIssuedName().isEmpty()) {
+      throw new ContractValidateException("An account can only issue one asset");
+    }
+
+    if (accountCapsule.getBalance() < deposit.getDynamicPropertiesStore().getAssetIssueFee()) {
+      throw new ContractValidateException("No enough balance for fee!");
     }
 
     return true;

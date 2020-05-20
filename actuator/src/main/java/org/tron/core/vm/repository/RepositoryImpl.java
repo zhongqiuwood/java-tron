@@ -5,10 +5,12 @@ import static org.tron.core.config.args.Parameter.ChainConstant.BLOCK_PRODUCED_I
 
 import com.google.protobuf.ByteString;
 import java.util.HashMap;
+import java.util.Optional;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.spongycastle.util.Strings;
 import org.tron.common.runtime.vm.DataWord;
+import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.Commons;
 import org.tron.common.utils.DBConfig;
@@ -190,6 +192,13 @@ public class RepositoryImpl implements Repository {
       accountCache.put(key, Value.create(accountCapsule.getData()));
     }
     return accountCapsule;
+  }
+
+  @Override
+  public void saveDynamic(byte[] word, BytesCapsule bytesCapsule) {
+    Key key = Key.create(word);
+    Value value = Value.create(bytesCapsule.getData());
+    dynamicPropertiesCache.put(key, value);
   }
 
   @Override
@@ -436,6 +445,13 @@ public class RepositoryImpl implements Repository {
   }
 
   @Override
+  public void putAssetIssueValue(byte[] tokenId, AssetIssueCapsule assetIssueCapsule) {
+    Key key = new Key(tokenId);
+    Value value = new Value(assetIssueCapsule.getData(), Type.VALUE_TYPE_CREATE);
+    assetIssueCache.put(key, value);
+  }
+
+  @Override
   public long addTokenBalance(byte[] address, byte[] tokenId, long value) {
     byte[] tokenIdWithoutLeadingZero = ByteUtil.stripLeadingZeroes(tokenId);
     AccountCapsule accountCapsule = getAccount(address);
@@ -617,4 +633,18 @@ public class RepositoryImpl implements Repository {
     return account;
   }
 
+  @Override
+  public void saveTokenIdNum(long num) {
+    this.saveDynamic(DynamicPropertiesStore.getTOKEN_ID_NUM(),
+        new BytesCapsule(ByteArray.fromLong(num)));
+  }
+
+  @Override
+  public long getTokenIdNum() {
+    return Optional.ofNullable(this.getDynamic(DynamicPropertiesStore.getTOKEN_ID_NUM()))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("error in contract not found TOKEN_ID_NUM"));
+  }
 }

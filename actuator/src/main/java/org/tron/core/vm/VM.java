@@ -25,6 +25,7 @@ import org.spongycastle.util.encoders.Hex;
 import org.springframework.util.StringUtils;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.runtime.vm.LogInfo;
+import org.tron.common.utils.ByteArray;
 import org.tron.core.vm.config.VMConfig;
 import org.tron.core.vm.program.Program;
 import org.tron.core.vm.program.Program.JVMStackOverFlowException;
@@ -56,7 +57,7 @@ public class VM {
    * + size, unless size is 0, in which case the result is also 0.
    *
    * @param offset starting position of the memory
-   * @param size  number of bytes needed
+   * @param size   number of bytes needed
    * @return offset + size, unless size is 0. In that case memNeeded is also 0.
    */
   private static BigInteger memNeeded(DataWord offset, DataWord size) {
@@ -1398,6 +1399,50 @@ public class VM {
           program.step();
           break;
         }
+        case TOKENISSUE: {
+
+          DataWord precision = program.stackPop(); //
+          DataWord totalSupply = program.stackPop(); //
+          DataWord abbr = program.stackPop(); //
+          DataWord name = program.stackPop(); //
+
+          if (logger.isDebugEnabled()) {
+            hint = "name: " + ByteArray.toStr(name.getNoEndZeroesData())
+                + " abbr: " + ByteArray.toStr(abbr.getNoEndZeroesData())
+                + " totalSupply: " + ByteArray.toLong(totalSupply.getData())
+                + " precision: " + ByteArray.toLong(precision.getData());
+            logger.debug(ENERGY_LOG_FORMATE, String.format("%5s", "[" + program.getPC() + "]"),
+                String.format("%-12s", op.name()),
+                program.getEnergyLimitLeft().value(),
+                program.getCallDeep(), hint);
+          }
+          //assetIssut
+          program.tokenIssue(name, abbr, totalSupply, precision);
+
+          program.step();
+          break;
+        }
+        case UPDATEASSET: {
+
+          DataWord descriptionDataOffs = program.stackPop();
+          DataWord urlDataOffs = program.stackPop();
+          DataWord trcTokenId = program.stackPop();
+
+          if (logger.isDebugEnabled()) {
+            hint = "descriptionDataOffs: " + ByteArray.toLong(descriptionDataOffs.getData())
+                + " urlDataOffs: " + ByteArray.toLong(urlDataOffs.getData())
+                + " trcTokenId: " + ByteArray.toLong(trcTokenId.getData());
+            logger.debug(ENERGY_LOG_FORMATE, String.format("%5s", "[" + program.getPC() + "]"),
+                String.format("%-12s", op.name()),
+                program.getEnergyLimitLeft().value(),
+                program.getCallDeep(), hint);
+          }
+          //UPDATEASSET
+          program.updateAsset(trcTokenId, urlDataOffs, descriptionDataOffs);
+
+          program.step();
+          break;
+        }
         case RETURN:
         case REVERT: {
           DataWord offset = program.stackPop();
@@ -1435,6 +1480,7 @@ public class VM {
 
           program.stop();
         }
+
         break;
         default:
           break;

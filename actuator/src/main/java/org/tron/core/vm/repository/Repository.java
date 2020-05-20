@@ -28,6 +28,8 @@ public interface Repository {
 
   AccountCapsule getAccount(byte[] address);
 
+  void saveDynamic(byte[] word, BytesCapsule bytesCapsule);
+
   BytesCapsule getDynamic(byte[] bytesKey);
 
   void deleteContract(byte[] address);
@@ -70,6 +72,8 @@ public interface Repository {
 
   void putAccountValue(byte[] address, AccountCapsule accountCapsule);
 
+  void putAssetIssueValue(byte[] tokenId, AssetIssueCapsule value);
+
   long addTokenBalance(byte[] address, byte[] tokenId, long value);
 
   long getTokenBalance(byte[] address, byte[] tokenId);
@@ -84,4 +88,7 @@ public interface Repository {
 
   public AccountCapsule createNormalAccount(byte[] address);
 
+  void saveTokenIdNum(long num);
+
+  long getTokenIdNum();
 }

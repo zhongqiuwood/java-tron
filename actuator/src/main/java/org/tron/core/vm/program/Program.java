@@ -45,12 +45,14 @@ import org.tron.common.runtime.InternalTransaction;
 import org.tron.common.runtime.ProgramResult;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.utils.BIUtil;
+import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.DBConfig;
 import org.tron.common.utils.FastByteComparisons;
 import org.tron.common.utils.Hash;
 import org.tron.common.utils.WalletUtil;
 import org.tron.core.capsule.AccountCapsule;
+import org.tron.core.capsule.AssetIssueCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.ContractCapsule;
 import org.tron.core.exception.ContractValidateException;
@@ -305,7 +307,7 @@ public class Program {
 
   /**
    * @param transferAddress the address send trx to.
-   * @param value  the trx value transferred in the internaltransaction
+   * @param value           the trx value transferred in the internaltransaction
    */
   private InternalTransaction addInternalTx(DataWord energyLimit, byte[] senderAddress,
       byte[] transferAddress,
@@ -1177,7 +1179,9 @@ public class Program {
     return invoke.getDifficulty().clone();
   }
 
-  public boolean isStaticCall() { return invoke.isStaticCall(); }
+  public boolean isStaticCall() {
+    return invoke.isStaticCall();
+  }
 
   public boolean isConstantCall() {
     return invoke.isConstantCall();
@@ -1428,6 +1432,49 @@ public class Program {
     }
   }
 
+  public void tokenIssue(DataWord name, DataWord abbr, DataWord totalSupply, DataWord precision) {
+    String hint = "name: " + ByteArray.toStr(name.getNoEndZeroesData())
+        + " abbr: " + ByteArray.toStr(abbr.getNoEndZeroesData())
+        + " totalSupply: " + ByteArray.toLong(totalSupply.getData())
+        + " precision: " + ByteArray.toLong(precision.getData());
+    Repository deposit = getContractState().newRepositoryChild();
+    byte[] ownerAddress = MUtil.convertToTronAddress(getContractAddress().getLast20Bytes());
+
+    try {
+      VMUtils.validateForSmartContract(deposit, ownerAddress,
+          ByteArray.toStr(name.getNoEndZeroesData()), ByteArray
+              .toStr(abbr.getNoEndZeroesData()), ByteArray.toInt(totalSupply.getData()),
+          ByteArray.toInt(precision.getData()));
+      long tokenIdNum = deposit.getTokenIdNum();
+      tokenIdNum++;
+      deposit.saveTokenIdNum(tokenIdNum);
+      AssetIssueCapsule assetIssueCapsule = new AssetIssueCapsule(ownerAddress,
+          Long.toString(tokenIdNum), ByteArray.toStr(name.getNoEndZeroesData()),
+          ByteArray.toStr(abbr.getNoEndZeroesData()), ByteArray.toLong(totalSupply.getData()),
+          ByteArray.toInt(precision.getData()));
+      AssetIssueCapsule assetIssueCapsuleV2 = new AssetIssueCapsule(ownerAddress,
+          Long.toString(tokenIdNum), ByteArray.toStr(name.getNoEndZeroesData()),
+          ByteArray.toStr(abbr.getNoEndZeroesData()), ByteArray.toLong(totalSupply.getData()),
+          ByteArray.toInt(precision.getData()));
+      if (deposit.getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
+        assetIssueCapsuleV2.setPrecision(0);
+        deposit.put
+            .put(assetIssueCapsule.createDbKey(), assetIssueCapsule);
+        assetIssueV2Store
+            .put(assetIssueCapsuleV2.createDbV2Key(), assetIssueCapsuleV2);
+      } else {
+        assetIssueV2Store
+            .put(assetIssueCapsuleV2.createDbV2Key(), assetIssueCapsuleV2);
+      }
+    } catch (ContractValidateException e) {
+      throw new AssetIssueException("tokenIssue trc10 failed: %s", e.getMessage());
+
+    }
+  }
+
+  public void updateAsset(DataWord trcTokenId, DataWord urlDataOffs, DataWord descriptionDataOffs) {
+  }
+
   public boolean byTestingSuite() {
     return invoke.byTestingSuite();
   }
@@ -1611,6 +1658,13 @@ public class Program {
   public static class TransferException extends BytecodeExecutionException {
 
     public TransferException(String message, Object... args) {
+      super(format(message, args));
+    }
+  }
+
+  public static class AssetIssueException extends BytecodeExecutionException {
+
+    public AssetIssueException(String message, Object... args) {
       super(format(message, args));
     }
   }

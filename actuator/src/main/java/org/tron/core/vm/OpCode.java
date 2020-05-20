@@ -577,6 +577,9 @@ public enum OpCode {
 
   ISCONTRACT(0xd4, 1, 1, OpCode.Tier.ExtTier),
 
+  TOKENISSUE(0xd5, 1, 1, Tier.HighTier),
+  UPDATEASSET(0xd6, 1, 1, OpCode.Tier.HighTier),
+
   /**
    * (0xf0) Create a new account with associated code
    */

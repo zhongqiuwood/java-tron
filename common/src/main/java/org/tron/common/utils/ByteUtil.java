@@ -53,7 +53,7 @@ public class ByteUtil {
    * The regular {@link java.math.BigInteger#toByteArray()} method isn't quite what we often need:
    * it appends a leading zero to indicate that the number is positive and may need padding.
    *
-   * @param b the integer to format into a byte array
+   * @param b        the integer to format into a byte array
    * @param numBytes the desired size of the resulting byte array
    * @return numBytes byte long array.
    */
@@ -235,7 +235,7 @@ public class ByteUtil {
 
   /**
    * Cast hex encoded value from byte[] to long null is parsed like byte[0]
-   *
+   * <p>
    * Limited to Long.MAX_VALUE: 2<sup>63</sup>-1 (8 bytes)
    *
    * @param b array contains the values
@@ -250,6 +250,15 @@ public class ByteUtil {
 
   public static int firstNonZeroByte(byte[] data) {
     for (int i = 0; i < data.length; ++i) {
+      if (data[i] != 0) {
+        return i;
+      }
+    }
+    return -1;
+  }
+
+  public static int lastNonZeroByte(byte[] data) {
+    for (int i = data.length - 1; i >= 0; --i) {
       if (data[i] != 0) {
         return i;
       }
@@ -274,6 +283,26 @@ public class ByteUtil {
       default:
         byte[] result = new byte[data.length - firstNonZero];
         System.arraycopy(data, firstNonZero, result, 0, data.length - firstNonZero);
+
+        return result;
+    }
+  }
+
+  public static byte[] stripEndingZeroes(byte[] data) {
+
+    if (data == null) {
+      return null;
+    }
+    if (data[data.length - 1] != 0) {
+      return data;
+    }
+    final int lastNonZeroByte = lastNonZeroByte(data);
+    switch (lastNonZeroByte) {
+      case -1:
+        return ZERO_BYTE_ARRAY;
+      default:
+        byte[] result = new byte[lastNonZeroByte + 1];
+        System.arraycopy(data, 0, result, 0, lastNonZeroByte + 1);
 
         return result;
     }
@@ -342,7 +371,7 @@ public class ByteUtil {
    * Parses 32-bytes word from given input. Uses {@link #parseBytes(byte[], int, int)} method, thus,
    * result will be right-padded with zero bytes if there is not enough bytes in {@code input}
    *
-   * @param idx an index of the word starting from {@code 0}
+   * @param idx    an index of the word starting from {@code 0}
    * @param offset an offset in {@code input} array to start parsing from
    */
   public static byte[] parseWord(byte[] input, int offset, int idx) {
