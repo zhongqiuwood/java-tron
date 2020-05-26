@@ -72,6 +72,8 @@ public interface Repository {
 
   void putAccountValue(byte[] address, AccountCapsule accountCapsule);
 
+  void putAssetIssue(Key key, Value value);
+
   void putAssetIssueValue(byte[] tokenId, AssetIssueCapsule value);
 
   long addTokenBalance(byte[] address, byte[] tokenId, long value);

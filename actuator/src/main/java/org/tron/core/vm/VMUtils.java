@@ -330,6 +330,48 @@ public final class VMUtils {
     return true;
   }
 
+  public static boolean validateForSmartContract(Repository deposit, byte[] ownerAddress,
+      byte[] newUrl, byte[] newDescription) throws ContractValidateException {
+
+    if (!Commons.addressValid(ownerAddress)) {
+      throw new ContractValidateException("Invalid ownerAddress");
+    }
+
+    AccountCapsule account = deposit.getAccount(ownerAddress);
+    if (account == null) {
+      throw new ContractValidateException("Account does not exist");
+    }
+    if (deposit.getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
+      if (account.getAssetIssuedName().isEmpty()) {
+        throw new ContractValidateException("Account has not issued any asset");
+      }
+
+      if (deposit.getAssetIssue(account.getAssetIssuedName().toByteArray())
+          == null) {
+        throw new ContractValidateException("Asset is not existed in AssetIssueStore");
+      }
+    } else {
+      if (account.getAssetIssuedID().isEmpty()) {
+        throw new ContractValidateException("Account has not issued any asset");
+      }
+
+      if (deposit.getAssetIssue(account.getAssetIssuedID().toByteArray())
+          == null) {
+        throw new ContractValidateException("Asset is not existed in AssetIssueV2Store");
+      }
+    }
+
+    if (!TransactionUtil.validUrl(newUrl)) {
+      throw new ContractValidateException("Invalid url");
+    }
+
+    if (!TransactionUtil.validAssetDescription(newDescription)) {
+      throw new ContractValidateException("Invalid description");
+    }
+
+    return true;
+  }
+
   public static String align(String s, char fillChar, int targetLen, boolean alignRight) {
     if (targetLen <= s.length()) {
       return s;

@@ -1433,10 +1433,6 @@ public class Program {
   }
 
   public void tokenIssue(DataWord name, DataWord abbr, DataWord totalSupply, DataWord precision) {
-    String hint = "name: " + ByteArray.toStr(name.getNoEndZeroesData())
-        + " abbr: " + ByteArray.toStr(abbr.getNoEndZeroesData())
-        + " totalSupply: " + ByteArray.toLong(totalSupply.getData())
-        + " precision: " + ByteArray.toLong(precision.getData());
     Repository deposit = getContractState().newRepositoryChild();
     byte[] ownerAddress = MUtil.convertToTronAddress(getContractAddress().getLast20Bytes());
 
@@ -1458,21 +1454,67 @@ public class Program {
           ByteArray.toInt(precision.getData()));
       if (deposit.getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
         assetIssueCapsuleV2.setPrecision(0);
-        deposit.put
-            .put(assetIssueCapsule.createDbKey(), assetIssueCapsule);
-        assetIssueV2Store
-            .put(assetIssueCapsuleV2.createDbV2Key(), assetIssueCapsuleV2);
+        deposit.putAssetIssueValue(assetIssueCapsule.createDbKey(), assetIssueCapsule);
+        deposit.putAssetIssueValue(assetIssueCapsuleV2.createDbV2Key(), assetIssueCapsuleV2);
       } else {
-        assetIssueV2Store
-            .put(assetIssueCapsuleV2.createDbV2Key(), assetIssueCapsuleV2);
+        deposit.putAssetIssueValue(assetIssueCapsuleV2.createDbV2Key(), assetIssueCapsuleV2);
       }
+      AccountCapsule accountCapsule = deposit.getAccount(ownerAddress);
+      if (deposit.getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
+        accountCapsule
+            .addAsset(assetIssueCapsule.createDbKey(), ByteArray.toLong(totalSupply.getData()));
+      }
+      accountCapsule.setAssetIssuedName(assetIssueCapsule.createDbKey());
+      accountCapsule.setAssetIssuedID(assetIssueCapsule.createDbV2Key());
+      accountCapsule
+          .addAssetV2(assetIssueCapsuleV2.createDbV2Key(), ByteArray.toLong(totalSupply.getData()));
+      accountCapsule.setInstance(accountCapsule.getInstance().toBuilder().build());
+
+      deposit.putAccountValue(ownerAddress, accountCapsule);
+      stackPush(new DataWord(tokenIdNum));
     } catch (ContractValidateException e) {
       throw new AssetIssueException("tokenIssue trc10 failed: %s", e.getMessage());
-
     }
   }
 
   public void updateAsset(DataWord trcTokenId, DataWord urlDataOffs, DataWord descriptionDataOffs) {
+    Repository deposit = getContractState().newRepositoryChild();
+    byte[] ownerAddress = MUtil.convertToTronAddress(getContractAddress().getLast20Bytes());
+
+    DataWord urlSize = memoryLoad(urlDataOffs);
+    DataWord descriptionSize = memoryLoad(descriptionDataOffs);
+    byte[] urlData = memoryChunk(urlDataOffs.intValueSafe() + DataWord.WORD_SIZE,
+        urlSize.intValueSafe());
+    byte[] descriptionData = memoryChunk(descriptionDataOffs.intValueSafe() + DataWord.WORD_SIZE,
+        descriptionSize.intValueSafe());
+
+    try {
+      VMUtils.validateForSmartContract(deposit, ownerAddress, urlData, descriptionData);
+
+      AccountCapsule accountCapsule = deposit.getAccount(ownerAddress);
+
+      AssetIssueCapsule assetIssueCapsule, assetIssueCapsuleV2;
+
+      assetIssueCapsuleV2 = deposit.getAssetIssue(accountCapsule.getAssetIssuedID().toByteArray());
+
+      assetIssueCapsuleV2.setUrl(ByteString.copyFrom(urlData));
+      assetIssueCapsuleV2.setDescription(ByteString.copyFrom(descriptionData));
+
+      if (deposit.getDynamicPropertiesStore().getAllowSameTokenName() == 0) {
+        assetIssueCapsule = deposit
+            .getAssetIssue(accountCapsule.getAssetIssuedName().toByteArray());
+        assetIssueCapsule.setUrl(ByteString.copyFrom(urlData));
+        assetIssueCapsule.setDescription(ByteString.copyFrom(descriptionData));
+
+        deposit.putAssetIssueValue(assetIssueCapsule.createDbKey(), assetIssueCapsule);
+        deposit.putAssetIssueValue(assetIssueCapsuleV2.createDbV2Key(), assetIssueCapsuleV2);
+      } else {
+        deposit.putAssetIssueValue(assetIssueCapsuleV2.createDbV2Key(), assetIssueCapsuleV2);
+      }
+      stackPushOne();
+    } catch (ContractValidateException e) {
+      throw new AssetIssueException("updateAsset trc10 failed: %s", e.getMessage());
+    }
   }
 
   public boolean byTestingSuite() {
