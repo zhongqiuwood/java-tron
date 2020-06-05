@@ -155,7 +155,7 @@ public class FullNode {
 
     AccountCapsule existAccount = manager.getAccountStore()
         .get(Commons.decodeFromBase58Check(localWitnesses[4]));
-    if (existAccount.getBalance() > 20000_000_000L) {
+    if (existAccount != null) {
       logger.info("Not mock witness, not the first time to kill");
       return;
     }
