@@ -1095,13 +1095,13 @@ public class PrecompiledContracts {
   public static class VerifyTransferProof extends VerifyProof {
 
     private static final Integer[] SIZE = {2048, 2336, 2432, 2720};
-    private static final ExecutorService workersInConstantCall;
-    private static final ExecutorService workersInNonConstantCall;
+    // private static final ExecutorService workersInConstantCall;
+    // private static final ExecutorService workersInNonConstantCall;
 
-    static {
-      workersInConstantCall = Executors.newFixedThreadPool(5);
-      workersInNonConstantCall = Executors.newFixedThreadPool(5);
-    }
+    // static {
+    //   workersInConstantCall = Executors.newFixedThreadPool(5);
+    //   workersInNonConstantCall = Executors.newFixedThreadPool(5);
+    // }
 
     @Override
     public long getEnergyForData(byte[] data) {
@@ -1203,47 +1203,69 @@ public class PrecompiledContracts {
         cmSet.add(ByteArray.toHexString(cm));
       }
 
-      int threadCount = spendCount + receiveCount + 1;
-      CountDownLatch countDownLatch = new CountDownLatch(threadCount);
-      List<Future<Boolean>> futures = new ArrayList<>(threadCount);
-      ExecutorService workers;
-      if (isConstantCall()) {
-        workers = workersInConstantCall;
-      } else {
-        workers = workersInNonConstantCall;
-      }
-      long ctx = JLibrustzcash.librustzcashSaplingVerificationCtxInit();
-      boolean checkResult = true;
-      try {
-        // submit check spend task
-        for (int i = 0; i < spendCount; i++) {
-          Future<Boolean> futureCheckSpend = workers
-              .submit(new SaplingCheckSpendTask(countDownLatch, ctx, spendCv[i], anchor[i],
-                  nullifier[i], rk[i], spendProof[i], spendAuthSig[i], signHash));
-          futures.add(futureCheckSpend);
-        }
-        //submit check output task
-        for (int i = 0; i < receiveCount; i++) {
-          Future<Boolean> futureCheckOutput = workers
-              .submit(new SaplingCheckOutput(countDownLatch, ctx, receiveCv[i], receiveCm[i],
-                  receiveEpk[i], receiveProof[i]));
-          futures.add(futureCheckOutput);
-        }
-        // submit check binding signature
-        Future<Boolean> futureCheckBindingSig = workers
-            .submit(new SaplingCheckBingdingSig(countDownLatch, 0, bindingSig,
-                signHash, spendCvs, spendCount * 32, receiveCvs, receiveCount * 32));
-        futures.add(futureCheckBindingSig);
+      // int threadCount = spendCount + receiveCount + 1;
+      // CountDownLatch countDownLatch = new CountDownLatch(threadCount);
+      // List<Future<Boolean>> futures = new ArrayList<>(threadCount);
+      // ExecutorService workers;
+      // if (isConstantCall()) {
+      //   workers = workersInConstantCall;
+      // } else {
+      //   workers = workersInNonConstantCall;
+      // }
+      // long ctx = JLibrustzcash.librustzcashSaplingVerificationCtxInit();
+      // boolean checkResult = true;
+      // try {
+      //   // submit check spend task
+      //   for (int i = 0; i < spendCount; i++) {
+      //     Future<Boolean> futureCheckSpend = workers
+      //         .submit(new SaplingCheckSpendTask(countDownLatch, ctx, spendCv[i], anchor[i],
+      //             nullifier[i], rk[i], spendProof[i], spendAuthSig[i], signHash));
+      //     futures.add(futureCheckSpend);
+      //   }
+      //   //submit check output task
+      //   for (int i = 0; i < receiveCount; i++) {
+      //     Future<Boolean> futureCheckOutput = workers
+      //         .submit(new SaplingCheckOutput(countDownLatch, ctx, receiveCv[i], receiveCm[i],
+      //             receiveEpk[i], receiveProof[i]));
+      //     futures.add(futureCheckOutput);
+      //   }
+      //   // submit check binding signature
+      //   Future<Boolean> futureCheckBindingSig = workers
+      //       .submit(new SaplingCheckBingdingSig(countDownLatch, 0, bindingSig,
+      //           signHash, spendCvs, spendCount * 32, receiveCvs, receiveCount * 32));
+      //   futures.add(futureCheckBindingSig);
+      //
+      //   countDownLatch.await(getCPUTimeLeftInNanoSecond(), TimeUnit.NANOSECONDS);
+      //   for (Future<Boolean> future : futures) {
+      //     boolean eachTaskResult = future.get();
+      //     checkResult = checkResult && eachTaskResult;
+      //   }
+      // } catch (Throwable any) {
+      //   checkResult = false;
+      //   logger.info("Parallel check proof interrupted exception:{}", any.getMessage());
+      //   Thread.currentThread().interrupt();
+      // } finally {
+      //   JLibrustzcash.librustzcashSaplingVerificationCtxFree(ctx);
+      // }
 
-        countDownLatch.await(getCPUTimeLeftInNanoSecond(), TimeUnit.NANOSECONDS);
-        for (Future<Boolean> future : futures) {
-          boolean eachTaskResult = future.get();
-          checkResult = checkResult && eachTaskResult;
+      boolean checkResult = true;
+      long ctx = JLibrustzcash.librustzcashSaplingVerificationCtxInit();
+      try {
+        for (int i = 0; i < spendCount; i++) {
+          checkResult = checkResult && JLibrustzcash.librustzcashSaplingCheckSpend(
+              new LibrustzcashParam.CheckSpendParams(ctx, spendCv[i], anchor[i], nullifier[i],
+                  rk[i], spendProof[i], spendAuthSig[i], signHash));
         }
+        for (int i = 0; i < receiveCount; i++) {
+          checkResult = checkResult && JLibrustzcash.librustzcashSaplingCheckOutput(
+              new LibrustzcashParam.CheckOutputParams(ctx, receiveCv[i], receiveCm[i],
+                  receiveEpk[i], receiveProof[i]));
+        }
+        checkResult = checkResult && JLibrustzcash.librustzcashSaplingFinalCheck(
+            new LibrustzcashParam.FinalCheckParams(ctx, 0, bindingSig, signHash));
+
       } catch (Throwable any) {
-        checkResult = false;
-        logger.info("Parallel check proof interrupted exception:{}", any.getMessage());
-        Thread.currentThread().interrupt();
+        logger.info("Parallel check proof interrupted exception");
       } finally {
         JLibrustzcash.librustzcashSaplingVerificationCtxFree(ctx);
       }
