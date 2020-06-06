@@ -1235,7 +1235,12 @@ public class PrecompiledContracts {
         //         signHash, spendCvs, spendCount * 32, receiveCvs, receiveCount * 32));
         // futures.add(futureCheckBindingSig);
 
-        countDownLatch.await(getCPUTimeLeftInNanoSecond(), TimeUnit.NANOSECONDS);
+        boolean withNoTimeout = countDownLatch.await(getCPUTimeLeftInNanoSecond(),
+            TimeUnit.NANOSECONDS);
+        if (!withNoTimeout) {
+          logger.info("Parallel check proof timeout");
+          throw Program.Exception.notEnoughTime("call VerifyTransferProof precompile method");
+        }
         for (Future<Boolean> future : futures) {
           boolean eachTaskResult = future.get();
           checkResult = checkResult && eachTaskResult;
@@ -1247,7 +1252,11 @@ public class PrecompiledContracts {
         }
       } catch (Throwable any) {
         checkResult = false;
-        logger.info("Parallel check proof interrupted exception:{}", any.getMessage());
+        String errorMsg = any.getMessage();
+        if(errorMsg == null && any.getCause()!=null){
+          errorMsg = any.getCause().getMessage();
+        }
+        logger.info("Parallel check proof interrupted exception " + errorMsg );
         Thread.currentThread().interrupt();
       } finally {
         JLibrustzcash.librustzcashSaplingVerificationCtxFree(ctx);
