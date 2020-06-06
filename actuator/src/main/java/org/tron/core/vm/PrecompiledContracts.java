@@ -71,6 +71,7 @@ import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.exception.ZksnarkException;
 import org.tron.core.vm.config.VMConfig;
 import org.tron.core.vm.program.Program;
+import org.tron.core.vm.program.Program.OutOfTimeException;
 import org.tron.core.vm.repository.Repository;
 import org.tron.protos.Protocol.Permission;
 
@@ -1250,15 +1251,19 @@ public class PrecompiledContracts {
           checkResult = checkResult && JLibrustzcash.librustzcashSaplingFinalCheck(
               new LibrustzcashParam.FinalCheckParams(ctx, 0, bindingSig, signHash));
         }
-      } catch (Throwable any) {
+      } catch (OutOfTimeException e) {
+        checkResult = false;
+        logger.info("Parallel check proof timeout");
+        throw e;
+      } catch(Throwable any){
         checkResult = false;
         String errorMsg = any.getMessage();
-        if(errorMsg == null && any.getCause()!=null){
+        if (errorMsg == null && any.getCause() != null) {
           errorMsg = any.getCause().getMessage();
         }
-        logger.info("Parallel check proof interrupted exception " + errorMsg );
+        logger.info("Parallel check proof interrupted exception " + errorMsg);
         Thread.currentThread().interrupt();
-      } finally {
+      } finally{
         JLibrustzcash.librustzcashSaplingVerificationCtxFree(ctx);
       }
 
@@ -1283,8 +1288,8 @@ public class PrecompiledContracts {
       private CountDownLatch countDownLatch;
 
       SaplingCheckSpendTask(CountDownLatch countDownLatch,
-                            long ctx, byte[] cv, byte[] anchor, byte[] nullifier,
-                            byte[] rk, byte[] zkproof, byte[] spendAuthSig, byte[] signHash) {
+          long ctx, byte[] cv, byte[] anchor, byte[] nullifier,
+          byte[] rk, byte[] zkproof, byte[] spendAuthSig, byte[] signHash) {
         this.ctx = ctx;
         this.cv = cv;
         this.anchor = anchor;
@@ -1323,7 +1328,7 @@ public class PrecompiledContracts {
       private CountDownLatch countDownLatch;
 
       SaplingCheckOutput(CountDownLatch countDownLatch, long ctx, byte[] cv, byte[] cm,
-                         byte[] ephemeralKey, byte[] zkproof) {
+          byte[] ephemeralKey, byte[] zkproof) {
         this.ctx = ctx;
         this.cv = cv;
         this.cm = cm;
@@ -1361,8 +1366,8 @@ public class PrecompiledContracts {
       private CountDownLatch countDownLatch;
 
       SaplingCheckBingdingSig(CountDownLatch countDownLatch, long valueBalance, byte[] bindingSig,
-                              byte[] signHash, byte[] spendCvs, int spendCvLen,
-                              byte[] receiveCvs, int receiveCvLen) {
+          byte[] signHash, byte[] spendCvs, int spendCvLen,
+          byte[] receiveCvs, int receiveCvLen) {
         this.valueBalance = valueBalance;
         this.bindingSig = bindingSig;
         this.signHash = signHash;
