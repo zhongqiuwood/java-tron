@@ -1261,9 +1261,11 @@ public class PrecompiledContracts {
               new LibrustzcashParam.CheckOutputParams(ctx, receiveCv[i], receiveCm[i],
                   receiveEpk[i], receiveProof[i]));
         }
-        checkResult = checkResult && JLibrustzcash.librustzcashSaplingFinalCheck(
-            new LibrustzcashParam.FinalCheckParams(ctx, 0, bindingSig, signHash));
-
+        // checkResult = checkResult && JLibrustzcash.librustzcashSaplingFinalCheck(
+        //     new LibrustzcashParam.FinalCheckParams(ctx, 0, bindingSig, signHash));
+        checkResult = checkResult && JLibrustzcash.librustzcashSaplingFinalCheckNew(
+            new LibrustzcashParam.FinalCheckNewParams(0, bindingSig, signHash, spendCvs,
+                spendCount * 32, receiveCvs, receiveCount * 32));
       } catch (Throwable any) {
         logger.info("Parallel check proof interrupted exception");
       } finally {
