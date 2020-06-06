@@ -1099,8 +1099,8 @@ public class PrecompiledContracts {
     private static final ExecutorService workersInNonConstantCall;
 
     static {
-      workersInConstantCall = Executors.newFixedThreadPool(5);
-      workersInNonConstantCall = Executors.newFixedThreadPool(5);
+      workersInConstantCall = Executors.newFixedThreadPool(4);
+      workersInNonConstantCall = Executors.newFixedThreadPool(4);
     }
 
     @Override
@@ -1203,7 +1203,7 @@ public class PrecompiledContracts {
         cmSet.add(ByteArray.toHexString(cm));
       }
 
-      int threadCount = spendCount + receiveCount + 1;
+      int threadCount = spendCount + receiveCount;
       CountDownLatch countDownLatch = new CountDownLatch(threadCount);
       List<Future<Boolean>> futures = new ArrayList<>(threadCount);
       ExecutorService workers;
@@ -1229,16 +1229,21 @@ public class PrecompiledContracts {
                   receiveEpk[i], receiveProof[i]));
           futures.add(futureCheckOutput);
         }
-        // submit check binding signature
-        Future<Boolean> futureCheckBindingSig = workers
-            .submit(new SaplingCheckBingdingSig(countDownLatch, 0, bindingSig,
-                signHash, spendCvs, spendCount * 32, receiveCvs, receiveCount * 32));
-        futures.add(futureCheckBindingSig);
+        // // submit check binding signature
+        // Future<Boolean> futureCheckBindingSig = workers
+        //     .submit(new SaplingCheckBingdingSig(countDownLatch, 0, bindingSig,
+        //         signHash, spendCvs, spendCount * 32, receiveCvs, receiveCount * 32));
+        // futures.add(futureCheckBindingSig);
 
         countDownLatch.await(getCPUTimeLeftInNanoSecond(), TimeUnit.NANOSECONDS);
         for (Future<Boolean> future : futures) {
           boolean eachTaskResult = future.get();
           checkResult = checkResult && eachTaskResult;
+        }
+        //verify binding sig after proof verified
+        if (checkResult) {
+          checkResult = checkResult && JLibrustzcash.librustzcashSaplingFinalCheck(
+              new LibrustzcashParam.FinalCheckParams(ctx, 0, bindingSig, signHash));
         }
       } catch (Throwable any) {
         checkResult = false;
