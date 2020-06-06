@@ -1118,48 +1118,52 @@ public class PrecompiledContracts {
     }
 
     public Pair<Boolean, byte[]> doExecute(byte[] data) {
-      if (data == null) {
-        return Pair.of(true, DataWord.ZERO().getData());
-      }
-      if (!Arrays.asList(SIZE).contains(data.length)) {
-        return Pair.of(true, DataWord.ZERO().getData());
-      }
-      byte[] bindingSig = new byte[64];
-      byte[] signHash = new byte[32];
-      byte[][] frontier = new byte[33][32];
-      //parse unfixed field offset
-      int spendOffset = parseInt(data, 0);
-      int spendAuthSigOffset = parseInt(data, 32);
-      int receiveOffset = parseInt(data, 64);
-      System.arraycopy(data, 96, bindingSig, 0, 64);
-      System.arraycopy(data, 160, signHash, 0, 32);
-      for (int i = 0; i < 33; i++) {
-        System.arraycopy(data, i * 32 + 192, frontier[i], 0, 32);
-      }
-      long leafCount = parseLong(data, 1248);
-      if (leafCount >= TREE_WIDTH - 1) {
-        return Pair.of(true, DataWord.ZERO().getData());
-      }
-
-      int spendCount = parseInt(data, spendOffset);
-      int spendAuthSigCount = parseInt(data, spendAuthSigOffset);
-      int receiveCount = parseInt(data, receiveOffset);
-
-      if (spendCount != spendAuthSigCount || spendCount < 1
-          || spendCount > 2 || receiveCount < 1 || receiveCount > 2) {
-        return Pair.of(true, DataWord.ZERO().getData());
-      }
-      byte[][] anchor = new byte[spendCount][32];
-      byte[][] nullifier = new byte[spendCount][32];
-      byte[][] spendCv = new byte[spendCount][32];
-      byte[][] rk = new byte[spendCount][32];
-      byte[][] spendProof = new byte[spendCount][192];
-      byte[][] spendAuthSig = new byte[spendCount][64];
-      byte[][] receiveCm = new byte[receiveCount][32];
-      byte[][] receiveCv = new byte[receiveCount][32];
-      byte[][] receiveEpk = new byte[receiveCount][32];
-      byte[][] receiveProof = new byte[receiveCount][192];
+      long ctx = JLibrustzcash.librustzcashSaplingVerificationCtxInit();
+      boolean checkResult = true;
+      boolean release = false;
       try {
+        if (data == null) {
+          return Pair.of(true, DataWord.ZERO().getData());
+        }
+        if (!Arrays.asList(SIZE).contains(data.length)) {
+          return Pair.of(true, DataWord.ZERO().getData());
+        }
+        byte[] bindingSig = new byte[64];
+        byte[] signHash = new byte[32];
+        byte[][] frontier = new byte[33][32];
+        //parse unfixed field offset
+        int spendOffset = parseInt(data, 0);
+        int spendAuthSigOffset = parseInt(data, 32);
+        int receiveOffset = parseInt(data, 64);
+        System.arraycopy(data, 96, bindingSig, 0, 64);
+        System.arraycopy(data, 160, signHash, 0, 32);
+        for (int i = 0; i < 33; i++) {
+          System.arraycopy(data, i * 32 + 192, frontier[i], 0, 32);
+        }
+        long leafCount = parseLong(data, 1248);
+        if (leafCount >= TREE_WIDTH - 1) {
+          return Pair.of(true, DataWord.ZERO().getData());
+        }
+
+        int spendCount = parseInt(data, spendOffset);
+        int spendAuthSigCount = parseInt(data, spendAuthSigOffset);
+        int receiveCount = parseInt(data, receiveOffset);
+
+        if (spendCount != spendAuthSigCount || spendCount < 1
+            || spendCount > 2 || receiveCount < 1 || receiveCount > 2) {
+          return Pair.of(true, DataWord.ZERO().getData());
+        }
+        byte[][] anchor = new byte[spendCount][32];
+        byte[][] nullifier = new byte[spendCount][32];
+        byte[][] spendCv = new byte[spendCount][32];
+        byte[][] rk = new byte[spendCount][32];
+        byte[][] spendProof = new byte[spendCount][192];
+        byte[][] spendAuthSig = new byte[spendCount][64];
+        byte[][] receiveCm = new byte[receiveCount][32];
+        byte[][] receiveCv = new byte[receiveCount][32];
+        byte[][] receiveEpk = new byte[receiveCount][32];
+        byte[][] receiveProof = new byte[receiveCount][192];
+
         //spend
         spendOffset += 32;
         for (int i = 0; i < spendCount; i++) {
@@ -1181,49 +1185,43 @@ public class PrecompiledContracts {
           System.arraycopy(data, receiveOffset + 288 * i + 64, receiveEpk[i], 0, 32);
           System.arraycopy(data, receiveOffset + 288 * i + 96, receiveProof[i], 0, 192);
         }
-      } catch (Throwable any) {
-        logger.info("copy data exception:{}" + any.getMessage());
-        return Pair.of(true, DataWord.ZERO().getData());
-      }
-      //copy each spendCv(receiveCv) into spendCvs(receiveCvs)
-      byte[] spendCvs = new byte[spendCount * 32];
-      byte[] receiveCvs = new byte[receiveCount * 32];
-      for (int i = 0; i < spendCount; i++) {
-        System.arraycopy(spendCv[i], 0, spendCvs, 32 * i, 32);
-      }
-      for (int i = 0; i < receiveCount; i++) {
-        System.arraycopy(receiveCv[i], 0, receiveCvs, 32 * i, 32);
-      }
-      //check duplicate nullifiers
-      HashSet<String> nfSet = new HashSet<>();
-      for (byte[] nf : nullifier) {
-        if (nfSet.contains(ByteArray.toHexString(nf))) {
-          return Pair.of(true, DataWord.ZERO().getData());
-        }
-        nfSet.add(ByteArray.toHexString(nf));
-      }
-      //check duplicate output note
-      HashSet<String> cmSet = new HashSet<>();
-      for (byte[] cm : receiveCm) {
-        if (cmSet.contains(ByteArray.toHexString(cm))) {
-          return Pair.of(true, DataWord.ZERO().getData());
-        }
-        cmSet.add(ByteArray.toHexString(cm));
-      }
 
-      int threadCount = spendCount + receiveCount;
-      CountDownLatch countDownLatch = new CountDownLatch(threadCount);
-      List<Future<Boolean>> futures = new ArrayList<>(threadCount);
-      ExecutorService workers;
-      if (isConstantCall()) {
-        workers = workersInConstantCall;
-      } else {
-        workers = workersInNonConstantCall;
-      }
-      long ctx = JLibrustzcash.librustzcashSaplingVerificationCtxInit();
-      boolean checkResult = true;
-      boolean release = false;
-      try {
+        //copy each spendCv(receiveCv) into spendCvs(receiveCvs)
+        byte[] spendCvs = new byte[spendCount * 32];
+        byte[] receiveCvs = new byte[receiveCount * 32];
+        for (int i = 0; i < spendCount; i++) {
+          System.arraycopy(spendCv[i], 0, spendCvs, 32 * i, 32);
+        }
+        for (int i = 0; i < receiveCount; i++) {
+          System.arraycopy(receiveCv[i], 0, receiveCvs, 32 * i, 32);
+        }
+        //check duplicate nullifiers
+        HashSet<String> nfSet = new HashSet<>();
+        for (byte[] nf : nullifier) {
+          if (nfSet.contains(ByteArray.toHexString(nf))) {
+            return Pair.of(true, DataWord.ZERO().getData());
+          }
+          nfSet.add(ByteArray.toHexString(nf));
+        }
+        //check duplicate output note
+        HashSet<String> cmSet = new HashSet<>();
+        for (byte[] cm : receiveCm) {
+          if (cmSet.contains(ByteArray.toHexString(cm))) {
+            return Pair.of(true, DataWord.ZERO().getData());
+          }
+          cmSet.add(ByteArray.toHexString(cm));
+        }
+
+        int threadCount = spendCount + receiveCount;
+        CountDownLatch countDownLatch = new CountDownLatch(threadCount);
+        List<Future<Boolean>> futures = new ArrayList<>(threadCount);
+        ExecutorService workers;
+        if (isConstantCall()) {
+          workers = workersInConstantCall;
+        } else {
+          workers = workersInNonConstantCall;
+        }
+
         // submit check spend task
         for (int i = 0; i < spendCount; i++) {
           Future<Boolean> futureCheckSpend = workers
@@ -1261,6 +1259,11 @@ public class PrecompiledContracts {
         }
         JLibrustzcash.librustzcashSaplingVerificationCtxFree(ctx);
         release = true;
+        if (checkResult) {
+          return insertLeaves(frontier, leafCount, receiveCm);
+        } else {
+          return Pair.of(true, DataWord.ZERO().getData());
+        }
       } catch (Throwable any) {
         checkResult = false;
         String errorMsg = any.getMessage();
@@ -1277,12 +1280,7 @@ public class PrecompiledContracts {
           JLibrustzcash.librustzcashSaplingVerificationCtxFree(ctx);
         }
       }
-
-      if (checkResult) {
-        return insertLeaves(frontier, leafCount, receiveCm);
-      } else {
-        return Pair.of(true, DataWord.ZERO().getData());
-      }
+      return Pair.of(true, DataWord.ZERO().getData());
     }
 
     private static class SaplingCheckSpendTask implements Callable<Boolean> {
