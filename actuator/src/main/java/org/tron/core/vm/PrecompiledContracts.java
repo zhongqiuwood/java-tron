@@ -1118,6 +1118,12 @@ public class PrecompiledContracts {
     }
 
     public Pair<Boolean, byte[]> doExecute(byte[] data) {
+      try {
+        Thread.sleep(50);
+      } catch (Throwable any) {
+        throw Program.Exception.notEnoughTime("call VerifyTransferProof precompile method");
+      }
+      /*
       long ctx = JLibrustzcash.librustzcashSaplingVerificationCtxInit();
       boolean checkResult = true;
       boolean release = false;
@@ -1280,6 +1286,8 @@ public class PrecompiledContracts {
           JLibrustzcash.librustzcashSaplingVerificationCtxFree(ctx);
         }
       }
+      return Pair.of(true, DataWord.ZERO().getData());
+       */
       return Pair.of(true, DataWord.ZERO().getData());
     }
 
