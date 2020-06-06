@@ -1251,10 +1251,6 @@ public class PrecompiledContracts {
           checkResult = checkResult && JLibrustzcash.librustzcashSaplingFinalCheck(
               new LibrustzcashParam.FinalCheckParams(ctx, 0, bindingSig, signHash));
         }
-      } catch (OutOfTimeException e) {
-        checkResult = false;
-        logger.info("Parallel check proof timeout");
-        throw e;
       } catch(Throwable any){
         checkResult = false;
         String errorMsg = any.getMessage();
