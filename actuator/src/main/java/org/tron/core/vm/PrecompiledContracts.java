@@ -71,7 +71,6 @@ import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.exception.ZksnarkException;
 import org.tron.core.vm.config.VMConfig;
 import org.tron.core.vm.program.Program;
-import org.tron.core.vm.program.Program.OutOfTimeException;
 import org.tron.core.vm.repository.Repository;
 import org.tron.protos.Protocol.Permission;
 
@@ -1111,6 +1110,14 @@ public class PrecompiledContracts {
 
     @Override
     public Pair<Boolean, byte[]> execute(byte[] data) {
+      try {
+        return doExecute(data);
+      } catch (Throwable t) {
+        return Pair.of(true, DataWord.ZERO().getData());
+      }
+    }
+
+    public Pair<Boolean, byte[]> doExecute(byte[] data) {
       if (data == null) {
         return Pair.of(true, DataWord.ZERO().getData());
       }
@@ -1251,15 +1258,14 @@ public class PrecompiledContracts {
           checkResult = checkResult && JLibrustzcash.librustzcashSaplingFinalCheck(
               new LibrustzcashParam.FinalCheckParams(ctx, 0, bindingSig, signHash));
         }
-      } catch(Throwable any){
+      } catch (Throwable any) {
         checkResult = false;
         String errorMsg = any.getMessage();
         if (errorMsg == null && any.getCause() != null) {
           errorMsg = any.getCause().getMessage();
         }
         logger.info("Parallel check proof interrupted exception " + errorMsg);
-        Thread.currentThread().interrupt();
-      } finally{
+      } finally {
         JLibrustzcash.librustzcashSaplingVerificationCtxFree(ctx);
       }
 
