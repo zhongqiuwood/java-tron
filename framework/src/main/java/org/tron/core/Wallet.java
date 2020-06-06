@@ -3396,7 +3396,7 @@ public class Wallet {
         parameterType);
     if (parametersBuilder.getShieldedTRC20ParametersType() == ShieldedTRC20ParametersType.BURN) {
       byte[] burnCiper = Hex.decode(shieldedTRC20Parameters.getTriggerContractInput());
-      if (burnCiper.length == 80) {
+      if (!ArrayUtils.isEmpty(burnCiper) && burnCiper.length == 80) {
         parametersBuilder.setBurnCiphertext(burnCiper);
       } else {
         throw new ZksnarkException(
