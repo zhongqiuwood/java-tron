@@ -1222,6 +1222,7 @@ public class PrecompiledContracts {
       }
       long ctx = JLibrustzcash.librustzcashSaplingVerificationCtxInit();
       boolean checkResult = true;
+      boolean release = false;
       try {
         // submit check spend task
         for (int i = 0; i < spendCount; i++) {
@@ -1258,15 +1259,23 @@ public class PrecompiledContracts {
           checkResult = checkResult && JLibrustzcash.librustzcashSaplingFinalCheck(
               new LibrustzcashParam.FinalCheckParams(ctx, 0, bindingSig, signHash));
         }
+        JLibrustzcash.librustzcashSaplingVerificationCtxFree(ctx);
+        release = true;
       } catch (Throwable any) {
         checkResult = false;
         String errorMsg = any.getMessage();
         if (errorMsg == null && any.getCause() != null) {
           errorMsg = any.getCause().getMessage();
         }
+        if (release != true) {
+          JLibrustzcash.librustzcashSaplingVerificationCtxFree(ctx);
+          release = true;
+        }
         logger.info("Parallel check proof interrupted exception " + errorMsg);
       } finally {
-        JLibrustzcash.librustzcashSaplingVerificationCtxFree(ctx);
+        if (release != true) {
+          JLibrustzcash.librustzcashSaplingVerificationCtxFree(ctx);
+        }
       }
 
       if (checkResult) {
