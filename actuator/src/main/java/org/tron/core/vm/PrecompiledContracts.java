@@ -1248,7 +1248,6 @@ public class PrecompiledContracts {
 
       }
 
-
       if (checkResult) {
         return insertLeaves(frontier, leafCount, receiveCm);
       } else {
