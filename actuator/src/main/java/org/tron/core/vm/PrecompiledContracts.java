@@ -1212,8 +1212,10 @@ public class PrecompiledContracts {
       } else {
         workers = workersInNonConstantCall;
       }
-      long ctx = JLibrustzcash.librustzcashSaplingVerificationCtxInit();
       boolean checkResult = true;
+
+      /*
+      long ctx = JLibrustzcash.librustzcashSaplingVerificationCtxInit();
       try {
         // submit check spend task
         for (int i = 0; i < spendCount; i++) {
@@ -1247,6 +1249,7 @@ public class PrecompiledContracts {
       } finally {
         JLibrustzcash.librustzcashSaplingVerificationCtxFree(ctx);
       }
+      */
 
       if (checkResult) {
         return insertLeaves(frontier, leafCount, receiveCm);
