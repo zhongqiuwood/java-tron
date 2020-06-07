@@ -1214,20 +1214,18 @@ public class PrecompiledContracts {
       }
       boolean checkResult = true;
 
-      /*
-      long ctx = JLibrustzcash.librustzcashSaplingVerificationCtxInit();
       try {
         // submit check spend task
         for (int i = 0; i < spendCount; i++) {
           Future<Boolean> futureCheckSpend = workers
-              .submit(new SaplingCheckSpendTask(countDownLatch, ctx, spendCv[i], anchor[i],
+              .submit(new SaplingCheckSpendTask(countDownLatch, spendCv[i], anchor[i],
                   nullifier[i], rk[i], spendProof[i], spendAuthSig[i], signHash));
           futures.add(futureCheckSpend);
         }
         //submit check output task
         for (int i = 0; i < receiveCount; i++) {
           Future<Boolean> futureCheckOutput = workers
-              .submit(new SaplingCheckOutput(countDownLatch, ctx, receiveCv[i], receiveCm[i],
+              .submit(new SaplingCheckOutput(countDownLatch, receiveCv[i], receiveCm[i],
                   receiveEpk[i], receiveProof[i]));
           futures.add(futureCheckOutput);
         }
@@ -1247,9 +1245,9 @@ public class PrecompiledContracts {
         logger.info("Parallel check proof interrupted exception:{}", any.getMessage());
         Thread.currentThread().interrupt();
       } finally {
-        JLibrustzcash.librustzcashSaplingVerificationCtxFree(ctx);
+
       }
-      */
+
 
       if (checkResult) {
         return insertLeaves(frontier, leafCount, receiveCm);
@@ -1272,9 +1270,9 @@ public class PrecompiledContracts {
       private CountDownLatch countDownLatch;
 
       SaplingCheckSpendTask(CountDownLatch countDownLatch,
-          long ctx, byte[] cv, byte[] anchor, byte[] nullifier,
+          byte[] cv, byte[] anchor, byte[] nullifier,
           byte[] rk, byte[] zkproof, byte[] spendAuthSig, byte[] signHash) {
-        this.ctx = ctx;
+        this.ctx = JLibrustzcash.librustzcashSaplingVerificationCtxInit();
         this.cv = cv;
         this.anchor = anchor;
         this.nullifier = nullifier;
@@ -1296,6 +1294,7 @@ public class PrecompiledContracts {
           throw e;
         } finally {
           countDownLatch.countDown();
+          JLibrustzcash.librustzcashSaplingVerificationCtxFree(this.ctx);
         }
         return result;
       }
@@ -1311,9 +1310,9 @@ public class PrecompiledContracts {
 
       private CountDownLatch countDownLatch;
 
-      SaplingCheckOutput(CountDownLatch countDownLatch, long ctx, byte[] cv, byte[] cm,
+      SaplingCheckOutput(CountDownLatch countDownLatch, byte[] cv, byte[] cm,
           byte[] ephemeralKey, byte[] zkproof) {
-        this.ctx = ctx;
+        this.ctx = JLibrustzcash.librustzcashSaplingVerificationCtxInit();
         this.cv = cv;
         this.cm = cm;
         this.ephemeralKey = ephemeralKey;
@@ -1332,6 +1331,7 @@ public class PrecompiledContracts {
           throw e;
         } finally {
           countDownLatch.countDown();
+          JLibrustzcash.librustzcashSaplingVerificationCtxFree(this.ctx);
         }
         return result;
       }
