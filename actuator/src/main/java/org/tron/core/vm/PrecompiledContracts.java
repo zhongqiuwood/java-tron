@@ -1272,8 +1272,8 @@ public class PrecompiledContracts {
       private CountDownLatch countDownLatch;
 
       SaplingCheckSpendTask(CountDownLatch countDownLatch,
-                            long ctx, byte[] cv, byte[] anchor, byte[] nullifier,
-                            byte[] rk, byte[] zkproof, byte[] spendAuthSig, byte[] signHash) {
+          long ctx, byte[] cv, byte[] anchor, byte[] nullifier,
+          byte[] rk, byte[] zkproof, byte[] spendAuthSig, byte[] signHash) {
         this.ctx = ctx;
         this.cv = cv;
         this.anchor = anchor;
@@ -1312,7 +1312,7 @@ public class PrecompiledContracts {
       private CountDownLatch countDownLatch;
 
       SaplingCheckOutput(CountDownLatch countDownLatch, long ctx, byte[] cv, byte[] cm,
-                         byte[] ephemeralKey, byte[] zkproof) {
+          byte[] ephemeralKey, byte[] zkproof) {
         this.ctx = ctx;
         this.cv = cv;
         this.cm = cm;
@@ -1350,8 +1350,8 @@ public class PrecompiledContracts {
       private CountDownLatch countDownLatch;
 
       SaplingCheckBingdingSig(CountDownLatch countDownLatch, long valueBalance, byte[] bindingSig,
-                              byte[] signHash, byte[] spendCvs, int spendCvLen,
-                              byte[] receiveCvs, int receiveCvLen) {
+          byte[] signHash, byte[] spendCvs, int spendCvLen,
+          byte[] receiveCvs, int receiveCvLen) {
         this.valueBalance = valueBalance;
         this.bindingSig = bindingSig;
         this.signHash = signHash;
