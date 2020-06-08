@@ -54,7 +54,7 @@ public class ShieldTrc10Stress {
   private byte[] tokenId = zenTokenId.getBytes();
   private Long zenTokenFee = Configuration.getByPath("testng.conf")
       .getLong("defaultParameter.zenTokenFee");
-  private Long costTokenAmount = 20000 * zenTokenFee;
+  private Long costTokenAmount = 1000 * zenTokenFee;
   private Long zenTokenWhenCreateNewAddress = Configuration.getByPath("testng.conf")
       .getLong("defaultParameter.zenTokenWhenCreateNewAddress");
 
@@ -104,7 +104,7 @@ public class ShieldTrc10Stress {
 
   }
 
-  @Test(enabled = true, threadPoolSize = 50, invocationCount = 50)
+  @Test(enabled = true, threadPoolSize = 50, invocationCount = 500)
   public void test1Shield2TwoShieldTransaction() {
     ManagedChannel channelFull = ManagedChannelBuilder.forTarget(fullnode)
         .usePlaintext(true)

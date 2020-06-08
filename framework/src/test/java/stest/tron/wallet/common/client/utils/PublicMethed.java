@@ -5183,6 +5183,8 @@ public class PublicMethed {
     final ECKey ecKey = temKey;
 
     PrivateParameters.Builder builder = PrivateParameters.newBuilder();
+
+    builder.setTimeout(3600);
     if (!ByteUtil.isNullOrZeroArray(publicZenTokenOwnerAddress)) {
       builder.setTransparentFromAddress(ByteString.copyFrom(publicZenTokenOwnerAddress));
       builder.setFromAmount(fromAmount);
