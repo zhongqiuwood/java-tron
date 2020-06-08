@@ -118,8 +118,11 @@ public class ShieldTrc10Stress {
     Integer times = 100;
     while (times-- > 0) {
       notes = PublicMethed.listShieldNote(sendShieldAddressInfo, blockingStubFull);
-      //logger.info("note size:" + notes.getNoteTxsCount());
+      logger.info("note size:" + notes.getNoteTxsCount());
 
+      if (notes.getNoteTxsCount() < 1) {
+        continue;
+      }
 
       String memo1 = "Shield to  shield address1 transaction" + System.currentTimeMillis();
       shieldOutList.clear();
