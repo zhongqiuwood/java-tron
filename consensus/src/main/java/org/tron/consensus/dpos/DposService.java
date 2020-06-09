@@ -24,6 +24,7 @@ import org.tron.consensus.base.ConsensusInterface;
 import org.tron.consensus.base.Param;
 import org.tron.consensus.base.Param.Miner;
 import org.tron.core.capsule.BlockCapsule;
+import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.config.args.GenesisBlock;
 
 @Slf4j(topic = "consensus")
@@ -96,7 +97,7 @@ public class DposService implements ConsensusInterface {
         witnesses.add(witnessCapsule.getAddress());
       }
     });
-    sortWitness(witnesses);
+    updateWitness(witnesses);
     consensusDelegate.saveActiveWitnesses(witnesses);
   }
   @Override
@@ -127,8 +128,8 @@ public class DposService implements ConsensusInterface {
     final ByteString scheduledWitness = dposSlot.getScheduledWitness(slot);
     if (!scheduledWitness.equals(witnessAddress)) {
       logger.warn("ValidBlock failed: sWitness: {}, bWitness: {}, bTimeStamp: {}, slot: {}",
-          ByteArray.toHexString(scheduledWitness.toByteArray()),
-          ByteArray.toHexString(witnessAddress.toByteArray()), new DateTime(timeStamp), slot);
+        ByteArray.toHexString(scheduledWitness.toByteArray()),
+        ByteArray.toHexString(witnessAddress.toByteArray()), new DateTime(timeStamp), slot);
       return false;
     }
 
@@ -145,9 +146,9 @@ public class DposService implements ConsensusInterface {
 
   private void updateSolidBlock() {
     List<Long> numbers = consensusDelegate.getActiveWitnesses().stream()
-        .map(address -> consensusDelegate.getWitness(address.toByteArray()).getLatestBlockNum())
-        .sorted()
-        .collect(Collectors.toList());
+      .map(address -> consensusDelegate.getWitness(address.toByteArray()).getLatestBlockNum())
+      .sorted()
+      .collect(Collectors.toList());
     long size = consensusDelegate.getActiveWitnesses().size();
     int position = (int) (size * (1 - SOLIDIFIED_THRESHOLD * 1.0 / 100));
     long newSolidNum = numbers.get(position);
@@ -162,24 +163,16 @@ public class DposService implements ConsensusInterface {
 
   public void updateWitness(List<ByteString> list) {
     list.sort(Comparator.comparingLong((ByteString b) ->
-        consensusDelegate.getWitness(b.toByteArray()).getVoteCount())
-        .reversed()
-        .thenComparing(Comparator.comparingInt(ByteString::hashCode).reversed()));
+      consensusDelegate.getWitness(b.toByteArray()).getVoteCount())
+      .reversed()
+      .thenComparing(Comparator.comparingInt(ByteString::hashCode).reversed()));
 
     if (list.size() > MAX_ACTIVE_WITNESS_NUM) {
       consensusDelegate
-          .saveActiveWitnesses(list.subList(0, MAX_ACTIVE_WITNESS_NUM));
+        .saveActiveWitnesses(list.subList(0, MAX_ACTIVE_WITNESS_NUM));
     } else {
       consensusDelegate.saveActiveWitnesses(list);
     }
-  }
-
-
-  public void sortWitness(List<ByteString> list) {
-    list.sort(Comparator.comparingLong((ByteString b) ->
-        consensusDelegate.getWitness(b.toByteArray()).getVoteCount())
-        .reversed()
-        .thenComparing(Comparator.comparingInt(ByteString::hashCode).reversed()));
   }
 
 }

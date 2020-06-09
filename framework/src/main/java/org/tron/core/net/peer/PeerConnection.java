@@ -90,10 +90,10 @@ public class PeerConnection extends Channel {
   private Set<BlockId> syncBlockInProcess = new HashSet<>();
   @Setter
   @Getter
-  private volatile boolean needSyncFromPeer;
+  private volatile boolean needSyncFromPeer = false;
   @Setter
   @Getter
-  private volatile boolean needSyncFromUs;
+  private volatile boolean needSyncFromUs = false;
 
   public void setBlockBothHave(BlockId blockId) {
     this.blockBothHave = blockId;

@@ -32,7 +32,7 @@ public class StatisticManager {
     if (blockNum != 1) {
       slot = dposSlot.getSlot(blockTime);
     }
-    for (int i = 1; i < slot; ++i) {
+    /*for (int i = 1; i < slot; ++i) {
       byte[] witness = dposSlot.getScheduledWitness(i).toByteArray();
       wc = consensusDelegate.getWitness(witness);
       wc.setTotalMissed(wc.getTotalMissed() + 1);
@@ -41,6 +41,6 @@ public class StatisticManager {
           blockNum, wc.createReadableString(), wc.getTotalMissed());
       consensusDelegate.applyBlock(false);
     }
-    consensusDelegate.applyBlock(true);
+    consensusDelegate.applyBlock(true);*/
   }
 }
