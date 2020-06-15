@@ -1538,8 +1538,6 @@ public class Args {
     DBConfig.setActuatorSet(cfgArgs.getActuatorSet());
 //    DBConfig.setECKeyCryptoEngine(cfgArgs.isECKeyCryptoEngine());
     DBConfig.setECKeyCryptoEngine(cfgArgs.isEckey());
-    DBConfig.setTrc20ContractAddress(cfgArgs.trc20ContractAddress);
-    DBConfig.setShieldedTrc20ContractAddress(cfgArgs.shieldedTrc20ContractAddress);
   }
 
   public void setFullNodeAllowShieldedTransaction(boolean fullNodeAllowShieldedTransaction) {
