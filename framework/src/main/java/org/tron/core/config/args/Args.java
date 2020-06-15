@@ -532,7 +532,15 @@ public class Args {
 
   @Getter
   @Setter
-  public boolean isEckey=true;
+  public boolean isEckey = true;
+
+  @Getter
+  @Setter
+  private String trc20ContractAddress;
+
+  @Getter
+  @Setter
+  private String shieldedTrc20ContractAddress;
 
   public static void clearParam() {
     INSTANCE.outputDirectory = "output-directory";
@@ -621,6 +629,8 @@ public class Args {
     INSTANCE.fullNodeHttpEnable = true;
     INSTANCE.solidityNodeHttpEnable = true;
     INSTANCE.isEckey = true;
+    INSTANCE.trc20ContractAddress = "";
+    INSTANCE.shieldedTrc20ContractAddress = "";
   }
 
   /**
@@ -1101,7 +1111,19 @@ public class Args {
                     new HashSet<>(config.getStringList(Constant.ACTUATOR_WHITELIST))
                     : Collections.emptySet();
 
+    INSTANCE.trc20ContractAddress = config.hasPath(Constant.TRC20_CONTRACT_ADDRESS) ? config
+        .getString(Constant.TRC20_CONTRACT_ADDRESS) : "";
 
+    INSTANCE.shieldedTrc20ContractAddress =
+        config.hasPath(Constant.SHIELDED_TRC20_CONTRACT_ADDRESS) ? config
+            .getString(Constant.SHIELDED_TRC20_CONTRACT_ADDRESS) : "";
+    logger.info("............shielded Trc20 address..............");
+    logger.info("............shielded Trc20 address..............");
+    logger.info(INSTANCE.getShieldedTrc20ContractAddress());
+    logger.info(ByteArray
+        .toHexString(Wallet.decodeFromBase58Check(INSTANCE.getShieldedTrc20ContractAddress())));
+    logger.info("............shielded Trc20 address..............");
+    logger.info("............shielded Trc20 address..............");
     logConfig();
     initDBConfig(INSTANCE);
   }
@@ -1516,6 +1538,8 @@ public class Args {
     DBConfig.setActuatorSet(cfgArgs.getActuatorSet());
 //    DBConfig.setECKeyCryptoEngine(cfgArgs.isECKeyCryptoEngine());
     DBConfig.setECKeyCryptoEngine(cfgArgs.isEckey());
+    DBConfig.setTrc20ContractAddress(cfgArgs.trc20ContractAddress);
+    DBConfig.setShieldedTrc20ContractAddress(cfgArgs.shieldedTrc20ContractAddress);
   }
 
   public void setFullNodeAllowShieldedTransaction(boolean fullNodeAllowShieldedTransaction) {

@@ -1,6 +1,7 @@
 package org.tron.core.store;
 
 import com.google.protobuf.ByteString;
+import java.math.BigInteger;
 import java.util.Arrays;
 import java.util.Optional;
 import java.util.stream.IntStream;
@@ -10,6 +11,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.DBConfig;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BytesCapsule;
@@ -135,6 +137,47 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   private static final byte[] ALLOW_ACCOUNT_STATE_ROOT = "ALLOW_ACCOUNT_STATE_ROOT".getBytes();
   private static final byte[] CURRENT_CYCLE_NUMBER = "CURRENT_CYCLE_NUMBER".getBytes();
   private static final byte[] CHANGE_DELEGATION = "CHANGE_DELEGATION".getBytes();
+
+  //used for monitor shielded TRC-20 contract transaction
+  private static final byte[] SHIELDED_TRC20_MONITOR_BLOCK_NUM = "SHIELDED_TRC20_MONITOR_BLOCK_NUM"
+      .getBytes();
+  private static final byte[] SHIELDED_TRC20_MINT_NUM = "SHIELDED_TRC20_MINT_NUM".getBytes();
+  private static final byte[] SHIELDED_TRC20_TRANSFER_NUM = "SHIELDED_TRC20_TRANSFER_NUM"
+      .getBytes();
+  private static final byte[] SHIELDED_TRC20_TRANSFER_1V1_NUM = "SHIELDED_TRC20_TRANSFER_1V1_NUM"
+      .getBytes();
+  private static final byte[] SHIELDED_TRC20_TRANSFER_1V2_NUM = "SHIELDED_TRC20_TRANSFER_1V2_NUM"
+      .getBytes();
+  private static final byte[] SHIELDED_TRC20_TRANSFER_2V1_NUM = "SHIELDED_TRC20_TRANSFER_2V1_NUM"
+      .getBytes();
+  private static final byte[] SHIELDED_TRC20_TRANSFER_2V2_NUM = "SHIELDED_TRC20_TRANSFER_2V2_NUM"
+      .getBytes();
+  private static final byte[] SHIELDED_TRC20_BURN_NUM = "SHIELDED_TRC20_BURN_NUM".getBytes();
+  private static final byte[] SHIELDED_TRC20_CM_NUM = "SHIELDED_TRC20_CM_NUM".getBytes();
+  private static final byte[] SHIELDED_TRC20_NULLIFIER_NUM = "SHIELDED_TRC20_NULLIFIER_NUM"
+      .getBytes();
+  private static final byte[] SHIELDED_TRC20_MINT_FAIL_NUM = "SHIELDED_TRC20_MINT_FAIL_NUM"
+      .getBytes();
+  private static final byte[] SHIELDED_TRC20_TRANSFER_FAIL_NUM = "SHIELDED_TRC20_TRANSFER_FAIL_NUM"
+      .getBytes();
+  private static final byte[] SHIELDED_TRC20_TRANSFER_1V1_FAIL_NUM =
+      "SHIELDED_TRC20_TRANSFER_1V1_FAIL_NUM"
+          .getBytes();
+  private static final byte[] SHIELDED_TRC20_TRANSFER_1V2_FAIL_NUM =
+      "SHIELDED_TRC20_TRANSFER_1V2_FAIL_NUM"
+          .getBytes();
+  private static final byte[] SHIELDED_TRC20_TRANSFER_2V1_FAIL_NUM =
+      "SHIELDED_TRC20_TRANSFER_2V1_FAIL_NUM"
+          .getBytes();
+  private static final byte[] SHIELDED_TRC20_TRANSFER_2V2_FAIL_NUM =
+      "SHIELDED_TRC20_TRANSFER_2V2_FAIL_NUM"
+          .getBytes();
+  private static final byte[] SHIELDED_TRC20_BURN_FAIL_NUM = "SHIELDED_TRC20_BURN_FAIL_NUM"
+      .getBytes();
+  private static final byte[] SHIELDED_TRC20_CURRENT_TOTAL_AMOUNT =
+      "SHIELDED_TRC20_CURRENT_TOTAL_AMOUNT"
+          .getBytes();
+
 
   @Autowired
   private DynamicPropertiesStore(@Value("properties") String dbName) {
@@ -616,6 +659,113 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
       this.saveChangeDelegation(DBConfig.getChangedDelegation());
     }
 
+    try {
+      this.getShieldedTRC20MonitorBlockNum();
+    } catch (IllegalArgumentException e) {
+      this.saveShieldedTRC20MonitorBlockNum(0L);
+    }
+
+    try {
+      this.getShieldedTRC20MintNum();
+    } catch (IllegalArgumentException e) {
+      this.saveShieldedTRC20MintNum(0L);
+    }
+
+    try {
+      this.getShieldedTRC20TransferNum();
+    } catch (IllegalArgumentException e) {
+      this.saveShieldedTRC20TransferNum(0L);
+    }
+
+    try {
+      this.getShieldedTRC20Transfer1v1Num();
+    } catch (IllegalArgumentException e) {
+      this.saveShieldedTRC20Transfer1v1Num(0L);
+    }
+
+    try {
+      this.getShieldedTRC20Transfer1v2Num();
+    } catch (IllegalArgumentException e) {
+      this.saveShieldedTRC20Transfer1v2Num(0L);
+    }
+
+    try {
+      this.getShieldedTRC20Transfer2v1Num();
+    } catch (IllegalArgumentException e) {
+      this.saveShieldedTRC20Transfer2v1Num(0L);
+    }
+
+    try {
+      this.getShieldedTRC20Transfer2v2Num();
+    } catch (IllegalArgumentException e) {
+      this.saveShieldedTRC20Transfer2v2Num(0L);
+    }
+
+    try {
+      this.getShieldedTRC20BurnNum();
+    } catch (IllegalArgumentException e) {
+      this.saveShieldedTRC20BurnNum(0L);
+    }
+
+    try {
+      this.getShieldedTRC20CmNum();
+    } catch (IllegalArgumentException e) {
+      this.saveShieldedTRC20CmNum(0L);
+    }
+
+    try {
+      this.getShieldedTRC20NullifierNum();
+    } catch (IllegalArgumentException e) {
+      this.saveShieldedTRC20NullifierNum(0L);
+    }
+
+    try {
+      this.getShieldedTRC20MintFailNum();
+    } catch (IllegalArgumentException e) {
+      this.saveShieldedTRC20MintFailNum(0L);
+    }
+
+    try {
+      this.getShieldedTRC20TransferFailNum();
+    } catch (IllegalArgumentException e) {
+      this.saveShieldedTRC20TransferFailNum(0L);
+    }
+
+    try {
+      this.getShieldedTRC20Transfer1v1FailNum();
+    } catch (IllegalArgumentException e) {
+      this.saveShieldedTRC20Transfer1v1FailNum(0L);
+    }
+
+    try {
+      this.getShieldedTRC20Transfer1v2FailNum();
+    } catch (IllegalArgumentException e) {
+      this.saveShieldedTRC20Transfer1v2FailNum(0L);
+    }
+
+    try {
+      this.getShieldedTRC20Transfer2v1FailNum();
+    } catch (IllegalArgumentException e) {
+      this.saveShieldedTRC20Transfer2v1FailNum(0L);
+    }
+
+    try {
+      this.getShieldedTRC20Transfer2v2FailNum();
+    } catch (IllegalArgumentException e) {
+      this.saveShieldedTRC20Transfer2v2FailNum(0L);
+    }
+
+    try {
+      this.getShieldedTRC20BurnFailNum();
+    } catch (IllegalArgumentException e) {
+      this.saveShieldedTRC20BurnFailNum(0L);
+    }
+
+    try {
+      this.getShieldedTRC20CurrentTotalAmount();
+    } catch (IllegalArgumentException e) {
+      this.saveShieldedTRC20CurrentTotalAmount(BigInteger.ZERO);
+    }
   }
 
   public String intArrayToString(int[] a) {
@@ -1846,6 +1996,240 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   public boolean allowChangeDelegation() {
     return getChangeDelegation() == 1;
+  }
+
+  public void saveShieldedTRC20MonitorBlockNum(long num) {
+    this.put(SHIELDED_TRC20_MONITOR_BLOCK_NUM,
+        new BytesCapsule(ByteArray.fromLong(num)));
+  }
+
+  public long getShieldedTRC20MonitorBlockNum() {
+    return Optional.ofNullable(getUnchecked(SHIELDED_TRC20_MONITOR_BLOCK_NUM))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found SHIELDED_TRC20_MONITOR_BLOCK_NUM"));
+  }
+
+  public void saveShieldedTRC20MintNum(long num) {
+    this.put(SHIELDED_TRC20_MINT_NUM,
+        new BytesCapsule(ByteArray.fromLong(num)));
+  }
+
+  public long getShieldedTRC20MintNum() {
+    return Optional.ofNullable(getUnchecked(SHIELDED_TRC20_MINT_NUM))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found SHIELDED_TRC20_MINT_NUM"));
+  }
+
+  public void saveShieldedTRC20TransferNum(long num) {
+    this.put(SHIELDED_TRC20_TRANSFER_NUM,
+        new BytesCapsule(ByteArray.fromLong(num)));
+  }
+
+  public long getShieldedTRC20TransferNum() {
+    return Optional.ofNullable(getUnchecked(SHIELDED_TRC20_TRANSFER_NUM))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found SHIELDED_TRC20_TRANSFER_NUM"));
+  }
+
+  public void saveShieldedTRC20Transfer1v1Num(long num) {
+    this.put(SHIELDED_TRC20_TRANSFER_1V1_NUM,
+        new BytesCapsule(ByteArray.fromLong(num)));
+  }
+
+  public long getShieldedTRC20Transfer1v1Num() {
+    return Optional.ofNullable(getUnchecked(SHIELDED_TRC20_TRANSFER_1V1_NUM))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found SHIELDED_TRC20_TRANSFER_1V1_NUM"));
+  }
+
+  public void saveShieldedTRC20Transfer1v2Num(long num) {
+    this.put(SHIELDED_TRC20_TRANSFER_1V2_NUM,
+        new BytesCapsule(ByteArray.fromLong(num)));
+  }
+
+  public long getShieldedTRC20Transfer1v2Num() {
+    return Optional.ofNullable(getUnchecked(SHIELDED_TRC20_TRANSFER_1V2_NUM))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found SHIELDED_TRC20_TRANSFER_1V2_NUM"));
+  }
+
+  public void saveShieldedTRC20Transfer2v1Num(long num) {
+    this.put(SHIELDED_TRC20_TRANSFER_2V1_NUM,
+        new BytesCapsule(ByteArray.fromLong(num)));
+  }
+
+  public long getShieldedTRC20Transfer2v1Num() {
+    return Optional.ofNullable(getUnchecked(SHIELDED_TRC20_TRANSFER_2V1_NUM))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found SHIELDED_TRC20_TRANSFER_1V1_NUM"));
+  }
+
+  public void saveShieldedTRC20Transfer2v2Num(long num) {
+    this.put(SHIELDED_TRC20_TRANSFER_2V2_NUM,
+        new BytesCapsule(ByteArray.fromLong(num)));
+  }
+
+  public long getShieldedTRC20Transfer2v2Num() {
+    return Optional.ofNullable(getUnchecked(SHIELDED_TRC20_TRANSFER_2V2_NUM))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found SHIELDED_TRC20_TRANSFER_2V2_NUM"));
+  }
+
+  public void saveShieldedTRC20BurnNum(long num) {
+    this.put(SHIELDED_TRC20_BURN_NUM,
+        new BytesCapsule(ByteArray.fromLong(num)));
+  }
+
+  public long getShieldedTRC20BurnNum() {
+    return Optional.ofNullable(getUnchecked(SHIELDED_TRC20_BURN_NUM))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found SHIELDED_TRC20_BURN_NUM"));
+  }
+
+  public void saveShieldedTRC20CmNum(long num) {
+    this.put(SHIELDED_TRC20_CM_NUM,
+        new BytesCapsule(ByteArray.fromLong(num)));
+  }
+
+  public long getShieldedTRC20CmNum() {
+    return Optional.ofNullable(getUnchecked(SHIELDED_TRC20_CM_NUM))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found SHIELDED_TRC20_CM_NUM"));
+  }
+
+  public void saveShieldedTRC20NullifierNum(long num) {
+    this.put(SHIELDED_TRC20_NULLIFIER_NUM,
+        new BytesCapsule(ByteArray.fromLong(num)));
+  }
+
+  public long getShieldedTRC20NullifierNum() {
+    return Optional.ofNullable(getUnchecked(SHIELDED_TRC20_NULLIFIER_NUM))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found SHIELDED_TRC20_NULLIFIER_NUM"));
+  }
+
+  public void saveShieldedTRC20MintFailNum(long num) {
+    this.put(SHIELDED_TRC20_MINT_FAIL_NUM,
+        new BytesCapsule(ByteArray.fromLong(num)));
+  }
+
+  public long getShieldedTRC20MintFailNum() {
+    return Optional.ofNullable(getUnchecked(SHIELDED_TRC20_MINT_FAIL_NUM))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found SHIELDED_TRC20_MINT_FAIL_NUM"));
+  }
+
+  public void saveShieldedTRC20TransferFailNum(long num) {
+    this.put(SHIELDED_TRC20_TRANSFER_FAIL_NUM,
+        new BytesCapsule(ByteArray.fromLong(num)));
+  }
+
+  public long getShieldedTRC20TransferFailNum() {
+    return Optional.ofNullable(getUnchecked(SHIELDED_TRC20_TRANSFER_FAIL_NUM))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found SHIELDED_TRC20_TRANSFER_FAIL_NUM"));
+  }
+
+  public void saveShieldedTRC20Transfer1v1FailNum(long num) {
+    this.put(SHIELDED_TRC20_TRANSFER_1V1_FAIL_NUM,
+        new BytesCapsule(ByteArray.fromLong(num)));
+  }
+
+  public long getShieldedTRC20Transfer1v1FailNum() {
+    return Optional.ofNullable(getUnchecked(SHIELDED_TRC20_TRANSFER_1V1_FAIL_NUM))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found SHIELDED_TRC20_TRANSFER_1V1_FAIL_NUM"));
+  }
+
+  public void saveShieldedTRC20Transfer1v2FailNum(long num) {
+    this.put(SHIELDED_TRC20_TRANSFER_1V2_FAIL_NUM,
+        new BytesCapsule(ByteArray.fromLong(num)));
+  }
+
+  public long getShieldedTRC20Transfer1v2FailNum() {
+    return Optional.ofNullable(getUnchecked(SHIELDED_TRC20_TRANSFER_1V2_FAIL_NUM))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found SHIELDED_TRC20_TRANSFER_1V2_FAIL_NUM"));
+  }
+
+  public void saveShieldedTRC20Transfer2v1FailNum(long num) {
+    this.put(SHIELDED_TRC20_TRANSFER_2V1_FAIL_NUM,
+        new BytesCapsule(ByteArray.fromLong(num)));
+  }
+
+  public long getShieldedTRC20Transfer2v1FailNum() {
+    return Optional.ofNullable(getUnchecked(SHIELDED_TRC20_TRANSFER_2V1_FAIL_NUM))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found SHIELDED_TRC20_TRANSFER_2V1_FAIL_NUM"));
+  }
+
+  public void saveShieldedTRC20Transfer2v2FailNum(long num) {
+    this.put(SHIELDED_TRC20_TRANSFER_2V2_FAIL_NUM,
+        new BytesCapsule(ByteArray.fromLong(num)));
+  }
+
+  public long getShieldedTRC20Transfer2v2FailNum() {
+    return Optional.ofNullable(getUnchecked(SHIELDED_TRC20_TRANSFER_2V2_FAIL_NUM))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found SHIELDED_TRC20_TRANSFER_2V2_FAIL_NUM"));
+  }
+
+  public void saveShieldedTRC20BurnFailNum(long num) {
+    this.put(SHIELDED_TRC20_BURN_FAIL_NUM,
+        new BytesCapsule(ByteArray.fromLong(num)));
+  }
+
+  public long getShieldedTRC20BurnFailNum() {
+    return Optional.ofNullable(getUnchecked(SHIELDED_TRC20_BURN_FAIL_NUM))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found SHIELDED_TRC20_BURN_NUM"));
+  }
+
+  public void saveShieldedTRC20CurrentTotalAmount(BigInteger num) {
+    this.put(SHIELDED_TRC20_CURRENT_TOTAL_AMOUNT,
+        new BytesCapsule(ByteUtil.bigIntegerToBytes(num)));
+  }
+
+  public BigInteger getShieldedTRC20CurrentTotalAmount() {
+    return Optional.ofNullable(getUnchecked(SHIELDED_TRC20_CURRENT_TOTAL_AMOUNT))
+        .map(BytesCapsule::getData)
+        .map(ByteUtil::bytesToBigInteger)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found SHIELDED_TRC20_CURRENT_TOTAL_AMOUNT"));
   }
 
   private static class DynamicResourceProperties {

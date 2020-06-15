@@ -25,6 +25,7 @@ import static org.tron.core.config.Parameter.DatabaseConstants.EXCHANGE_COUNT_LI
 import static org.tron.core.config.Parameter.DatabaseConstants.PROPOSAL_COUNT_LIMIT_MAX;
 import static org.tron.core.config.args.Parameter.ChainConstant.BLOCK_PRODUCED_INTERVAL;
 
+import com.alibaba.fastjson.JSONObject;
 import com.google.common.base.CaseFormat;
 import com.google.common.collect.ContiguousSet;
 import com.google.common.collect.DiscreteDomain;
@@ -232,6 +233,28 @@ public class Wallet {
   private int minEffectiveConnection = Args.getInstance().getMinEffectiveConnection();
   public static final String CONTRACT_VALIDATE_EXCEPTION = "ContractValidateException: {}";
   public static final String CONTRACT_VALIDATE_ERROR = "contract validate error : ";
+
+  private Thread monitorShieldedTrc20Thread = new Thread(new MonitorShieldedTRC20Runnalbe());
+  private static final byte[] mintMehtodSign = getSelector(Hash
+      .sha3(ByteArray.fromString("mint(uint256,bytes32[9],bytes32[2],bytes32[21])")));
+  private static final byte[] transferMehtodSign = getSelector(Hash
+      .sha3(ByteArray.fromString("transfer(bytes32[10][],bytes32[2][],bytes32[9][],bytes32[2],"
+          + "bytes32[21][])")));
+  private static final byte[] burnMehtodSign = getSelector(Hash
+      .sha3(ByteArray.fromString("burn(bytes32[10],bytes32[2],uint256,bytes32[2],address,"
+          + "bytes32[3])")));
+  private static byte[] shieldedTRC20ContractAddress = new byte[21];
+  private static byte[] trc20ContractAddress = new byte[21];
+
+  {
+    shieldedTRC20ContractAddress = Wallet
+        .decode58Check(Args.getInstance().getShieldedTrc20ContractAddress());
+    trc20ContractAddress = Wallet
+        .decode58Check(Args.getInstance().getTrc20ContractAddress());
+    if (!monitorShieldedTrc20Thread.isAlive()) {
+      monitorShieldedTrc20Thread.start();
+    }
+  }
 
   /**
    * Creates a new Wallet with a random ECKey.
@@ -3495,5 +3518,331 @@ public class Wallet {
     BytesMessage.Builder bytesBuilder = BytesMessage.newBuilder();
     return bytesBuilder.setValue(ByteString.copyFrom(Hex.decode(input))).build();
   }
+
+  private void scanShieldedTRC20Transaction() throws InterruptedException {
+    long startNum = dbManager.getDynamicPropertiesStore().getShieldedTRC20MonitorBlockNum();
+    long latestNum = dbManager.getDynamicPropertiesStore().getLatestSolidifiedBlockNum();
+    long endNum;
+    while (startNum < latestNum) {
+      if (latestNum - startNum > 1000) {
+        endNum = startNum + 1000;
+      } else {
+        endNum = latestNum;
+      }
+      BlockList blockList = this.getBlocksByLimitNext(startNum, endNum - startNum);
+      for (Block block : blockList.getBlockList()) {
+        for (Transaction transaction : block.getTransactionsList()) {
+          if (transaction.getRetList().size() == 1
+              && transaction.getRawData().getContractList().size() == 1) {
+            byte[] value = transaction.getRawData().getContract(0).getParameter().getValue()
+                .toByteArray();
+            ContractType type = transaction.getRawData().getContract(0).getType();
+            Transaction.Result.contractResult result = transaction.getRet(0).getContractRet();
+            if (String.valueOf(type).equals("TriggerSmartContract") && !ArrayUtils.isEmpty(value)
+                && value.length >= 53) {
+              byte[] contractAddress = new byte[21];
+              System.arraycopy(value, 25, contractAddress, 0, 21);
+              if (Arrays.equals(contractAddress, shieldedTRC20ContractAddress)) {
+                byte[] selector = new byte[4];
+                System.arraycopy(value, 49, selector, 0, 4);
+                // mint data length
+                if (Arrays.equals(mintMehtodSign, selector) && value.length == 1109) {
+                  if (String.valueOf(result).equals("SUCCESS")) {
+                    dbManager.getDynamicPropertiesStore().saveShieldedTRC20MintNum(
+                        dbManager.getDynamicPropertiesStore().getShieldedTRC20MintNum() + 1);
+                    dbManager.getDynamicPropertiesStore().saveShieldedTRC20CmNum(
+                        dbManager.getDynamicPropertiesStore().getShieldedTRC20CmNum() + 1);
+                    byte[] amountBytes = new byte[32];
+                    System.arraycopy(value, 53, amountBytes, 0, 32);
+                    dbManager.getDynamicPropertiesStore().saveShieldedTRC20CurrentTotalAmount(
+                        dbManager.getDynamicPropertiesStore().getShieldedTRC20CurrentTotalAmount()
+                            .add(ByteUtil.bytesToBigInteger(amountBytes)));
+                  } else {
+                    dbManager.getDynamicPropertiesStore().saveShieldedTRC20MintFailNum(
+                        dbManager.getDynamicPropertiesStore().getShieldedTRC20MintFailNum() + 1);
+                  }
+                } else if (Arrays.equals(transferMehtodSign, selector)) {
+                  if (value.length == 1717) {  // transfer 1v1
+                    if (String.valueOf(result).equals("SUCCESS")) {
+                      dbManager.getDynamicPropertiesStore().saveShieldedTRC20Transfer1v1Num(
+                          dbManager.getDynamicPropertiesStore().getShieldedTRC20Transfer1v1Num()
+                              + 1);
+                      dbManager.getDynamicPropertiesStore().saveShieldedTRC20TransferNum(
+                          dbManager.getDynamicPropertiesStore().getShieldedTRC20TransferNum()
+                              + 1);
+                      dbManager.getDynamicPropertiesStore().saveShieldedTRC20NullifierNum(
+                          dbManager.getDynamicPropertiesStore().getShieldedTRC20NullifierNum() + 1);
+                      dbManager.getDynamicPropertiesStore().saveShieldedTRC20CmNum(
+                          dbManager.getDynamicPropertiesStore().getShieldedTRC20CmNum() + 1);
+                    } else {
+                      dbManager.getDynamicPropertiesStore().saveShieldedTRC20Transfer1v1FailNum(
+                          dbManager.getDynamicPropertiesStore().getShieldedTRC20Transfer1v1FailNum()
+                              + 1);
+                      dbManager.getDynamicPropertiesStore().saveShieldedTRC20TransferFailNum(
+                          dbManager.getDynamicPropertiesStore().getShieldedTRC20TransferFailNum()
+                              + 1);
+                    }
+                  } else if (value.length == 2677) {  //transfer 1v2
+                    if (String.valueOf(result).equals("SUCCESS")) {
+                      dbManager.getDynamicPropertiesStore().saveShieldedTRC20Transfer1v2Num(
+                          dbManager.getDynamicPropertiesStore().getShieldedTRC20Transfer1v2Num()
+                              + 1);
+                      dbManager.getDynamicPropertiesStore().saveShieldedTRC20TransferNum(
+                          dbManager.getDynamicPropertiesStore().getShieldedTRC20TransferNum()
+                              + 1);
+                      dbManager.getDynamicPropertiesStore().saveShieldedTRC20NullifierNum(
+                          dbManager.getDynamicPropertiesStore().getShieldedTRC20NullifierNum() + 1);
+                      dbManager.getDynamicPropertiesStore().saveShieldedTRC20CmNum(
+                          dbManager.getDynamicPropertiesStore().getShieldedTRC20CmNum() + 2);
+                    } else {
+                      dbManager.getDynamicPropertiesStore().saveShieldedTRC20Transfer1v2FailNum(
+                          dbManager.getDynamicPropertiesStore().getShieldedTRC20Transfer1v2FailNum()
+                              + 1);
+                      dbManager.getDynamicPropertiesStore().saveShieldedTRC20TransferFailNum(
+                          dbManager.getDynamicPropertiesStore().getShieldedTRC20TransferFailNum()
+                              + 1);
+                    }
+                  } else if (value.length == 2101) { //transfer 2v1
+                    if (String.valueOf(result).equals("SUCCESS")) {
+                      dbManager.getDynamicPropertiesStore().saveShieldedTRC20Transfer2v1Num(
+                          dbManager.getDynamicPropertiesStore().getShieldedTRC20Transfer2v1Num()
+                              + 1);
+                      dbManager.getDynamicPropertiesStore().saveShieldedTRC20TransferNum(
+                          dbManager.getDynamicPropertiesStore().getShieldedTRC20TransferNum()
+                              + 1);
+                      dbManager.getDynamicPropertiesStore().saveShieldedTRC20NullifierNum(
+                          dbManager.getDynamicPropertiesStore().getShieldedTRC20NullifierNum() + 2);
+                      dbManager.getDynamicPropertiesStore().saveShieldedTRC20CmNum(
+                          dbManager.getDynamicPropertiesStore().getShieldedTRC20CmNum() + 1);
+                    } else {
+                      dbManager.getDynamicPropertiesStore().saveShieldedTRC20Transfer2v1FailNum(
+                          dbManager.getDynamicPropertiesStore().getShieldedTRC20Transfer2v1FailNum()
+                              + 1);
+                      dbManager.getDynamicPropertiesStore().saveShieldedTRC20TransferFailNum(
+                          dbManager.getDynamicPropertiesStore().getShieldedTRC20TransferFailNum()
+                              + 1);
+                    }
+                  } else if (value.length == 3061) { //transfer 2v2
+                    if (String.valueOf(result).equals("SUCCESS")) {
+                      dbManager.getDynamicPropertiesStore().saveShieldedTRC20Transfer2v2Num(
+                          dbManager.getDynamicPropertiesStore().getShieldedTRC20Transfer2v2Num()
+                              + 1);
+                      dbManager.getDynamicPropertiesStore().saveShieldedTRC20TransferNum(
+                          dbManager.getDynamicPropertiesStore().getShieldedTRC20TransferNum()
+                              + 1);
+                      dbManager.getDynamicPropertiesStore().saveShieldedTRC20NullifierNum(
+                          dbManager.getDynamicPropertiesStore().getShieldedTRC20NullifierNum() + 2);
+                      dbManager.getDynamicPropertiesStore().saveShieldedTRC20CmNum(
+                          dbManager.getDynamicPropertiesStore().getShieldedTRC20CmNum() + 2);
+                    } else {
+                      dbManager.getDynamicPropertiesStore().saveShieldedTRC20Transfer2v2FailNum(
+                          dbManager.getDynamicPropertiesStore().getShieldedTRC20Transfer2v2FailNum()
+                              + 1);
+                      dbManager.getDynamicPropertiesStore().saveShieldedTRC20TransferFailNum(
+                          dbManager.getDynamicPropertiesStore().getShieldedTRC20TransferFailNum()
+                              + 1);
+                    }
+                  }
+                } else if (Arrays.equals(burnMehtodSign, selector) && value.length == 661) {
+                  if (String.valueOf(result).equals("SUCCESS")) {
+                    dbManager.getDynamicPropertiesStore().saveShieldedTRC20BurnNum(
+                        dbManager.getDynamicPropertiesStore().getShieldedTRC20BurnNum() + 1);
+                    dbManager.getDynamicPropertiesStore().saveShieldedTRC20NullifierNum(
+                        dbManager.getDynamicPropertiesStore().getShieldedTRC20NullifierNum() + 1);
+                    byte[] amountBytes = new byte[32];
+                    System.arraycopy(value, 437, amountBytes, 0, 32);
+                    dbManager.getDynamicPropertiesStore().saveShieldedTRC20CurrentTotalAmount(
+                        dbManager.getDynamicPropertiesStore().getShieldedTRC20CurrentTotalAmount()
+                            .subtract(ByteUtil.bytesToBigInteger(amountBytes)));
+                  } else {
+                    dbManager.getDynamicPropertiesStore().saveShieldedTRC20BurnFailNum(
+                        dbManager.getDynamicPropertiesStore().getShieldedTRC20BurnFailNum() + 1);
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+      startNum = endNum;
+      dbManager.getDynamicPropertiesStore().saveShieldedTRC20MonitorBlockNum(startNum);
+    }
+  }
+
+  private void clearShieldedTRC20DynamicPropertiesStore()
+      throws InterruptedException {
+    try {
+      dbManager.getDynamicPropertiesStore().saveShieldedTRC20MonitorBlockNum(0L);
+      dbManager.getDynamicPropertiesStore().saveShieldedTRC20NullifierNum(0L);
+      dbManager.getDynamicPropertiesStore().saveShieldedTRC20CmNum(0L);
+      dbManager.getDynamicPropertiesStore().saveShieldedTRC20MintNum(0L);
+      dbManager.getDynamicPropertiesStore().saveShieldedTRC20TransferNum(0L);
+      dbManager.getDynamicPropertiesStore().saveShieldedTRC20Transfer1v1Num(0L);
+      dbManager.getDynamicPropertiesStore().saveShieldedTRC20Transfer1v2Num(0L);
+      dbManager.getDynamicPropertiesStore().saveShieldedTRC20Transfer2v1Num(0L);
+      dbManager.getDynamicPropertiesStore().saveShieldedTRC20Transfer2v2Num(0L);
+      dbManager.getDynamicPropertiesStore().saveShieldedTRC20BurnNum(0L);
+
+      dbManager.getDynamicPropertiesStore().saveShieldedTRC20MintFailNum(0L);
+      dbManager.getDynamicPropertiesStore().saveShieldedTRC20TransferFailNum(0L);
+      dbManager.getDynamicPropertiesStore().saveShieldedTRC20Transfer1v1FailNum(0L);
+      dbManager.getDynamicPropertiesStore().saveShieldedTRC20Transfer1v2FailNum(0L);
+      dbManager.getDynamicPropertiesStore().saveShieldedTRC20Transfer2v1FailNum(0L);
+      dbManager.getDynamicPropertiesStore().saveShieldedTRC20Transfer2v2FailNum(0L);
+      dbManager.getDynamicPropertiesStore().saveShieldedTRC20BurnFailNum(0L);
+      dbManager.getDynamicPropertiesStore().saveShieldedTRC20CurrentTotalAmount(BigInteger.ZERO);
+    } catch (NullPointerException e) {
+      Thread.sleep(2000);
+      clearShieldedTRC20DynamicPropertiesStore();
+    }
+  }
+
+  public class MonitorShieldedTRC20Runnalbe implements Runnable {
+
+    @Override
+    public void run() {
+      try {
+        clearShieldedTRC20DynamicPropertiesStore();
+      } catch (InterruptedException e) {
+        e.printStackTrace();
+      }
+      while (true) {
+        try {
+          scanShieldedTRC20Transaction();
+          Thread.sleep(10000);
+        } catch (Exception e) {
+          if (!monitorShieldedTrc20Thread.isInterrupted()) {
+            monitorShieldedTrc20Thread.interrupt();
+          }
+          if (!monitorShieldedTrc20Thread.isAlive()) {
+            monitorShieldedTrc20Thread.start();
+          }
+        }
+      }
+    }
+  }
+
+  private BigInteger getTotalShieldedTRC20Balance()
+      throws ContractExeException {
+    byte[] accountAddress = new byte[32];
+    System.arraycopy(shieldedTRC20ContractAddress, 0, accountAddress, 11, 21);
+    String methodSign = "balanceOf(address)";
+    byte[] selector = new byte[4];
+    System.arraycopy(Hash.sha3(methodSign.getBytes()), 0, selector, 0, 4);
+    byte[] input = ByteUtil.merge(selector, accountAddress);
+
+    TriggerSmartContract.Builder triggerBuilder = TriggerSmartContract.newBuilder();
+    triggerBuilder.setContractAddress(ByteString.copyFrom(trc20ContractAddress));
+    triggerBuilder.setData(ByteString.copyFrom(input));
+    TriggerSmartContract trigger = triggerBuilder.build();
+    TransactionExtention.Builder trxExtBuilder = TransactionExtention.newBuilder();
+    Return.Builder retBuilder = Return.newBuilder();
+    TransactionExtention trxExt;
+    try {
+      TransactionCapsule trxCap = createTransactionCapsule(trigger,
+          ContractType.TriggerSmartContract);
+      Transaction trx = triggerConstantContract(trigger, trxCap, trxExtBuilder, retBuilder);
+
+      retBuilder.setResult(true).setCode(response_code.SUCCESS);
+      trxExtBuilder.setTransaction(trx);
+      trxExtBuilder.setTxid(trxCap.getTransactionId().getByteString());
+      trxExtBuilder.setResult(retBuilder);
+    } catch (ContractValidateException | VMIllegalException e) {
+      retBuilder.setResult(false).setCode(response_code.CONTRACT_VALIDATE_ERROR)
+          .setMessage(ByteString.copyFromUtf8(CONTRACT_VALIDATE_ERROR + e.getMessage()));
+      trxExtBuilder.setResult(retBuilder);
+      logger.warn(CONTRACT_VALIDATE_EXCEPTION, e.getMessage());
+    } catch (RuntimeException e) {
+      retBuilder.setResult(false).setCode(response_code.CONTRACT_EXE_ERROR)
+          .setMessage(ByteString.copyFromUtf8(e.getClass() + " : " + e.getMessage()));
+      trxExtBuilder.setResult(retBuilder);
+      logger.warn("When run constant call in VM, have RuntimeException: " + e.getMessage());
+    } catch (Exception e) {
+      retBuilder.setResult(false).setCode(response_code.OTHER_ERROR)
+          .setMessage(ByteString.copyFromUtf8(e.getClass() + " : " + e.getMessage()));
+      trxExtBuilder.setResult(retBuilder);
+      logger.warn("unknown exception caught: " + e.getMessage(), e);
+    } finally {
+      trxExt = trxExtBuilder.build();
+    }
+
+    String code = trxExt.getResult().getCode().toString();
+    if (code.equals("SUCCESS")) {
+      List<ByteString> list = trxExt.getConstantResultList();
+      byte[] listBytes = new byte[0];
+      for (ByteString bs : list) {
+        listBytes = ByteUtil.merge(listBytes, bs.toByteArray());
+      }
+      BigInteger amount = new BigInteger(listBytes);
+      return amount;
+    } else {
+      // trigger contract failed
+      throw new ContractExeException(
+          "trigger contract to get the shielded TRC-20 address balance error.");
+    }
+  }
+
+  public String getShieldedTRC20TransactionMonitorInfo() throws ContractExeException {
+    JSONObject result = new JSONObject();
+    long totalSuccessNum =
+        dbManager.getDynamicPropertiesStore().getShieldedTRC20MintNum() + dbManager
+            .getDynamicPropertiesStore().getShieldedTRC20TransferNum() + dbManager
+            .getDynamicPropertiesStore().getShieldedTRC20BurnNum();
+    long totalFailNum =
+        dbManager.getDynamicPropertiesStore().getShieldedTRC20MintFailNum() + dbManager
+            .getDynamicPropertiesStore().getShieldedTRC20TransferFailNum() + dbManager
+            .getDynamicPropertiesStore().getShieldedTRC20BurnFailNum();
+    result.put("trc20Address", Args.getInstance().getTrc20ContractAddress());
+    result.put("shieldedTrc20Address", Args.getInstance().getShieldedTrc20ContractAddress());
+    result.put("currentMonitorBlockNum",
+        dbManager.getDynamicPropertiesStore().getShieldedTRC20MonitorBlockNum());
+    result
+        .put("latestSolidityBlockNum",
+            dbManager.getDynamicPropertiesStore().getLatestSolidifiedBlockNum());
+    result.put("totalShieldedAmount", getTotalShieldedTRC20Balance().toString(10));
+    result.put("currentTotalShieldedAmount",
+        dbManager.getDynamicPropertiesStore().getShieldedTRC20CurrentTotalAmount().toString(10));
+    result.put("totalShieldedTRC20Num", totalSuccessNum + totalFailNum);
+    result.put("totalSuccessNum", totalSuccessNum);
+    result.put("totalFailNum", totalFailNum);
+    result.put("commitmentNum", dbManager.getDynamicPropertiesStore().getShieldedTRC20CmNum());
+    result
+        .put("nullifierNum", dbManager.getDynamicPropertiesStore().getShieldedTRC20NullifierNum());
+    JSONObject success = new JSONObject();
+    success.put("mint", dbManager.getDynamicPropertiesStore().getShieldedTRC20MintNum());
+    JSONObject successTransfer = new JSONObject();
+    successTransfer
+        .put("total", dbManager.getDynamicPropertiesStore().getShieldedTRC20TransferNum());
+    successTransfer
+        .put("1v1", dbManager.getDynamicPropertiesStore().getShieldedTRC20Transfer1v1Num());
+    successTransfer
+        .put("1v2", dbManager.getDynamicPropertiesStore().getShieldedTRC20Transfer1v2Num());
+    successTransfer
+        .put("2v1", dbManager.getDynamicPropertiesStore().getShieldedTRC20Transfer2v1Num());
+    successTransfer
+        .put("2v2", dbManager.getDynamicPropertiesStore().getShieldedTRC20Transfer2v2Num());
+    success.put("transfer", successTransfer);
+    success.put("burn", dbManager.getDynamicPropertiesStore().getShieldedTRC20BurnNum());
+    result.put("success", success);
+
+    JSONObject fail = new JSONObject();
+    fail.put("mint", dbManager.getDynamicPropertiesStore().getShieldedTRC20MintFailNum());
+    JSONObject failTransfer = new JSONObject();
+    failTransfer
+        .put("total", dbManager.getDynamicPropertiesStore().getShieldedTRC20TransferFailNum());
+    failTransfer
+        .put("1v1", dbManager.getDynamicPropertiesStore().getShieldedTRC20Transfer1v1FailNum());
+    failTransfer
+        .put("1v2", dbManager.getDynamicPropertiesStore().getShieldedTRC20Transfer1v2FailNum());
+    failTransfer
+        .put("2v1", dbManager.getDynamicPropertiesStore().getShieldedTRC20Transfer2v1FailNum());
+    failTransfer
+        .put("2v2", dbManager.getDynamicPropertiesStore().getShieldedTRC20Transfer2v2FailNum());
+    fail.put("transfer", failTransfer);
+    fail.put("burn", dbManager.getDynamicPropertiesStore().getShieldedTRC20BurnFailNum());
+    result.put("fail", fail);
+    return result.toJSONString();
+  }
+
 }
 
