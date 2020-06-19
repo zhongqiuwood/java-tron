@@ -152,7 +152,12 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
       .getBytes();
   private static final byte[] SHIELDED_TRC20_TRANSFER_2V2_NUM = "SHIELDED_TRC20_TRANSFER_2V2_NUM"
       .getBytes();
-  private static final byte[] SHIELDED_TRC20_BURN_NUM = "SHIELDED_TRC20_BURN_NUM".getBytes();
+  private static final byte[] SHIELDED_TRC20_BURN_NUM = "SHIELDED_TRC20_BURN_NUM"
+      .getBytes();
+  private static final byte[] SHIELDED_TRC20_BURN_1v1_NUM = "SHIELDED_TRC20_BURN_1v1_NUM"
+      .getBytes();
+  private static final byte[] SHIELDED_TRC20_BURN_1v2_NUM = "SHIELDED_TRC20_BURN_1v2_NUM"
+      .getBytes();
   private static final byte[] SHIELDED_TRC20_CM_NUM = "SHIELDED_TRC20_CM_NUM".getBytes();
   private static final byte[] SHIELDED_TRC20_NULLIFIER_NUM = "SHIELDED_TRC20_NULLIFIER_NUM"
       .getBytes();
@@ -174,9 +179,18 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
           .getBytes();
   private static final byte[] SHIELDED_TRC20_BURN_FAIL_NUM = "SHIELDED_TRC20_BURN_FAIL_NUM"
       .getBytes();
+  private static final byte[] SHIELDED_TRC20_BURN_1v1_FAIL_NUM = "SHIELDED_TRC20_BURN_1v1_FAIL_NUM"
+      .getBytes();
+  private static final byte[] SHIELDED_TRC20_BURN_1v2_FAIL_NUM = "SHIELDED_TRC20_BURN_1v2_FAIL_NUM"
+      .getBytes();
   private static final byte[] SHIELDED_TRC20_CURRENT_TOTAL_AMOUNT =
       "SHIELDED_TRC20_CURRENT_TOTAL_AMOUNT"
           .getBytes();
+  private static final byte[] SHIELDED_TRC20_TOTAL_MINT_AMOUNT = "SHIELDED_TRC20_TOTAL_MINT_AMOUNT"
+      .getBytes();
+  private static final byte[] SHIELDED_TRC20_TOTAL_BURN_AMOUNT = "SHIELDED_TRC20_TOTAL_BURN_AMOUNT"
+      .getBytes();
+
 
 
   @Autowired
@@ -708,6 +722,18 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     }
 
     try {
+      this.getShieldedTRC20Burn1v1Num();
+    } catch (IllegalArgumentException e) {
+      this.saveShieldedTRC20Burn1v1Num(0L);
+    }
+
+    try {
+      this.getShieldedTRC20Burn1v2Num();
+    } catch (IllegalArgumentException e) {
+      this.saveShieldedTRC20Burn1v2Num(0L);
+    }
+
+    try {
       this.getShieldedTRC20CmNum();
     } catch (IllegalArgumentException e) {
       this.saveShieldedTRC20CmNum(0L);
@@ -762,9 +788,33 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     }
 
     try {
+      this.getShieldedTRC20Burn1v1FailNum();
+    } catch (IllegalArgumentException e) {
+      this.saveShieldedTRC20Burn1v1FailNum(0L);
+    }
+
+    try {
+      this.getShieldedTRC20Burn1v2FailNum();
+    } catch (IllegalArgumentException e) {
+      this.saveShieldedTRC20Burn1v2FailNum(0L);
+    }
+
+    try {
       this.getShieldedTRC20CurrentTotalAmount();
     } catch (IllegalArgumentException e) {
       this.saveShieldedTRC20CurrentTotalAmount(BigInteger.ZERO);
+    }
+
+    try {
+      this.getShieldedTRC20TotalMintAmount();
+    } catch (IllegalArgumentException e) {
+      this.saveShieldedTRC20TotalMintAmount(BigInteger.ZERO);
+    }
+
+    try {
+      this.getShieldedTRC20TotalBurnAmount();
+    } catch (IllegalArgumentException e) {
+      this.saveShieldedTRC20TotalBurnAmount(BigInteger.ZERO);
     }
   }
 
@@ -2102,6 +2152,32 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
             () -> new IllegalArgumentException("not found SHIELDED_TRC20_BURN_NUM"));
   }
 
+  public void saveShieldedTRC20Burn1v1Num(long num) {
+    this.put(SHIELDED_TRC20_BURN_1v1_NUM,
+        new BytesCapsule(ByteArray.fromLong(num)));
+  }
+
+  public long getShieldedTRC20Burn1v1Num() {
+    return Optional.ofNullable(getUnchecked(SHIELDED_TRC20_BURN_1v1_NUM))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found SHIELDED_TRC20_BURN_1v1_NUM"));
+  }
+
+  public void saveShieldedTRC20Burn1v2Num(long num) {
+    this.put(SHIELDED_TRC20_BURN_1v2_NUM,
+        new BytesCapsule(ByteArray.fromLong(num)));
+  }
+
+  public long getShieldedTRC20Burn1v2Num() {
+    return Optional.ofNullable(getUnchecked(SHIELDED_TRC20_BURN_1v2_NUM))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found SHIELDED_TRC20_BURN_1v2_NUM"));
+  }
+
   public void saveShieldedTRC20CmNum(long num) {
     this.put(SHIELDED_TRC20_CM_NUM,
         new BytesCapsule(ByteArray.fromLong(num)));
@@ -2216,7 +2292,33 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
         .map(BytesCapsule::getData)
         .map(ByteArray::toLong)
         .orElseThrow(
-            () -> new IllegalArgumentException("not found SHIELDED_TRC20_BURN_NUM"));
+            () -> new IllegalArgumentException("not found SHIELDED_TRC20_BURN_Fail_NUM"));
+  }
+
+  public void saveShieldedTRC20Burn1v1FailNum(long num) {
+    this.put(SHIELDED_TRC20_BURN_1v1_FAIL_NUM,
+        new BytesCapsule(ByteArray.fromLong(num)));
+  }
+
+  public long getShieldedTRC20Burn1v1FailNum() {
+    return Optional.ofNullable(getUnchecked(SHIELDED_TRC20_BURN_1v1_FAIL_NUM))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found SHIELDED_TRC20_BURN_1v1_FAIL_NUM"));
+  }
+
+  public void saveShieldedTRC20Burn1v2FailNum(long num) {
+    this.put(SHIELDED_TRC20_BURN_1v2_FAIL_NUM,
+        new BytesCapsule(ByteArray.fromLong(num)));
+  }
+
+  public long getShieldedTRC20Burn1v2FailNum() {
+    return Optional.ofNullable(getUnchecked(SHIELDED_TRC20_BURN_1v2_FAIL_NUM))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found SHIELDED_TRC20_BURN_1v2_FAIL_NUM"));
   }
 
   public void saveShieldedTRC20CurrentTotalAmount(BigInteger num) {
@@ -2230,6 +2332,32 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
         .map(ByteUtil::bytesToBigInteger)
         .orElseThrow(
             () -> new IllegalArgumentException("not found SHIELDED_TRC20_CURRENT_TOTAL_AMOUNT"));
+  }
+
+  public void saveShieldedTRC20TotalMintAmount(BigInteger num) {
+    this.put(SHIELDED_TRC20_TOTAL_MINT_AMOUNT,
+        new BytesCapsule(ByteUtil.bigIntegerToBytes(num)));
+  }
+
+  public BigInteger getShieldedTRC20TotalMintAmount() {
+    return Optional.ofNullable(getUnchecked(SHIELDED_TRC20_TOTAL_MINT_AMOUNT))
+        .map(BytesCapsule::getData)
+        .map(ByteUtil::bytesToBigInteger)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found SHIELDED_TRC20_TOTAL_MINT_AMOUNT"));
+  }
+
+  public void saveShieldedTRC20TotalBurnAmount(BigInteger num) {
+    this.put(SHIELDED_TRC20_TOTAL_BURN_AMOUNT,
+        new BytesCapsule(ByteUtil.bigIntegerToBytes(num)));
+  }
+
+  public BigInteger getShieldedTRC20TotalBurnAmount() {
+    return Optional.ofNullable(getUnchecked(SHIELDED_TRC20_TOTAL_BURN_AMOUNT))
+        .map(BytesCapsule::getData)
+        .map(ByteUtil::bytesToBigInteger)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found SHIELDED_TRC20_TOTAL_BURN_AMOUNT"));
   }
 
   private static class DynamicResourceProperties {

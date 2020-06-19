@@ -245,8 +245,9 @@ public class Wallet {
       .sha3(ByteArray.fromString("transfer(bytes32[10][],bytes32[2][],bytes32[9][],bytes32[2],"
           + "bytes32[21][])")));
   private static final byte[] burnMehtodSign = getSelector(Hash
-      .sha3(ByteArray.fromString("burn(bytes32[10],bytes32[2],uint256,bytes32[2],address,"
-          + "bytes32[3])")));
+      .sha3(ByteArray.fromString(
+          "burn(bytes32[10],bytes32[2],uint256,bytes32[2],address,bytes32[3],bytes32[9][],"
+              + "bytes32[21][])")));
   private static byte[] shieldedTRC20ContractAddress = new byte[21];
   private static byte[] trc20ContractAddress = new byte[21];
 
@@ -3598,6 +3599,9 @@ public class Wallet {
                     dbManager.getDynamicPropertiesStore().saveShieldedTRC20CurrentTotalAmount(
                         dbManager.getDynamicPropertiesStore().getShieldedTRC20CurrentTotalAmount()
                             .add(ByteUtil.bytesToBigInteger(amountBytes)));
+                    dbManager.getDynamicPropertiesStore().saveShieldedTRC20TotalMintAmount(
+                        dbManager.getDynamicPropertiesStore().getShieldedTRC20TotalMintAmount()
+                            .add(ByteUtil.bytesToBigInteger(amountBytes)));
                   } else {
                     dbManager.getDynamicPropertiesStore().saveShieldedTRC20MintFailNum(
                         dbManager.getDynamicPropertiesStore().getShieldedTRC20MintFailNum() + 1);
@@ -3684,20 +3688,55 @@ public class Wallet {
                               + 1);
                     }
                   }
-                } else if (Arrays.equals(burnMehtodSign, selector) && value.length == 661) {
-                  if (String.valueOf(result).equals("SUCCESS")) {
-                    dbManager.getDynamicPropertiesStore().saveShieldedTRC20BurnNum(
-                        dbManager.getDynamicPropertiesStore().getShieldedTRC20BurnNum() + 1);
-                    dbManager.getDynamicPropertiesStore().saveShieldedTRC20NullifierNum(
-                        dbManager.getDynamicPropertiesStore().getShieldedTRC20NullifierNum() + 1);
-                    byte[] amountBytes = new byte[32];
-                    System.arraycopy(value, 437, amountBytes, 0, 32);
-                    dbManager.getDynamicPropertiesStore().saveShieldedTRC20CurrentTotalAmount(
-                        dbManager.getDynamicPropertiesStore().getShieldedTRC20CurrentTotalAmount()
-                            .subtract(ByteUtil.bytesToBigInteger(amountBytes)));
-                  } else {
-                    dbManager.getDynamicPropertiesStore().saveShieldedTRC20BurnFailNum(
-                        dbManager.getDynamicPropertiesStore().getShieldedTRC20BurnFailNum() + 1);
+                } else if (Arrays.equals(burnMehtodSign, selector)) {
+                  if (value.length == 789) {
+                    if (String.valueOf(result).equals("SUCCESS")) {
+                      dbManager.getDynamicPropertiesStore().saveShieldedTRC20BurnNum(
+                          dbManager.getDynamicPropertiesStore().getShieldedTRC20BurnNum() + 1);
+                      dbManager.getDynamicPropertiesStore().saveShieldedTRC20Burn1v1Num(
+                          dbManager.getDynamicPropertiesStore().getShieldedTRC20Burn1v1Num() + 1);
+                      dbManager.getDynamicPropertiesStore().saveShieldedTRC20NullifierNum(
+                          dbManager.getDynamicPropertiesStore().getShieldedTRC20NullifierNum() + 1);
+                      byte[] amountBytes = new byte[32];
+                      System.arraycopy(value, 437, amountBytes, 0, 32);
+                      dbManager.getDynamicPropertiesStore().saveShieldedTRC20TotalBurnAmount(
+                          dbManager.getDynamicPropertiesStore().getShieldedTRC20TotalBurnAmount()
+                              .add(ByteUtil.bytesToBigInteger(amountBytes)));
+                      dbManager.getDynamicPropertiesStore().saveShieldedTRC20CurrentTotalAmount(
+                          dbManager.getDynamicPropertiesStore().getShieldedTRC20CurrentTotalAmount()
+                              .subtract(ByteUtil.bytesToBigInteger(amountBytes)));
+                    } else {
+                      dbManager.getDynamicPropertiesStore().saveShieldedTRC20BurnFailNum(
+                          dbManager.getDynamicPropertiesStore().getShieldedTRC20BurnFailNum() + 1);
+                      dbManager.getDynamicPropertiesStore().saveShieldedTRC20Transfer1v1FailNum(
+                          dbManager.getDynamicPropertiesStore().getShieldedTRC20Burn1v1FailNum()
+                              + 1);
+                    }
+                  } else if (value.length == 1749) {
+                    if (String.valueOf(result).equals("SUCCESS")) {
+                      dbManager.getDynamicPropertiesStore().saveShieldedTRC20BurnNum(
+                          dbManager.getDynamicPropertiesStore().getShieldedTRC20BurnNum() + 1);
+                      dbManager.getDynamicPropertiesStore().saveShieldedTRC20Burn1v2Num(
+                          dbManager.getDynamicPropertiesStore().getShieldedTRC20Burn1v2Num() + 1);
+                      dbManager.getDynamicPropertiesStore().saveShieldedTRC20NullifierNum(
+                          dbManager.getDynamicPropertiesStore().getShieldedTRC20NullifierNum() + 1);
+                      dbManager.getDynamicPropertiesStore().saveShieldedTRC20CmNum(
+                          dbManager.getDynamicPropertiesStore().getShieldedTRC20CmNum() + 1);
+                      byte[] amountBytes = new byte[32];
+                      System.arraycopy(value, 437, amountBytes, 0, 32);
+                      dbManager.getDynamicPropertiesStore().saveShieldedTRC20TotalBurnAmount(
+                          dbManager.getDynamicPropertiesStore().getShieldedTRC20TotalBurnAmount()
+                              .add(ByteUtil.bytesToBigInteger(amountBytes)));
+                      dbManager.getDynamicPropertiesStore().saveShieldedTRC20CurrentTotalAmount(
+                          dbManager.getDynamicPropertiesStore().getShieldedTRC20CurrentTotalAmount()
+                              .subtract(ByteUtil.bytesToBigInteger(amountBytes)));
+                    } else {
+                      dbManager.getDynamicPropertiesStore().saveShieldedTRC20BurnFailNum(
+                          dbManager.getDynamicPropertiesStore().getShieldedTRC20BurnFailNum() + 1);
+                      dbManager.getDynamicPropertiesStore().saveShieldedTRC20Transfer1v2FailNum(
+                          dbManager.getDynamicPropertiesStore().getShieldedTRC20Burn1v2FailNum()
+                              + 1);
+                    }
                   }
                 }
               }
@@ -3723,6 +3762,8 @@ public class Wallet {
       dbManager.getDynamicPropertiesStore().saveShieldedTRC20Transfer2v1Num(0L);
       dbManager.getDynamicPropertiesStore().saveShieldedTRC20Transfer2v2Num(0L);
       dbManager.getDynamicPropertiesStore().saveShieldedTRC20BurnNum(0L);
+      dbManager.getDynamicPropertiesStore().saveShieldedTRC20Burn1v1Num(0L);
+      dbManager.getDynamicPropertiesStore().saveShieldedTRC20Burn1v2Num(0L);
 
       dbManager.getDynamicPropertiesStore().saveShieldedTRC20MintFailNum(0L);
       dbManager.getDynamicPropertiesStore().saveShieldedTRC20TransferFailNum(0L);
@@ -3731,6 +3772,10 @@ public class Wallet {
       dbManager.getDynamicPropertiesStore().saveShieldedTRC20Transfer2v1FailNum(0L);
       dbManager.getDynamicPropertiesStore().saveShieldedTRC20Transfer2v2FailNum(0L);
       dbManager.getDynamicPropertiesStore().saveShieldedTRC20BurnFailNum(0L);
+      dbManager.getDynamicPropertiesStore().saveShieldedTRC20Burn1v1FailNum(0L);
+      dbManager.getDynamicPropertiesStore().saveShieldedTRC20Burn1v2FailNum(0L);
+      dbManager.getDynamicPropertiesStore().saveShieldedTRC20TotalMintAmount(BigInteger.ZERO);
+      dbManager.getDynamicPropertiesStore().saveShieldedTRC20TotalBurnAmount(BigInteger.ZERO);
       dbManager.getDynamicPropertiesStore().saveShieldedTRC20CurrentTotalAmount(BigInteger.ZERO);
     } catch (NullPointerException e) {
       Thread.sleep(2000);
@@ -3840,16 +3885,22 @@ public class Wallet {
     result
         .put("latestSolidityBlockNum",
             dbManager.getDynamicPropertiesStore().getLatestSolidifiedBlockNum());
-    result.put("totalShieldedAmount", getTotalShieldedTRC20Balance().toString(10));
-    result.put("currentTotalShieldedAmount",
+    JSONObject amount = new JSONObject();
+    amount.put("totalShieldedAmount", getTotalShieldedTRC20Balance().toString(10));
+    amount.put("currentTotalShieldedAmount",
         dbManager.getDynamicPropertiesStore().getShieldedTRC20CurrentTotalAmount().toString(10));
-    result.put("totalShieldedTRC20Num", totalSuccessNum + totalFailNum);
-    result.put("totalSuccessNum", totalSuccessNum);
-    result.put("totalFailNum", totalFailNum);
-    result.put("commitmentNum", dbManager.getDynamicPropertiesStore().getShieldedTRC20CmNum());
-    result
+    amount.put("totalMintAmount",
+        dbManager.getDynamicPropertiesStore().getShieldedTRC20TotalMintAmount().toString(10));
+    amount.put("totalBurnAmount",
+        dbManager.getDynamicPropertiesStore().getShieldedTRC20TotalBurnAmount().toString(10));
+    result.put("amount", amount);
+    JSONObject number = new JSONObject();
+    number.put("totalShieldedTRC20Num", totalSuccessNum + totalFailNum);
+    number.put("commitmentNum", dbManager.getDynamicPropertiesStore().getShieldedTRC20CmNum());
+    number
         .put("nullifierNum", dbManager.getDynamicPropertiesStore().getShieldedTRC20NullifierNum());
     JSONObject success = new JSONObject();
+    success.put("totalSuccessNum", totalSuccessNum);
     success.put("mint", dbManager.getDynamicPropertiesStore().getShieldedTRC20MintNum());
     JSONObject successTransfer = new JSONObject();
     successTransfer
@@ -3863,10 +3914,15 @@ public class Wallet {
     successTransfer
         .put("2v2", dbManager.getDynamicPropertiesStore().getShieldedTRC20Transfer2v2Num());
     success.put("transfer", successTransfer);
-    success.put("burn", dbManager.getDynamicPropertiesStore().getShieldedTRC20BurnNum());
-    result.put("success", success);
+    JSONObject burnSuccess = new JSONObject();
+    burnSuccess.put("total", dbManager.getDynamicPropertiesStore().getShieldedTRC20BurnNum());
+    burnSuccess.put("1v1", dbManager.getDynamicPropertiesStore().getShieldedTRC20Burn1v1Num());
+    burnSuccess.put("1v2", dbManager.getDynamicPropertiesStore().getShieldedTRC20Burn1v2Num());
+    success.put("burn", burnSuccess);
+    number.put("success", success);
 
     JSONObject fail = new JSONObject();
+    fail.put("totalFailNum", totalFailNum);
     fail.put("mint", dbManager.getDynamicPropertiesStore().getShieldedTRC20MintFailNum());
     JSONObject failTransfer = new JSONObject();
     failTransfer
@@ -3880,8 +3936,13 @@ public class Wallet {
     failTransfer
         .put("2v2", dbManager.getDynamicPropertiesStore().getShieldedTRC20Transfer2v2FailNum());
     fail.put("transfer", failTransfer);
-    fail.put("burn", dbManager.getDynamicPropertiesStore().getShieldedTRC20BurnFailNum());
-    result.put("fail", fail);
+    JSONObject failBurn = new JSONObject();
+    failBurn.put("total", dbManager.getDynamicPropertiesStore().getShieldedTRC20BurnFailNum());
+    failBurn.put("1v1", dbManager.getDynamicPropertiesStore().getShieldedTRC20Burn1v1FailNum());
+    failBurn.put("1v2", dbManager.getDynamicPropertiesStore().getShieldedTRC20Burn1v2FailNum());
+    fail.put("burn", failBurn);
+    number.put("fail", fail);
+    result.put("number", number);
     return result.toJSONString();
   }
 
