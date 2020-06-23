@@ -103,8 +103,7 @@ public class KhaosDatabase extends TronDatabase {
    */
   public BlockCapsule push(BlockCapsule blk)
       throws UnLinkedBlockException, BadNumberBlockException {
-    logger.info("-----push begin---: block:{}", blk);
-    logger.info("-----push begin---: head:{}, miniStore:{}", head, miniStore);
+    logger.info("-----push begin---: block:{}, head:{}, miniStore:{}", blk, head, miniStore);
     KhaosBlock block = new KhaosBlock(blk);
     if (head != null && block.getParentHash() != Sha256Hash.ZERO_HASH) {
       KhaosBlock kblock = miniStore.getByHash(block.getParentHash());
@@ -125,7 +124,7 @@ public class KhaosDatabase extends TronDatabase {
     if (head == null || block.num > head.num) {
       head = block;
     }
-    logger.info("-----push end---: {}", miniStore);
+    logger.info("-----push end---: block:{}, head:{}, miniStore:{}", blk, head, miniStore);
     return head.blk;
   }
 
