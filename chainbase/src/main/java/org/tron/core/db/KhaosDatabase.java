@@ -156,7 +156,8 @@ public class KhaosDatabase extends TronDatabase {
   /**
    * Find two block's most recent common parent block.
    */
-  public Pair<LinkedList<KhaosBlock>, LinkedList<KhaosBlock>> getBranch(Sha256Hash block1, Sha256Hash block2)
+  public Pair<LinkedList<KhaosBlock>, LinkedList<KhaosBlock>> getBranch(Sha256Hash block1,
+      Sha256Hash block2)
       throws NonCommonBlockException {
     LinkedList<KhaosBlock> list1 = new LinkedList<>();
     LinkedList<KhaosBlock> list2 = new LinkedList<>();
