@@ -13,6 +13,7 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -26,6 +27,7 @@ import org.tron.core.exception.NonCommonBlockException;
 import org.tron.core.exception.UnLinkedBlockException;
 
 @Component
+@Slf4j(topic = "DB")
 public class KhaosDatabase extends TronDatabase {
 
   private KhaosBlock head;
@@ -101,6 +103,8 @@ public class KhaosDatabase extends TronDatabase {
    */
   public BlockCapsule push(BlockCapsule blk)
       throws UnLinkedBlockException, BadNumberBlockException {
+    logger.info("-----push begin---: block:{}", blk);
+    logger.info("-----push begin---: head:{}, miniStore:{}", head, miniStore);
     KhaosBlock block = new KhaosBlock(blk);
     if (head != null && block.getParentHash() != Sha256Hash.ZERO_HASH) {
       KhaosBlock kblock = miniStore.getByHash(block.getParentHash());
@@ -121,6 +125,7 @@ public class KhaosDatabase extends TronDatabase {
     if (head == null || block.num > head.num) {
       head = block;
     }
+    logger.info("-----push end---: {}", miniStore);
     return head.blk;
   }
 
@@ -153,7 +158,7 @@ public class KhaosDatabase extends TronDatabase {
    * Find two block's most recent common parent block.
    */
   public Pair<LinkedList<KhaosBlock>, LinkedList<KhaosBlock>> getBranch(Sha256Hash block1,
-      Sha256Hash block2)
+                                                                        Sha256Hash block2)
       throws NonCommonBlockException {
     LinkedList<KhaosBlock> list1 = new LinkedList<>();
     LinkedList<KhaosBlock> list2 = new LinkedList<>();
@@ -287,6 +292,16 @@ public class KhaosDatabase extends TronDatabase {
 
       return Objects.hash(id);
     }
+
+    @Override
+    public String toString() {
+      return "KhaosBlock{" +
+          "blk=" + blk +
+          ", parent=" + parent.get() +
+          ", id=" + id +
+          ", num=" + num +
+          '}';
+    }
   }
 
   public class KhaosStore {
@@ -301,6 +316,7 @@ public class KhaosDatabase extends TronDatabase {
 
           @Override
           protected boolean removeEldestEntry(Map.Entry<Long, ArrayList<KhaosBlock>> entry) {
+            logger.info("-----removeEldestEntry begin-----: head:{}, maxCapcity:{}, numKblkMap:{}, hashKblkMap:{}", head, maxCapcity, numKblkMap, hashKblkMap);
             long minNum = Long.max(0L, head.num - maxCapcity);
             Map<Long, ArrayList<KhaosBlock>> minNumMap = numKblkMap.entrySet().stream()
                 .filter(e -> e.getKey() < minNum)
@@ -310,7 +326,7 @@ public class KhaosDatabase extends TronDatabase {
               numKblkMap.remove(k);
               v.forEach(b -> hashKblkMap.remove(b.id));
             });
-
+            logger.info("-----removeEldestEntry end-----: head:{}, maxCapcity:{} numKblkMap:{}, hashKblkMap:{}", head, maxCapcity, numKblkMap, hashKblkMap);
             return false;
           }
         };
@@ -357,5 +373,13 @@ public class KhaosDatabase extends TronDatabase {
       return hashKblkMap.size();
     }
 
+    @Override
+    public String toString() {
+      return "KhaosStore{" +
+          "hashKblkMap=" + hashKblkMap +
+          ", maxCapcity=" + maxCapcity +
+          ", numKblkMap=" + numKblkMap +
+          '}';
+    }
   }
 }
