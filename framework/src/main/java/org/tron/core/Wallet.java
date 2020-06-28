@@ -3868,6 +3868,63 @@ public class Wallet {
     }
   }
 
+  private long getTotalShieldedTRC20CmNum()
+      throws ContractExeException {
+    String methodSign = "leafCount()";
+    byte[] selector = new byte[4];
+    System.arraycopy(Hash.sha3(methodSign.getBytes()), 0, selector, 0, 4);
+
+    TriggerSmartContract.Builder triggerBuilder = TriggerSmartContract.newBuilder();
+    triggerBuilder.setContractAddress(ByteString.copyFrom(shieldedTRC20ContractAddress));
+    triggerBuilder.setData(ByteString.copyFrom(selector));
+    TriggerSmartContract trigger = triggerBuilder.build();
+    TransactionExtention.Builder trxExtBuilder = TransactionExtention.newBuilder();
+    Return.Builder retBuilder = Return.newBuilder();
+    TransactionExtention trxExt;
+    try {
+      TransactionCapsule trxCap = createTransactionCapsule(trigger,
+          ContractType.TriggerSmartContract);
+      Transaction trx = triggerConstantContract(trigger, trxCap, trxExtBuilder, retBuilder);
+
+      retBuilder.setResult(true).setCode(response_code.SUCCESS);
+      trxExtBuilder.setTransaction(trx);
+      trxExtBuilder.setTxid(trxCap.getTransactionId().getByteString());
+      trxExtBuilder.setResult(retBuilder);
+    } catch (ContractValidateException | VMIllegalException e) {
+      retBuilder.setResult(false).setCode(response_code.CONTRACT_VALIDATE_ERROR)
+          .setMessage(ByteString.copyFromUtf8(CONTRACT_VALIDATE_ERROR + e.getMessage()));
+      trxExtBuilder.setResult(retBuilder);
+      logger.warn(CONTRACT_VALIDATE_EXCEPTION, e.getMessage());
+    } catch (RuntimeException e) {
+      retBuilder.setResult(false).setCode(response_code.CONTRACT_EXE_ERROR)
+          .setMessage(ByteString.copyFromUtf8(e.getClass() + " : " + e.getMessage()));
+      trxExtBuilder.setResult(retBuilder);
+      logger.warn("When run constant call in VM, have RuntimeException: " + e.getMessage());
+    } catch (Exception e) {
+      retBuilder.setResult(false).setCode(response_code.OTHER_ERROR)
+          .setMessage(ByteString.copyFromUtf8(e.getClass() + " : " + e.getMessage()));
+      trxExtBuilder.setResult(retBuilder);
+      logger.warn("unknown exception caught: " + e.getMessage(), e);
+    } finally {
+      trxExt = trxExtBuilder.build();
+    }
+
+    String code = trxExt.getResult().getCode().toString();
+    if (code.equals("SUCCESS")) {
+      List<ByteString> list = trxExt.getConstantResultList();
+      byte[] listBytes = new byte[0];
+      for (ByteString bs : list) {
+        listBytes = ByteUtil.merge(listBytes, bs.toByteArray());
+      }
+      long num = ByteUtil.byteArrayToLong(listBytes);
+      return num;
+    } else {
+      // trigger contract failed
+      throw new ContractExeException(
+          "trigger contract to get the shielded TRC-20 address balance error.");
+    }
+  }
+
   public String getShieldedTRC20TransactionMonitorInfo() throws ContractExeException {
     JSONObject result = new JSONObject();
     long totalSuccessNum =
@@ -3886,9 +3943,11 @@ public class Wallet {
         .put("latestSolidityBlockNum",
             dbManager.getDynamicPropertiesStore().getLatestSolidifiedBlockNum());
     JSONObject amount = new JSONObject();
-    amount.put("totalShieldedAmount", getTotalShieldedTRC20Balance().toString(10));
-    amount.put("currentTotalShieldedAmount",
+    JSONObject shieldedAmount = new JSONObject();
+    shieldedAmount.put("fromContract", getTotalShieldedTRC20Balance().toString(10));
+    shieldedAmount.put("fromTransaction",
         dbManager.getDynamicPropertiesStore().getShieldedTRC20CurrentTotalAmount().toString(10));
+    amount.put("totalShieldedAmount", shieldedAmount);
     amount.put("totalMintAmount",
         dbManager.getDynamicPropertiesStore().getShieldedTRC20TotalMintAmount().toString(10));
     amount.put("totalBurnAmount",
@@ -3896,7 +3955,11 @@ public class Wallet {
     result.put("amount", amount);
     JSONObject number = new JSONObject();
     number.put("totalShieldedTRC20Num", totalSuccessNum + totalFailNum);
-    number.put("commitmentNum", dbManager.getDynamicPropertiesStore().getShieldedTRC20CmNum());
+    JSONObject commitment = new JSONObject();
+    commitment.put("fromContract", getTotalShieldedTRC20CmNum());
+    commitment
+        .put("fromTransaction", dbManager.getDynamicPropertiesStore().getShieldedTRC20CmNum());
+    number.put("commitmentNum", commitment);
     number
         .put("nullifierNum", dbManager.getDynamicPropertiesStore().getShieldedTRC20NullifierNum());
     JSONObject success = new JSONObject();
