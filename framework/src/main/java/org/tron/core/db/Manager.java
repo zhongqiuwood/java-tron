@@ -1706,8 +1706,13 @@ public class Manager {
   }
 
   public boolean isTooManyPending() {
-    return getPendingTransactions().size() + getRepushTransactions().size()
-        > MAX_TRANSACTION_PENDING;
+    long size = getPendingTransactions().size() + getRepushTransactions().size();
+    if (size > 2_000) {
+      logger.info("Too many pending, rePushSize: {}, pendingSize: {}",
+          getRepushTransactions().size(),
+          getPendingTransactions().size() );
+    }
+    return size > 20_000;
   }
 
   public void preValidateTransactionSign(BlockCapsule block)
