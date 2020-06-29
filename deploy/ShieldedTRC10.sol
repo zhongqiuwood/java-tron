@@ -34,7 +34,7 @@ contract ShieldedTRC10 {
         tokenId = id;
     }
     // output: cm, cv, epk, proof
-    function mint(uint256 rawValue, bytes32[9] calldata output, bytes32[2] calldata bindingSignature, bytes32[21] calldata c) external {
+    function mint(uint256 rawValue, bytes32[9] calldata output, bytes32[2] calldata bindingSignature, bytes32[21] calldata c) external payable {
         address sender = msg.sender;
         require(msg.tokenid == tokenId, "msg.tokenid must be equal to tokenId in contract!");
         require(msg.tokenvalue == rawValue, "msg.tokenvalue must be equal to rawValue!");
@@ -120,7 +120,7 @@ contract ShieldedTRC10 {
     }
     //input: nf, anchor, cv, rk, proof
     //output: cm, cv, epk, proof
-    function burn(bytes32[10] calldata input, bytes32[2] calldata spendAuthoritySignature, uint256 rawValue, bytes32[2] calldata bindingSignature, address payTo, bytes32[3] calldata burnCipher, bytes32[9][] calldata output, bytes32[21][] calldata c) external {
+    function burn(bytes32[10] calldata input, bytes32[2] calldata spendAuthoritySignature, uint256 rawValue, bytes32[2] calldata bindingSignature, address payable payTo, bytes32[3] calldata burnCipher, bytes32[9][] calldata output, bytes32[21][] calldata c) external {
         uint64 value = rawValueToValue(rawValue);
         bytes32 signHash = sha256(abi.encodePacked(address(this), input, output, c, payTo, value));
 
