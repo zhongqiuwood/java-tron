@@ -286,8 +286,6 @@ public class Manager {
   private BlockingQueue<TransactionCapsule> repushTransactions;
   private BlockingQueue<TriggerCapsule> triggerCapsuleQueue;
 
-  private static final int DEFAULT_MAX_CHECK_COUNT = 30;
-
   /**
    * Cycle thread to repush Transactions
    */
@@ -1837,12 +1835,12 @@ public class Manager {
       }
     }
     if (eventPluginLoaded && EventPluginLoader.getInstance().isSolidityLogTriggerEnable()) {
-      for (long i = latestSolidifiedBlockNumber - DEFAULT_MAX_CHECK_COUNT; i <= latestSolidifiedBlockNumber; i++) {
+      for (long i = Long.min(Args.getInstance().getOldSolidityBlockNum(), Args.getInstance().getContractTriggerLastProcessBlockNum()) + 1; i <= latestSolidifiedBlockNumber; i++) {
         postSolitityLogContractTrigger(i);
       }
     }
     if (eventPluginLoaded && EventPluginLoader.getInstance().isSolidityEventTriggerEnable()) {
-      for (long i = latestSolidifiedBlockNumber - DEFAULT_MAX_CHECK_COUNT; i <= latestSolidifiedBlockNumber; i++) {
+      for (long i = Long.min(Args.getInstance().getOldSolidityBlockNum(), Args.getInstance().getContractTriggerLastProcessBlockNum()) + 1; i <= latestSolidifiedBlockNumber; i++) {
         postSolitityEventContractTrigger(i);
       }
     }

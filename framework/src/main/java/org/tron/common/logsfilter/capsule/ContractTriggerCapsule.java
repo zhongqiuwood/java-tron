@@ -146,5 +146,6 @@ public class ContractTriggerCapsule extends TriggerCapsule {
         }
       }
     }
+    Args.getInstance().setContractTriggerLastProcessBlockNum(event.getBlockNumber());
   }
 }
