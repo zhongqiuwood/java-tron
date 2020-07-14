@@ -449,6 +449,11 @@ public class Args {
 //  private long allowShieldedTransaction; //committee parameter
 
   // full node used this parameter to close shielded transaction
+
+  @Getter
+  @Setter
+  private boolean monitorShieldCheckLog;
+
   @Getter
   @Setter
   private boolean fullNodeAllowShieldedTransactionArgs;
@@ -620,6 +625,7 @@ public class Args {
     INSTANCE.allowMultiSign = 0;
     INSTANCE.trxExpirationTimeInMilliseconds = 0;
     INSTANCE.fullNodeAllowShieldedTransactionArgs = true;
+    INSTANCE.monitorShieldCheckLog = true;
     INSTANCE.zenTokenId = "000000";
     INSTANCE.allowProtoFilterNum = 0;
     INSTANCE.allowAccountStateRoot = 0;
@@ -1047,6 +1053,10 @@ public class Args {
 //    INSTANCE.allowShieldedTransaction =
 //        config.hasPath(Constant.COMMITTEE_ALLOW_SHIELDED_TRANSACTION) ? config
 //            .getInt(Constant.COMMITTEE_ALLOW_SHIELDED_TRANSACTION) : 0;
+
+    INSTANCE.monitorShieldCheckLog =
+        config.hasPath(Constant.MONITOR_SHIELDED_CHECK_LOG) ?
+            config.getBoolean(Constant.MONITOR_SHIELDED_CHECK_LOG) : true;
 
     INSTANCE.allowShieldedTRC20Transaction =
         config.hasPath(Constant.COMMITTEE_ALLOW_SHIELDED_TRC20_TRANSACTION) ? config
@@ -1517,6 +1527,7 @@ public class Args {
     DBConfig.setAllowSameTokenName(cfgArgs.getAllowSameTokenName());
     DBConfig.setAllowCreationOfContracts(cfgArgs.getAllowCreationOfContracts());
 //    DBConfig.setAllowShieldedTransaction(cfgArgs.getAllowShieldedTransaction());
+    DBConfig.setMonitorShieldCheckLog(cfgArgs.isMonitorShieldCheckLog());
     DBConfig.setAllowShieldedTRC20Transaction(
         cfgArgs.getAllowShieldedTRC20Transaction());
     DBConfig.setAllowAccountStateRoot(cfgArgs.getAllowAccountStateRoot());

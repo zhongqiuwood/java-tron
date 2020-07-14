@@ -39,7 +39,6 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
-import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.ECKey.ECDSASignature;
 import org.tron.common.crypto.SignInterface;
 import org.tron.common.crypto.SignUtils;
@@ -247,6 +246,17 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
       currentWeight += weight;
     }
     return currentWeight;
+  }
+
+  //make sure that contractType is validated before
+  //No exception will be thrown here
+  public static byte[] getShieldTransactionHashIgnoreTypeException(TransactionCapsule tx) {
+    try {
+      return hashShieldTransaction(tx.getInstance(), DBConfig.getZenTokenId());
+    } catch (ContractValidateException | InvalidProtocolBufferException e) {
+      logger.debug(e.getMessage(), e);
+    }
+    return null;
   }
 
   public static byte[] hashShieldTransaction(Transaction tx, String tokenId)

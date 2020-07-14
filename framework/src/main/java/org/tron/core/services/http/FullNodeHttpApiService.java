@@ -213,6 +213,8 @@ public class FullNodeHttpApiService implements Service {
   private CreateShieldedTransactionWithoutSpendAuthSigServlet
       createShieldedTransactionWithoutSpendAuthSigServlet;
   @Autowired
+  private ShieldedMonitorInfoServlet shieldedMonitorInfoServlet;
+  @Autowired
   private BroadcastHexServlet broadcastHexServlet;
   @Autowired
   private GetBrokerageServlet getBrokerageServlet;
@@ -408,6 +410,7 @@ public class FullNodeHttpApiService implements Service {
       // context.addServlet(new ServletHolder(createShieldNullifierServlet), "/createshieldnullifier");
       // context.addServlet(new ServletHolder(getShieldTransactionHashServlet),
       //     "/getshieldtransactionhash");
+      context.addServlet(new ServletHolder(shieldedMonitorInfoServlet), "/shieldedmonitorinfo");
       // for shielded contract
       context
           .addServlet(new ServletHolder(isShieldedTRC20ContractNoteSpentServlet),

@@ -3,7 +3,6 @@ package org.tron.common.utils;
 import java.io.File;
 import java.util.Map;
 import java.util.Set;
-
 import lombok.Getter;
 import lombok.Setter;
 import org.apache.commons.lang3.StringUtils;
@@ -77,6 +76,10 @@ public class DBConfig {
 //  @Getter
 //  @Setter
 //  private static long allowShieldedTransaction; //committee parameter
+
+  @Getter
+  @Setter
+  private static boolean monitorShieldCheckLog;
   @Getter
   @Setter
   private static long allowShieldedTRC20Transaction;

@@ -118,6 +118,7 @@ import org.tron.common.zksnark.LibrustzcashParam.ComputeNfParams;
 import org.tron.common.zksnark.LibrustzcashParam.CrhIvkParams;
 import org.tron.common.zksnark.LibrustzcashParam.IvkToPkdParams;
 import org.tron.common.zksnark.LibrustzcashParam.SpendSigParams;
+import org.tron.common.zksnark.MerkleContainer;
 import org.tron.core.actuator.Actuator;
 import org.tron.core.actuator.ActuatorFactory;
 import org.tron.core.actuator.VMActuator;
@@ -2765,6 +2766,54 @@ public class Wallet {
       } // end of transaction
     } //end of blocklist
     return builder.build();
+  }
+
+  public String getShieldedMonitorInfo() {
+    JSONObject resultJsonObject = new JSONObject(true);
+
+    JSONObject transactionObject = new JSONObject(true);
+    transactionObject.put("totalNumber",
+        dbManager.getDynamicPropertiesStore().getTotalShieldedTransactionNumber());
+    transactionObject.put("publicTo1Shielded",
+        dbManager.getDynamicPropertiesStore().getPublicToOneShieldedNumber());
+    transactionObject.put("publicTo2Shielded",
+        dbManager.getDynamicPropertiesStore().getPublicToTwoShieldedNumber());
+    transactionObject.put("shieldedToPublicAnd1Shielded",
+        dbManager.getDynamicPropertiesStore().getShieldedToOneShieldedAndPublicNumber());
+    transactionObject.put("shieldedToPublicAnd2Shielded",
+        dbManager.getDynamicPropertiesStore().getShieldedToTwoShieldedAndPublicNumber());
+    transactionObject.put("shieldedToPublic",
+        dbManager.getDynamicPropertiesStore().getShieldedToPublicNumber());
+    transactionObject.put("shieldedTo1Shielded",
+        dbManager.getDynamicPropertiesStore().getShieldedToOneShieldedNumber());
+    transactionObject.put("shieldedTo2Shielded",
+        dbManager.getDynamicPropertiesStore().getShieldedToTwoShieldedNumber());
+    resultJsonObject.put("ShieldNumber", transactionObject);
+
+    JSONObject cmJsonObject = new JSONObject();
+    cmJsonObject.put("fromDb", dbManager.getMerkleContainer().getCurrentMerkle().size());
+    cmJsonObject.put("fromTransactions",
+        dbManager.getDynamicPropertiesStore().getTotalCMNumberFromTransactions());
+    resultJsonObject.put("cmNumber", cmJsonObject);
+
+    JSONObject nullifierJsonObject = new JSONObject();
+    nullifierJsonObject
+        .put("fromTransactions", dbManager.getDynamicPropertiesStore().getTotalNullifierNumber());
+    nullifierJsonObject.put("fromDb", dbManager.getNullfierStore().size());
+    resultJsonObject.put("nullifierNumber", nullifierJsonObject);
+
+    JSONObject shieldedValueJsonObject = new JSONObject();
+    shieldedValueJsonObject
+        .put("fromDb", dbManager.getDynamicPropertiesStore().getTotalShieldedPoolValue());
+    shieldedValueJsonObject.put("fromTransactions",
+        dbManager.getDynamicPropertiesStore().getShieldValueFromTransaction());
+    resultJsonObject.put("shieldValue", shieldedValueJsonObject);
+
+    MerkleContainer merkleContainer = dbManager.getMerkleContainer();
+    IncrementalMerkleTreeContainer currentMerkle = merkleContainer.getCurrentMerkle();
+    resultJsonObject.put("merkleHeight", currentMerkle.monitorMerkleHeight());
+
+    return resultJsonObject.toJSONString();
   }
 
   private void checkShieldedTRC20NoteValue(
