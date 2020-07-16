@@ -1127,13 +1127,7 @@ public class Args {
     INSTANCE.shieldedTrc20ContractAddress =
         config.hasPath(Constant.SHIELDED_TRC20_CONTRACT_ADDRESS) ? config
             .getString(Constant.SHIELDED_TRC20_CONTRACT_ADDRESS) : "";
-    logger.info("............shielded Trc20 address..............");
-    logger.info("............shielded Trc20 address..............");
-    logger.info(INSTANCE.getShieldedTrc20ContractAddress());
-    logger.info(ByteArray
-        .toHexString(Wallet.decodeFromBase58Check(INSTANCE.getShieldedTrc20ContractAddress())));
-    logger.info("............shielded Trc20 address..............");
-    logger.info("............shielded Trc20 address..............");
+
     logConfig();
     initDBConfig(INSTANCE);
   }
