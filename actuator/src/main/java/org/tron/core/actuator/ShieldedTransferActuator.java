@@ -47,6 +47,9 @@ import org.tron.protos.contract.ShieldContract.SpendDescription;
 @Slf4j(topic = "actuator")
 public class ShieldedTransferActuator extends AbstractActuator {
 
+  // adjust monitor bug
+  private static boolean adjustMonitorResult = true;
+
   public static String zenTokenId;
   private ShieldedTransferContract shieldedTransferContract;
 
@@ -111,7 +114,7 @@ public class ShieldedTransferActuator extends AbstractActuator {
     ret.setStatus(0, code.SUCESS);
     ret.setShieldedTransactionFee(fee);
 
-    setAndCheckMonitorMerkleTree();
+    setAndCheckMonitorMerkleTree(shieldedTransferContract);
     return true;
   }
 
@@ -473,8 +476,8 @@ public class ShieldedTransferActuator extends AbstractActuator {
     }
   }
 
-  private void setAndCheckMonitorMerkleTree() {
-    setShieldedTransactionParameter();
+  private void setAndCheckMonitorMerkleTree(ShieldedTransferContract shieldedTransferContract) {
+    setShieldedTransactionParameter(shieldedTransferContract);
     if (DBConfig.isMonitorShieldCheckLog()) {
       checkDataDBAndMonitor();
     }
@@ -528,6 +531,15 @@ public class ShieldedTransferActuator extends AbstractActuator {
         shieldedValueFromDB != shieldedValueFromTransaction ||
         cmNumberFromDB != totalCmFromTransaction ||
         nullifierNumberFromDB != totalNullFromTransaction) {
+
+      // adjust because of bug
+      if (adjustMonitorResult) {
+        long deltaFee = shieldedValueFromTransaction - shieldedValueFromDB;
+        chainBaseManager.getDynamicPropertiesStore().saveTotalShieldedTransactionsFee(
+            chainBaseManager.getDynamicPropertiesStore().getTotalShieldedTransactionsFee() + deltaFee);
+        logger.warn("[setAndCheckMonitorMerkleTree] adjust fee, deltaFee = " + deltaFee);
+      }
+
       byte[] signHash = TransactionCapsule.getShieldTransactionHashIgnoreTypeException(tx);
       logger.error(
           "[setAndCheckMonitorMerkleTree] Last BlockNum {} transaction {} shield transaction "
@@ -542,7 +554,7 @@ public class ShieldedTransferActuator extends AbstractActuator {
     }
   }
 
-  private void setShieldedTransactionParameter() {
+  private void setShieldedTransactionParameter(ShieldedTransferContract shieldedTransferContract) {
     long newCMNumber = shieldedTransferContract.getReceiveDescriptionCount();
     long newNullifierNumber = shieldedTransferContract.getSpendDescriptionCount();
     long amountFromPublic = shieldedTransferContract.getFromAmount();
@@ -559,7 +571,7 @@ public class ShieldedTransferActuator extends AbstractActuator {
     chainBaseManager.getDynamicPropertiesStore().saveTotalAmountToPublic(
         chainBaseManager.getDynamicPropertiesStore().getTotalAmountToPublic() + amountToPublic);
     chainBaseManager.getDynamicPropertiesStore().saveTotalShieldedTransactionsFee(
-        chainBaseManager.getDynamicPropertiesStore().getTotalShieldedTransactionsFee() + calcFee());
+        chainBaseManager.getDynamicPropertiesStore().getTotalShieldedTransactionsFee() + calcFee(shieldedTransferContract));
     chainBaseManager.getDynamicPropertiesStore().saveTotalShieldedTransactionNumber(
         chainBaseManager.getDynamicPropertiesStore().getTotalShieldedTransactionNumber() + 1L);
 
