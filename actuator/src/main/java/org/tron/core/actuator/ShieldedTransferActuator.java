@@ -47,9 +47,6 @@ import org.tron.protos.contract.ShieldContract.SpendDescription;
 @Slf4j(topic = "actuator")
 public class ShieldedTransferActuator extends AbstractActuator {
 
-  // adjust monitor bug
-  private static boolean adjustMonitorResult = true;
-
   public static String zenTokenId;
   private ShieldedTransferContract shieldedTransferContract;
 
@@ -531,14 +528,6 @@ public class ShieldedTransferActuator extends AbstractActuator {
         shieldedValueFromDB != shieldedValueFromTransaction ||
         cmNumberFromDB != totalCmFromTransaction ||
         nullifierNumberFromDB != totalNullFromTransaction) {
-
-      // adjust because of bug
-      if (adjustMonitorResult) {
-        long deltaFee = shieldedValueFromTransaction - shieldedValueFromDB;
-        chainBaseManager.getDynamicPropertiesStore().saveTotalShieldedTransactionsFee(
-            chainBaseManager.getDynamicPropertiesStore().getTotalShieldedTransactionsFee() + deltaFee);
-        logger.warn("[setAndCheckMonitorMerkleTree] adjust fee, deltaFee = " + deltaFee);
-      }
 
       byte[] signHash = TransactionCapsule.getShieldTransactionHashIgnoreTypeException(tx);
       logger.error(
