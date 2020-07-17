@@ -530,6 +530,14 @@ public class ShieldedTransferActuator extends AbstractActuator {
         shieldedValueFromDB != shieldedValueFromTransaction ||
         cmNumberFromDB != totalCmFromTransaction ||
         nullifierNumberFromDB != totalNullFromTransaction) {
+      // adjust because of bug
+      if (adjustMonitorResult) {
+        long deltaFee = shieldedValueFromTransaction - shieldedValueFromDB;
+        chainBaseManager.getDynamicPropertiesStore().saveTotalShieldedTransactionsFee(
+            chainBaseManager.getDynamicPropertiesStore().getTotalShieldedTransactionsFee() + deltaFee);
+        logger.warn("[setAndCheckMonitorMerkleTree] adjust fee, deltaFee = " + deltaFee);
+      }
+
       byte[] signHash = TransactionCapsule.getShieldTransactionHashIgnoreTypeException(tx);
       logger.error(
           "[setAndCheckMonitorMerkleTree] Last BlockNum {} transaction {} shield transaction "
