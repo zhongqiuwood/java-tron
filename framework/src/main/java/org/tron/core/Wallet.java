@@ -207,6 +207,8 @@ import org.tron.protos.contract.ShieldContract.ShieldedTransferContract;
 import org.tron.protos.contract.SmartContractOuterClass.CreateSmartContract;
 import org.tron.protos.contract.SmartContractOuterClass.SmartContract;
 import org.tron.protos.contract.SmartContractOuterClass.TriggerSmartContract;
+import com.alibaba.fastjson.JSONObject;
+import org.tron.common.zksnark.MerkleContainer;
 
 @Slf4j
 @Component
@@ -2530,6 +2532,55 @@ public class Wallet {
             .addExchanges(exchangeCapsule.getInstance()));
     return builder.build();
 
+  }
+
+
+  public String getShieldedMonitorInfo() {
+    JSONObject resultJsonObject = new JSONObject(true);
+
+    JSONObject transactionObject = new JSONObject(true);
+    transactionObject.put("totalNumber",
+        dbManager.getDynamicPropertiesStore().getTotalShieldedTransactionNumber());
+    transactionObject.put("publicTo1Shielded",
+        dbManager.getDynamicPropertiesStore().getPublicToOneShieldedNumber());
+    transactionObject.put("publicTo2Shielded",
+        dbManager.getDynamicPropertiesStore().getPublicToTwoShieldedNumber());
+    transactionObject.put("shieldedToPublicAnd1Shielded",
+        dbManager.getDynamicPropertiesStore().getShieldedToOneShieldedAndPublicNumber());
+    transactionObject.put("shieldedToPublicAnd2Shielded",
+        dbManager.getDynamicPropertiesStore().getShieldedToTwoShieldedAndPublicNumber());
+    transactionObject.put("shieldedToPublic",
+        dbManager.getDynamicPropertiesStore().getShieldedToPublicNumber());
+    transactionObject.put("shieldedTo1Shielded",
+        dbManager.getDynamicPropertiesStore().getShieldedToOneShieldedNumber());
+    transactionObject.put("shieldedTo2Shielded",
+        dbManager.getDynamicPropertiesStore().getShieldedToTwoShieldedNumber());
+    resultJsonObject.put("ShieldNumber", transactionObject);
+
+    JSONObject cmJsonObject = new JSONObject();
+    cmJsonObject.put("fromDb", dbManager.getMerkleContainer().getCurrentMerkle().size());
+    cmJsonObject.put("fromTransactions",
+        dbManager.getDynamicPropertiesStore().getTotalCMNumberFromTransactions());
+    resultJsonObject.put("cmNumber", cmJsonObject);
+
+    JSONObject nullifierJsonObject = new JSONObject();
+    nullifierJsonObject
+        .put("fromTransactions", dbManager.getDynamicPropertiesStore().getTotalNullifierNumber());
+    nullifierJsonObject.put("fromDb", dbManager.getNullfierStore().size());
+    resultJsonObject.put("nullifierNumber", nullifierJsonObject);
+
+    JSONObject shieldedValueJsonObject = new JSONObject();
+    shieldedValueJsonObject
+        .put("fromDb", dbManager.getDynamicPropertiesStore().getTotalShieldedPoolValue());
+    shieldedValueJsonObject.put("fromTransactions",
+        dbManager.getDynamicPropertiesStore().getShieldValueFromTransaction());
+    resultJsonObject.put("shieldValue", shieldedValueJsonObject);
+
+    MerkleContainer merkleContainer = dbManager.getMerkleContainer();
+    IncrementalMerkleTreeContainer currentMerkle = merkleContainer.getCurrentMerkle();
+    resultJsonObject.put("merkleHeight", currentMerkle.monitorMerkleHeight());
+
+    return resultJsonObject.toJSONString();
   }
 
   /*

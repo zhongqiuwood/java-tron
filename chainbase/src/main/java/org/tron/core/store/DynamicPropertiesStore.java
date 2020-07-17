@@ -136,6 +136,32 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   private static final byte[] CURRENT_CYCLE_NUMBER = "CURRENT_CYCLE_NUMBER".getBytes();
   private static final byte[] CHANGE_DELEGATION = "CHANGE_DELEGATION".getBytes();
 
+  //Used for monitor shielded transaction
+  private static final byte[] TOTAL_CM_FROM_TRANSACTIONS = "TOTAL_CM_FROM_TRANSACTIONS".getBytes();
+  private static final byte[] TOTAL_NULLIFIER_NUMBER = "TOTAL_NULLIFIER_NUMBER".getBytes();
+  private static final byte[] TOTAL_AMOUNT_FROM_PUBLIC = "TOTAL_AMOUNT_FROM_PUBLIC"
+      .getBytes();
+  private static final byte[] TOTAL_AMOUNT_TO_PUBLIC = "TOTAL_AMOUNT_TO_PUBLIC"
+      .getBytes();
+  private static final byte[] TOTAL_SHIELDED_TRANSACTIONS_FEE = "TOTAL_SHIELDED_TRANSACTIONS_FEE"
+      .getBytes();
+  private static final byte[] TOTAL_SHIELDED_TRANSACTIONS_NUMBER =
+      "TOTAL_SHIELDED_TRANSACTIONS_NUMBER"
+          .getBytes();
+
+  private static final byte[] PUBLIC_TO_1_SHIELD_NUMBER = "PUBLIC_TO_1_SHIELD_NUMBER".getBytes();
+  private static final byte[] PUBLIC_TO_2_SHIELD_NUMBER = "PUBLIC_TO_2_SHIELD_NUMBER".getBytes();
+  private static final byte[] SHIELD_TO_1_SHIELD_NUMBER = "SHIELD_TO_1_SHIELD_NUMBER".getBytes();
+  private static final byte[] SHIELD_TO_2_SHIELD_NUMBER = "SHIELD_TO_2_SHIELD_NUMBER".getBytes();
+  private static final byte[] SHIELD_TO_1_SHIELD_AND_PUBLIC_NUMBER =
+      "SHIELD_TO_1_SHIELD_AND_PUBLIC_NUMBER"
+          .getBytes();
+  private static final byte[] SHIELD_TO_2_SHIELD_AND_PUBLIC_NUMBER =
+      "SHIELD_TO_2_SHIELD_AND_PUBLIC_NUMBER"
+          .getBytes();
+  private static final byte[] SHIELD_TO_PUBLIC_NUMBER = "SHIELD_TO_PUBLIC_NUMBER"
+      .getBytes();
+
   @Autowired
   private DynamicPropertiesStore(@Value("properties") String dbName) {
     super(dbName);
@@ -615,6 +641,85 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     } catch (IllegalArgumentException e) {
       this.saveChangeDelegation(DBConfig.getChangedDelegation());
     }
+
+    try {
+      this.getTotalCMNumberFromTransactions();
+    } catch (IllegalArgumentException e) {
+      this.saveTotalCMNumberFromTransactions(0L);
+    }
+
+    try {
+      this.getTotalNullifierNumber();
+    } catch (IllegalArgumentException e) {
+      this.saveTotalNullifierNumber(0L);
+    }
+
+    try {
+      this.getTotalAmountFromPulic();
+    } catch (IllegalArgumentException e) {
+      this.saveTotalAmountFromPulic(0L);
+    }
+
+    try {
+      this.getTotalAmountToPublic();
+    } catch (IllegalArgumentException e) {
+      this.saveTotalAmountToPublic(0L);
+    }
+
+    try {
+      this.getTotalShieldedTransactionsFee();
+    } catch (IllegalArgumentException e) {
+      this.saveTotalShieldedTransactionsFee(0L);
+    }
+
+    try {
+      this.getTotalShieldedTransactionNumber();
+    } catch (IllegalArgumentException e) {
+      this.saveTotalShieldedTransactionNumber(0L);
+    }
+
+    try {
+      this.getPublicToOneShieldedNumber();
+    } catch (IllegalArgumentException e) {
+      this.savePublicToOneShieldedNumber(0L);
+    }
+
+    try {
+      this.getPublicToTwoShieldedNumber();
+    } catch (IllegalArgumentException e) {
+      this.savePublicToTwoShieldedNumber(0L);
+    }
+
+    try {
+      this.getShieldedToOneShieldedNumber();
+    } catch (IllegalArgumentException e) {
+      this.saveShieldedToOneShieldedNumber(0L);
+    }
+
+    try {
+      this.getShieldedToTwoShieldedNumber();
+    } catch (IllegalArgumentException e) {
+      this.saveShieldedToTwoShieldedNumber(0L);
+    }
+
+    try {
+      this.getShieldedToOneShieldedAndPublicNumber();
+    } catch (IllegalArgumentException e) {
+      this.saveShieldedToOneShieldedAndPublicNumber(0L);
+    }
+
+    try {
+      this.getShieldedToTwoShieldedAndPublicNumber();
+    } catch (IllegalArgumentException e) {
+      this.saveShieldedToTwoShieldedAndPublicNumber(0L);
+    }
+
+    try {
+      this.getShieldedToPublicNumber();
+    } catch (IllegalArgumentException e) {
+      this.saveShieldedToPublicNumber(0L);
+    }
+
 
   }
 
@@ -1846,6 +1951,178 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   public boolean allowChangeDelegation() {
     return getChangeDelegation() == 1;
+  }
+
+  public void saveTotalCMNumberFromTransactions(long n) {
+    this.put(TOTAL_CM_FROM_TRANSACTIONS, new BytesCapsule(ByteArray.fromLong(n)));
+  }
+
+  public long getTotalCMNumberFromTransactions() {
+    return Optional.ofNullable(getUnchecked(TOTAL_CM_FROM_TRANSACTIONS))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found total number from transactions."));
+  }
+
+  public void saveTotalNullifierNumber(long num) {
+    this.put(TOTAL_NULLIFIER_NUMBER,
+        new BytesCapsule(ByteArray.fromLong(num)));
+  }
+
+  public long getTotalNullifierNumber() {
+    return Optional.ofNullable(getUnchecked(TOTAL_NULLIFIER_NUMBER))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found total nullifier number"));
+  }
+
+  public void saveTotalAmountFromPulic(long num) {
+    this.put(TOTAL_AMOUNT_FROM_PUBLIC,
+        new BytesCapsule(ByteArray.fromLong(num)));
+  }
+
+  public long getTotalAmountFromPulic() {
+    return Optional.ofNullable(getUnchecked(TOTAL_AMOUNT_FROM_PUBLIC))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found TOTAL_AMOUNT_FROM_PUBLIC"));
+  }
+
+  public void saveTotalAmountToPublic(long num) {
+    this.put(TOTAL_AMOUNT_TO_PUBLIC,
+        new BytesCapsule(ByteArray.fromLong(num)));
+  }
+
+  public long getTotalAmountToPublic() {
+    return Optional.ofNullable(getUnchecked(TOTAL_AMOUNT_TO_PUBLIC))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found TOTAL_AMOUNT_TO_PUBLIC"));
+  }
+
+  public void saveTotalShieldedTransactionsFee(long num) {
+    this.put(TOTAL_SHIELDED_TRANSACTIONS_FEE,
+        new BytesCapsule(ByteArray.fromLong(num)));
+  }
+
+  public long getTotalShieldedTransactionsFee() {
+    return Optional.ofNullable(getUnchecked(TOTAL_SHIELDED_TRANSACTIONS_FEE))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found TOTAL_SHIELDED_TRANSACTIONS_FEE"));
+  }
+
+  public void saveTotalShieldedTransactionNumber(long num) {
+    this.put(TOTAL_SHIELDED_TRANSACTIONS_NUMBER,
+        new BytesCapsule(ByteArray.fromLong(num)));
+  }
+
+  public long getTotalShieldedTransactionNumber() {
+    return Optional.ofNullable(getUnchecked(TOTAL_SHIELDED_TRANSACTIONS_NUMBER))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found TOTAL_SHIELDED_TRANSACTIONS_NUMBER"));
+  }
+
+  public long getShieldValueFromTransaction() {
+    return getTotalAmountFromPulic() - getTotalAmountToPublic() - getTotalShieldedTransactionsFee();
+  }
+
+  public void savePublicToOneShieldedNumber(long num) {
+    this.put(PUBLIC_TO_1_SHIELD_NUMBER,
+        new BytesCapsule(ByteArray.fromLong(num)));
+  }
+
+  public long getPublicToOneShieldedNumber() {
+    return Optional.ofNullable(getUnchecked(PUBLIC_TO_1_SHIELD_NUMBER))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found PUBLIC_TO_1_SHIELD_NUMBER"));
+  }
+
+  public void savePublicToTwoShieldedNumber(long num) {
+    this.put(PUBLIC_TO_2_SHIELD_NUMBER,
+        new BytesCapsule(ByteArray.fromLong(num)));
+  }
+
+  public long getPublicToTwoShieldedNumber() {
+    return Optional.ofNullable(getUnchecked(PUBLIC_TO_2_SHIELD_NUMBER))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found PUBLIC_TO_2_SHIELD_NUMBER"));
+  }
+
+  public void saveShieldedToOneShieldedNumber(long num) {
+    this.put(SHIELD_TO_1_SHIELD_NUMBER,
+        new BytesCapsule(ByteArray.fromLong(num)));
+  }
+
+  public long getShieldedToOneShieldedNumber() {
+    return Optional.ofNullable(getUnchecked(SHIELD_TO_1_SHIELD_NUMBER))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found SHIELD_TO_1_SHIELD_NUMBER"));
+  }
+
+  public void saveShieldedToTwoShieldedNumber(long num) {
+    this.put(SHIELD_TO_2_SHIELD_NUMBER,
+        new BytesCapsule(ByteArray.fromLong(num)));
+  }
+
+  public long getShieldedToTwoShieldedNumber() {
+    return Optional.ofNullable(getUnchecked(SHIELD_TO_2_SHIELD_NUMBER))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found SHIELD_TO_2_SHIELD_NUMBER"));
+  }
+
+  public void saveShieldedToOneShieldedAndPublicNumber(long num) {
+    this.put(SHIELD_TO_1_SHIELD_AND_PUBLIC_NUMBER,
+        new BytesCapsule(ByteArray.fromLong(num)));
+  }
+
+  public long getShieldedToOneShieldedAndPublicNumber() {
+    return Optional.ofNullable(getUnchecked(SHIELD_TO_1_SHIELD_AND_PUBLIC_NUMBER))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found SHIELD_TO_1_SHIELD_AND_PUBLIC_NUMBER"));
+  }
+
+  public void saveShieldedToTwoShieldedAndPublicNumber(long num) {
+    this.put(SHIELD_TO_2_SHIELD_AND_PUBLIC_NUMBER,
+        new BytesCapsule(ByteArray.fromLong(num)));
+  }
+
+  public long getShieldedToTwoShieldedAndPublicNumber() {
+    return Optional.ofNullable(getUnchecked(SHIELD_TO_2_SHIELD_AND_PUBLIC_NUMBER))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found SHIELD_TO_2_SHIELD_AND_PUBLIC_NUMBER"));
+  }
+
+  public void saveShieldedToPublicNumber(long num) {
+    this.put(SHIELD_TO_PUBLIC_NUMBER,
+        new BytesCapsule(ByteArray.fromLong(num)));
+  }
+
+  public long getShieldedToPublicNumber() {
+    return Optional.ofNullable(getUnchecked(SHIELD_TO_PUBLIC_NUMBER))
+        .map(BytesCapsule::getData)
+        .map(ByteArray::toLong)
+        .orElseThrow(
+            () -> new IllegalArgumentException("not found SHIELD_TO_PUBLIC_NUMBER"));
   }
 
   private static class DynamicResourceProperties {

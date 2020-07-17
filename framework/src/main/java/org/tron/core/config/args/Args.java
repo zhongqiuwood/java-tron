@@ -373,6 +373,10 @@ public class Args {
 
   @Getter
   @Setter
+  private boolean monitorShieldCheckLog;
+
+  @Getter
+  @Setter
   private int tcpNettyWorkThreadNum;
 
   @Getter
@@ -621,6 +625,7 @@ public class Args {
     INSTANCE.fullNodeHttpEnable = true;
     INSTANCE.solidityNodeHttpEnable = true;
     INSTANCE.isEckey = true;
+    INSTANCE.monitorShieldCheckLog = true;
   }
 
   /**
@@ -1041,6 +1046,10 @@ public class Args {
     INSTANCE.allowShieldedTRC20Transaction =
         config.hasPath(Constant.COMMITTEE_ALLOW_SHIELDED_TRC20_TRANSACTION) ? config
             .getInt(Constant.COMMITTEE_ALLOW_SHIELDED_TRC20_TRANSACTION) : 0;
+
+    INSTANCE.monitorShieldCheckLog =
+        config.hasPath(Constant.MONITOR_SHIELDED_CHECK_LOG) ?
+            config.getBoolean(Constant.MONITOR_SHIELDED_CHECK_LOG) : true;
 
     INSTANCE.eventPluginConfig =
         config.hasPath(Constant.EVENT_SUBSCRIBE) ?
@@ -1516,6 +1525,7 @@ public class Args {
     DBConfig.setActuatorSet(cfgArgs.getActuatorSet());
 //    DBConfig.setECKeyCryptoEngine(cfgArgs.isECKeyCryptoEngine());
     DBConfig.setECKeyCryptoEngine(cfgArgs.isEckey());
+    DBConfig.setMonitorShieldCheckLog(cfgArgs.isMonitorShieldCheckLog());
   }
 
   public void setFullNodeAllowShieldedTransaction(boolean fullNodeAllowShieldedTransaction) {

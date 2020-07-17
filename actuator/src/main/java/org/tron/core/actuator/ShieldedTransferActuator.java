@@ -40,10 +40,14 @@ import org.tron.protos.Protocol.Transaction.Result.code;
 import org.tron.protos.contract.ShieldContract.ReceiveDescription;
 import org.tron.protos.contract.ShieldContract.ShieldedTransferContract;
 import org.tron.protos.contract.ShieldContract.SpendDescription;
+import org.tron.common.utils.ByteArray;
+import org.tron.core.capsule.TransactionCapsule;
 
 
 @Slf4j(topic = "actuator")
 public class ShieldedTransferActuator extends AbstractActuator {
+  // adjust monitor bug
+  private static boolean adjustMonitorResult = true;
 
   public static String zenTokenId;
   private ShieldedTransferContract shieldedTransferContract;
@@ -108,6 +112,8 @@ public class ShieldedTransferActuator extends AbstractActuator {
 
     ret.setStatus(0, code.SUCESS);
     ret.setShieldedTransactionFee(fee);
+
+    setAndCheckMonitorMerkleTree(shieldedTransferContract);
     return true;
   }
 
@@ -466,6 +472,138 @@ public class ShieldedTransferActuator extends AbstractActuator {
       return 0L;
     } else {
       return account.getAssetMapV2().get(zenTokenId);
+    }
+  }
+
+  private void setAndCheckMonitorMerkleTree(ShieldedTransferContract shieldedTransferContract) {
+    setShieldedTransactionParameter(shieldedTransferContract);
+    if (DBConfig.isMonitorShieldCheckLog()) {
+      checkDataDBAndMonitor();
+    }
+  }
+
+  private void checkDataDBAndMonitor() {
+    long cmNumberFromDB = chainBaseManager.getMerkleContainer().getCurrentMerkle().size();
+    long nullifierNumberFromDB = chainBaseManager.getNullifierStore().size(); //耗时比较久，将近0.5s
+    long shieldedValueFromDB = chainBaseManager.getDynamicPropertiesStore()
+        .getTotalShieldedPoolValue();
+    long cmNumberFromTransaction = chainBaseManager.getDynamicPropertiesStore()
+        .getTotalCMNumberFromTransactions();
+    long nullifierNumberFromTransaction = chainBaseManager.getDynamicPropertiesStore()
+        .getTotalNullifierNumber();
+    long shieldedValueFromTransaction = chainBaseManager.getDynamicPropertiesStore()
+        .getShieldValueFromTransaction();
+
+    long publicToOneShielded = chainBaseManager.getDynamicPropertiesStore()
+        .getPublicToOneShieldedNumber();
+    long publicToTwoSHielded = chainBaseManager.getDynamicPropertiesStore()
+        .getPublicToTwoShieldedNumber();
+    long shieldedToOneShielded = chainBaseManager.getDynamicPropertiesStore()
+        .getShieldedToOneShieldedNumber();
+    long shieldedToTwoShielded = chainBaseManager.getDynamicPropertiesStore()
+        .getShieldedToTwoShieldedNumber();
+    long shieldedToPublicOneShielded = chainBaseManager.getDynamicPropertiesStore()
+        .getShieldedToOneShieldedAndPublicNumber();
+    long shieldedToPublicTwoShielded = chainBaseManager.getDynamicPropertiesStore()
+        .getShieldedToTwoShieldedAndPublicNumber();
+    long shieldedToPublic = chainBaseManager.getDynamicPropertiesStore()
+        .getShieldedToPublicNumber();
+
+    long totalCmFromTransaction =
+        (publicToOneShielded + shieldedToOneShielded + shieldedToPublicOneShielded)
+            + (publicToTwoSHielded + shieldedToTwoShielded + shieldedToPublicTwoShielded) * 2;
+    long totalNullFromTransaction =
+        shieldedToOneShielded + shieldedToTwoShielded + shieldedToPublicOneShielded
+            + shieldedToPublicTwoShielded + shieldedToPublic;
+
+    logger.info(
+        "[setAndCheckMonitorMerkleTree] cmNumberFromDb {} cmNumberFromTransaction {} "
+            + "nullifierFromDb {} "
+            + "nullifierFromTransaction {} shieldValueFromDb {} shieldValueFromTransaction {} "
+            + "totalCmFromTransaction {} totalNullFromTransaction {}",
+        cmNumberFromDB, cmNumberFromTransaction, nullifierNumberFromDB,
+        nullifierNumberFromTransaction, shieldedValueFromDB, shieldedValueFromTransaction,
+        totalCmFromTransaction, totalNullFromTransaction);
+
+    if (cmNumberFromDB != cmNumberFromTransaction ||
+        nullifierNumberFromDB != nullifierNumberFromTransaction ||
+        shieldedValueFromDB != shieldedValueFromTransaction ||
+        cmNumberFromDB != totalCmFromTransaction ||
+        nullifierNumberFromDB != totalNullFromTransaction) {
+      byte[] signHash = TransactionCapsule.getShieldTransactionHashIgnoreTypeException(tx);
+      logger.error(
+          "[setAndCheckMonitorMerkleTree] Last BlockNum {} transaction {} shield transaction "
+              + "check failure.",
+          chainBaseManager.getDynamicPropertiesStore().getLatestBlockHeaderNumber(),
+          ByteArray.toHexString(signHash));
+
+//      postAlarmToDingDing(cmNumberFromDB, cmNumberFromTransaction, nullifierNumberFromDB,
+//          nullifierNumberFromTransaction, shieldedValueFromDB,shieldedValueFromTransaction);
+    } else {
+      logger.info("[setAndCheckMonitorMerkleTree] success!");
+    }
+  }
+
+  private void setShieldedTransactionParameter(ShieldedTransferContract shieldedTransferContract) {
+    long newCMNumber = shieldedTransferContract.getReceiveDescriptionCount();
+    long newNullifierNumber = shieldedTransferContract.getSpendDescriptionCount();
+    long amountFromPublic = shieldedTransferContract.getFromAmount();
+    long amountToPublic = shieldedTransferContract.getToAmount();
+
+    chainBaseManager.getDynamicPropertiesStore().saveTotalCMNumberFromTransactions(
+        chainBaseManager.getDynamicPropertiesStore().getTotalCMNumberFromTransactions()
+            + newCMNumber);
+    chainBaseManager.getDynamicPropertiesStore().saveTotalNullifierNumber(
+        chainBaseManager.getDynamicPropertiesStore().getTotalNullifierNumber()
+            + newNullifierNumber);
+    chainBaseManager.getDynamicPropertiesStore().saveTotalAmountFromPulic(
+        chainBaseManager.getDynamicPropertiesStore().getTotalAmountFromPulic() + amountFromPublic);
+    chainBaseManager.getDynamicPropertiesStore().saveTotalAmountToPublic(
+        chainBaseManager.getDynamicPropertiesStore().getTotalAmountToPublic() + amountToPublic);
+    chainBaseManager.getDynamicPropertiesStore().saveTotalShieldedTransactionsFee(
+        chainBaseManager.getDynamicPropertiesStore().getTotalShieldedTransactionsFee() + calcFee(shieldedTransferContract));
+    chainBaseManager.getDynamicPropertiesStore().saveTotalShieldedTransactionNumber(
+        chainBaseManager.getDynamicPropertiesStore().getTotalShieldedTransactionNumber() + 1L);
+
+    //set transaction number
+    if (amountFromPublic > 0L) {
+      if (newCMNumber == 1) {
+        chainBaseManager.getDynamicPropertiesStore().savePublicToOneShieldedNumber(
+            chainBaseManager.getDynamicPropertiesStore().getPublicToOneShieldedNumber() + 1L);
+      } else if (newCMNumber == 2) {
+        chainBaseManager.getDynamicPropertiesStore().savePublicToTwoShieldedNumber(
+            chainBaseManager.getDynamicPropertiesStore().getPublicToTwoShieldedNumber() + 1L);
+      } else {
+        logger.error("This is not allowed. public to shielded number {} ", newCMNumber);
+      }
+    } else {
+      if (amountToPublic > 0L) {
+        if (newCMNumber == 0) {
+          chainBaseManager.getDynamicPropertiesStore().saveShieldedToPublicNumber(
+              chainBaseManager.getDynamicPropertiesStore().getShieldedToPublicNumber() + 1L);
+        } else if (newCMNumber == 1) {
+          chainBaseManager.getDynamicPropertiesStore().saveShieldedToOneShieldedAndPublicNumber(
+              chainBaseManager.getDynamicPropertiesStore().getShieldedToOneShieldedAndPublicNumber()
+                  + 1L);
+        } else if (newCMNumber == 2) {
+          chainBaseManager.getDynamicPropertiesStore().saveShieldedToTwoShieldedAndPublicNumber(
+              chainBaseManager.getDynamicPropertiesStore().getShieldedToTwoShieldedAndPublicNumber()
+                  + 1L);
+        } else {
+          logger.error("This is not allowed. shielded to public and shielded number {} ",
+              newCMNumber);
+        }
+      } else {
+        if (newCMNumber == 1) {
+          chainBaseManager.getDynamicPropertiesStore().saveShieldedToOneShieldedNumber(
+              chainBaseManager.getDynamicPropertiesStore().getShieldedToOneShieldedNumber() + 1L);
+        } else if (newCMNumber == 2) {
+          chainBaseManager.getDynamicPropertiesStore().saveShieldedToTwoShieldedNumber(
+              chainBaseManager.getDynamicPropertiesStore().getShieldedToTwoShieldedNumber() + 1L);
+        } else {
+          logger.error("This is not allowed. shielded to shielded number {} ", newCMNumber);
+        }
+      }
     }
   }
 
