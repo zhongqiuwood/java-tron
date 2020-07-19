@@ -3755,7 +3755,7 @@ public class Wallet {
                     } else {
                       dbManager.getDynamicPropertiesStore().saveShieldedTRC20BurnFailNum(
                           dbManager.getDynamicPropertiesStore().getShieldedTRC20BurnFailNum() + 1);
-                      dbManager.getDynamicPropertiesStore().saveShieldedTRC20Transfer1v1FailNum(
+                      dbManager.getDynamicPropertiesStore().saveShieldedTRC20Burn1v1FailNum(
                           dbManager.getDynamicPropertiesStore().getShieldedTRC20Burn1v1FailNum()
                               + 1);
                     }
@@ -3780,7 +3780,7 @@ public class Wallet {
                     } else {
                       dbManager.getDynamicPropertiesStore().saveShieldedTRC20BurnFailNum(
                           dbManager.getDynamicPropertiesStore().getShieldedTRC20BurnFailNum() + 1);
-                      dbManager.getDynamicPropertiesStore().saveShieldedTRC20Transfer1v2FailNum(
+                      dbManager.getDynamicPropertiesStore().saveShieldedTRC20Burn1v2FailNum(
                           dbManager.getDynamicPropertiesStore().getShieldedTRC20Burn1v2FailNum()
                               + 1);
                     }
