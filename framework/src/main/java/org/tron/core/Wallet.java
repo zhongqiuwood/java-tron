@@ -207,6 +207,7 @@ import org.tron.protos.contract.ShieldContract.ReceiveDescription;
 import org.tron.protos.contract.ShieldContract.ShieldedTransferContract;
 import org.tron.protos.contract.SmartContractOuterClass.CreateSmartContract;
 import org.tron.protos.contract.SmartContractOuterClass.SmartContract;
+import org.tron.protos.contract.SmartContractOuterClass.SmartContractDataWrapper;
 import org.tron.protos.contract.SmartContractOuterClass.TriggerSmartContract;
 
 @Slf4j
@@ -2471,7 +2472,7 @@ public class Wallet {
    * @return
    *
    */
-  public SmartContract getContract2(GrpcAPI.BytesMessage bytesMessage) {
+  public SmartContractDataWrapper getContractInfo(GrpcAPI.BytesMessage bytesMessage) {
     byte[] address = bytesMessage.getValue().toByteArray();
     AccountCapsule accountCapsule = dbManager.getAccountStore().get(address);
     if (accountCapsule == null) {
@@ -2486,8 +2487,8 @@ public class Wallet {
     if (Objects.nonNull(contractCapsule)) {
       CodeCapsule codeCapsule = dbManager.getCodeStore().get(bytesMessage.getValue().toByteArray());
       if(Objects.nonNull(codeCapsule)) {
-        contractCapsule.setBytecode(codeCapsule.getData());
-        return contractCapsule.getInstance();
+        contractCapsule.setRuntimecode(codeCapsule.getData());
+        return contractCapsule.generateWrapper();
       }
     }
     return null;
