@@ -7,9 +7,9 @@ import org.tron.core.exception.ContractValidateException;
 
 public interface IContractProcessor {
 
-    boolean execute(Object result) throws ContractExeException;
+    boolean execute(Object contract) throws ContractExeException;
 
-    boolean validate() throws ContractValidateException;
+    boolean validate(Object contract) throws ContractValidateException;
 
     ByteString getOwnerAddress() throws InvalidProtocolBufferException;
 

@@ -31,14 +31,7 @@ import org.tron.core.db.TransactionTrace;
 import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ItemNotFoundException;
 import org.tron.core.exception.StoreException;
-import org.tron.core.store.AccountStore;
-import org.tron.core.store.AssetIssueStore;
-import org.tron.core.store.AssetIssueV2Store;
-import org.tron.core.store.CodeStore;
-import org.tron.core.store.ContractStore;
-import org.tron.core.store.DynamicPropertiesStore;
-import org.tron.core.store.StorageRowStore;
-import org.tron.core.store.StoreFactory;
+import org.tron.core.store.*;
 import org.tron.core.vm.config.VMConfig;
 import org.tron.core.vm.program.Program.IllegalOperationException;
 import org.tron.core.vm.program.Storage;
@@ -74,6 +67,8 @@ public class RepositoryImpl implements Repository {
   private KhaosDatabase khaosDb;
   @Getter
   private BlockIndexStore blockIndexStore;
+  @Getter
+  private WitnessStore witnessStore;
 
 
   private Repository parent = null;
@@ -108,6 +103,7 @@ public class RepositoryImpl implements Repository {
       blockStore = manager.getBlockStore();
       khaosDb = manager.getKhaosDb();
       blockIndexStore = manager.getBlockIndexStore();
+      witnessStore = manager.getWitnessStore();
     }
     this.parent = parent;
   }
