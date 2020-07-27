@@ -258,6 +258,7 @@ public class MarketSellAssetActuator extends AbstractActuator {
         }
       }
 
+      //not trx
       if (!Arrays.equals(buyTokenID, "_".getBytes())) {
         // Whether have the token
         AssetIssueCapsule assetIssueCapsule = Commons
