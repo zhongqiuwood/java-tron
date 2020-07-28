@@ -855,7 +855,6 @@ public class RpcApiService implements Service {
         StreamObserver<MarketOrder> responseObserver) {
       try {
         ByteString address = request.getValue();
-
         MarketOrder marketOrder = wallet
             .getMarketOrderById(address);
         responseObserver.onNext(marketOrder);
