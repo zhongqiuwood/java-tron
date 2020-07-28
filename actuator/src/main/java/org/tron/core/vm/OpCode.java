@@ -577,6 +577,22 @@ public enum OpCode {
 
   ISCONTRACT(0xd4, 1, 1, OpCode.Tier.ExtTier),
 
+  FREEZE(0xd5, 4, 1, OpCode.Tier.ExtTier),
+
+  UNFREEZE(0xd6, 2, 1, OpCode.Tier.ExtTier),
+
+  BANDWIDTH(0xd7, 1, 1, OpCode.Tier.ExtTier),
+
+  ENERGY(0xd8, 1, 1, OpCode.Tier.ExtTier),
+
+  VOTE(0xd9, 4, 1, OpCode.Tier.ExtTier),
+
+  WITHDRAWREWARD(0xda, 1, 1, OpCode.Tier.ExtTier),
+
+  REWARDBALANCE(0xdb, 1, 1, OpCode.Tier.ExtTier),
+  
+  ISWITNESS(0xdc, 1, 1, OpCode.Tier.ExtTier),
+
   /**
    * (0xf0) Create a new account with associated code
    */
