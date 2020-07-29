@@ -68,6 +68,8 @@ public interface Repository {
 
   void updateDelegation(byte[] word, BytesCapsule bytesCapsule);
 
+  void updateLastWithdrawCycle(byte[] address, long cycle);
+
   void saveCode(byte[] address, byte[] code);
 
   byte[] getCode(byte[] address);

@@ -115,4 +115,41 @@ public class ContractService {
         accountCapsule.setAllowance(allowance + amount);
         repository.putAccountValue(accountCapsule.createDbKey(), accountCapsule);
     }
+
+
+
+    public long queryReward(byte[] address) {
+        if (!repository.getDynamicPropertiesStore().allowChangeDelegation()) {
+            return 0;
+        }
+        AccountCapsule accountCapsule = repository.getAccount(address);
+        long beginCycle = repository.getBeginCycle(address);
+        long endCycle = repository.getEndCycle(address);
+        long currentCycle = repository.getDynamicPropertiesStore().getCurrentCycleNumber();
+        long reward = 0;
+        if (accountCapsule == null) {
+            return 0;
+        }
+        if (beginCycle > currentCycle) {
+            return accountCapsule.getAllowance();
+        }
+        //withdraw the latest cycle reward
+        if (beginCycle + 1 == endCycle && beginCycle < currentCycle) {
+            AccountCapsule account = repository.getAccountVote(beginCycle, address);
+            if (account != null) {
+                reward = computeReward(beginCycle, account);
+            }
+            beginCycle += 1;
+        }
+        endCycle = currentCycle;
+        if (CollectionUtils.isEmpty(accountCapsule.getVotesList())) {
+            return reward + accountCapsule.getAllowance();
+        }
+        if (beginCycle < endCycle) {
+            for (long cycle = beginCycle; cycle < endCycle; cycle++) {
+                reward += computeReward(cycle, accountCapsule);
+            }
+        }
+        return reward + accountCapsule.getAllowance();
+    }
 }

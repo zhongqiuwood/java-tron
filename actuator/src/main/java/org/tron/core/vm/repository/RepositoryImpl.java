@@ -437,7 +437,13 @@ public class RepositoryImpl implements Repository {
   public void updateDelegation(byte[] word, BytesCapsule bytesCapsule) {
       Key key = Key.create(word);
       Value value = Value.create(bytesCapsule.getData(), Type.VALUE_TYPE_DIRTY);
-      dynamicPropertiesCache.put(key, value);
+      delegationCache.put(key, value);
+  }
+
+  @Override
+  public void updateLastWithdrawCycle(byte[] address, long cycle) {
+    BytesCapsule bytesCapsule = new BytesCapsule(ByteArray.fromLong(cycle));
+    updateDynamic(address, bytesCapsule);
   }
 
   @Override
