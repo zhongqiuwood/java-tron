@@ -15,6 +15,7 @@ import org.tron.common.utils.Utils;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.Transaction;
+import org.tron.protos.Protocol.MarketOrderList;
 import stest.tron.wallet.common.client.Configuration;
 import stest.tron.wallet.common.client.utils.PublicMethed;
 
@@ -49,7 +50,7 @@ public class MarketSellAsset001 {
   private ManagedChannel channelFull = null;
   private WalletGrpc.WalletBlockingStub blockingStubFull = null;
   private String fullnode = Configuration.getByPath("testng.conf").getStringList("fullnode.ip.list")
-      .get(0);
+      .get(1);
 
   @BeforeClass(enabled = true)
   public void beforeClass() {
@@ -57,6 +58,9 @@ public class MarketSellAsset001 {
         .usePlaintext(true)
         .build();
     blockingStubFull = WalletGrpc.newBlockingStub(channelFull);
+
+    PublicMethed.printAddress(testKey001);
+    PublicMethed.printAddress(testKey002);
 
     Assert.assertTrue(PublicMethed.sendcoin(testAddress001,20000_000000L,foundationAddress001,
         foundationKey001,blockingStubFull));
@@ -76,10 +80,10 @@ public class MarketSellAsset001 {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
 
     assetAccountId001 =
-        PublicMethed.queryAccount(testAddress001, blockingStubFull).getAssetIdFromThisAccount.getAssetIssuedID().toByteArray();
+        PublicMethed.queryAccount(testAddress001, blockingStubFull).getAssetIssuedID().toByteArray();
 
     assetAccountId002 =
-        PublicMethed.queryAccount(testAddress002, blockingStubFull).getAssetIdFromThisAccount.getAssetIssuedID().toByteArray();
+        PublicMethed.queryAccount(testAddress002, blockingStubFull).getAssetIssuedID().toByteArray();
   }
 
 
@@ -93,6 +97,11 @@ public class MarketSellAsset001 {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Optional<Transaction> transaction = PublicMethed
         .getTransactionById(txid, blockingStubFull);
+    logger.info("transaction: " + transaction);
+
+    Optional<MarketOrderList> orderList = PublicMethed
+        .getMarketOrderByAccount(testAddress001, blockingStubFull);
+
 
   }
 
