@@ -52,6 +52,7 @@ import org.tron.common.utils.FastByteComparisons;
 import org.tron.common.utils.Utils;
 import org.tron.common.utils.WalletUtil;
 import org.tron.core.capsule.AccountCapsule;
+import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.ContractCapsule;
 import org.tron.core.db.TransactionTrace;
@@ -1083,10 +1084,23 @@ public class Program {
     return new DataWord(balance);
   }
 
+  public DataWord getRewardBalance(DataWord address) {
+    long rewardBalance = getContractState()
+            .getRewardBalance(TransactionTrace.convertToTronAddress(address.getLast20Bytes()));
+    return new DataWord(rewardBalance);
+  }
+
   public DataWord isContract(DataWord address) {
     ContractCapsule contract = getContractState()
         .getContract(TransactionTrace.convertToTronAddress(address.getLast20Bytes()));
     return contract != null ? new DataWord(1) : new DataWord(0);
+  }
+
+  public DataWord isWitness(DataWord address) {
+    byte[] witnessAddress = TransactionTrace.convertToTronAddress(address.getLast20Bytes());
+    WitnessCapsule witnessCapsule = getContractState()
+            .getWitnessCapsule(witnessAddress);
+    return witnessCapsule != null ? new DataWord(1) : new DataWord(0);
   }
 
   public DataWord getOriginAddress() {

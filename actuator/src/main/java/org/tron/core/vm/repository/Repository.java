@@ -32,6 +32,8 @@ public interface Repository {
 
   VotesCapsule getVotesCapsule(byte[] address);
 
+  WitnessCapsule getWitnessCapsule(byte[] address);
+
   long getBeginCycle(byte[] address);
 
   long getEndCycle(byte[] address);
@@ -83,6 +85,8 @@ public interface Repository {
   long getBalance(byte[] address);
 
   long addBalance(byte[] address, long value);
+
+  long getRewardBalance(byte[] address);
 
   Repository newRepositoryChild();
 

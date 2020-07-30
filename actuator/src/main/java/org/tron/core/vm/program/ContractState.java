@@ -94,6 +94,11 @@ public class ContractState implements Repository, ProgramListenerAware {
   }
 
   @Override
+  public WitnessCapsule getWitnessCapsule(byte[] address) {
+    return repository.getWitnessCapsule(address);
+  }
+
+  @Override
   public void deleteContract(byte[] address) {
     repository.deleteContract(address);
   }
@@ -153,6 +158,11 @@ public class ContractState implements Repository, ProgramListenerAware {
   @Override
   public long addBalance(byte[] addr, long value) {
     return repository.addBalance(addr, value);
+  }
+
+  @Override
+  public long getRewardBalance(byte[] address) {
+    return repository.getRewardBalance(address);
   }
 
   @Override
@@ -236,5 +246,4 @@ public class ContractState implements Repository, ProgramListenerAware {
   public AccountCapsule createNormalAccount(byte[] address) {
     return repository.createNormalAccount(address);
   }
-
 }

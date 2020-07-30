@@ -287,6 +287,11 @@ public class RepositoryImpl implements Repository {
   }
 
   @Override
+  public WitnessCapsule getWitnessCapsule(byte[] address) {
+    return witnessStore.get(address);
+  }
+
+  @Override
   public long getBeginCycle(byte[] address){
       Key cacheKey = new Key(address);
       BytesCapsule bytesCapsule = getDelegationCache(cacheKey);
@@ -571,6 +576,12 @@ public class RepositoryImpl implements Repository {
         Type.VALUE_TYPE_DIRTY | accountCache.get(key).getType().getType());
     accountCache.put(key, val);
     return accountCapsule.getBalance();
+  }
+
+  @Override
+  public long getRewardBalance(byte[] address) {
+    AccountCapsule accountCapsule = getAccount(address);
+    return accountCapsule == null ? 0L : accountCapsule.getRewardBalance();
   }
 
   @Override
