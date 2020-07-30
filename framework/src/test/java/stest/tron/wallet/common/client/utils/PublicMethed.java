@@ -72,6 +72,7 @@ import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.Commons;
+import org.tron.common.utils.Utils;
 import org.tron.core.Wallet;
 import org.tron.core.zen.address.DiversifierT;
 import org.tron.core.zen.address.ExpandedSpendingKey;
@@ -107,6 +108,7 @@ import org.tron.protos.contract.ExchangeContract.ExchangeCreateContract;
 import org.tron.protos.contract.ExchangeContract.ExchangeInjectContract;
 import org.tron.protos.contract.ExchangeContract.ExchangeTransactionContract;
 import org.tron.protos.contract.ExchangeContract.ExchangeWithdrawContract;
+import org.tron.protos.contract.MarketContract.MarketSellAssetContract;
 import org.tron.protos.contract.ProposalContract.ProposalApproveContract;
 import org.tron.protos.contract.ProposalContract.ProposalCreateContract;
 import org.tron.protos.contract.ProposalContract.ProposalDeleteContract;
@@ -6293,5 +6295,59 @@ public class PublicMethed {
     GrpcAPI.Return response = broadcastTransaction(transaction, blockingStubFull);
 
     return response.getResult();
+  }
+
+  public static String marketSellAsset(byte[] owner, String priKey, byte[] sellTokenId,
+      long sellTokenQuantity, byte[] buyTokenId, long buyTokenQuantity,
+      WalletGrpc.WalletBlockingStub blockingStubFull) {
+
+    ECKey temKey = null;
+    try {
+      BigInteger priK = new BigInteger(priKey, 16);
+      temKey = ECKey.fromPrivate(priK);
+    } catch (Exception ex) {
+      ex.printStackTrace();
+    }
+    ECKey ecKey = temKey;
+
+    MarketSellAssetContract.Builder builder = MarketSellAssetContract.newBuilder();
+    builder
+        .setOwnerAddress(ByteString.copyFrom(owner))
+        .setSellTokenId(ByteString.copyFrom(sellTokenId))
+        .setSellTokenQuantity(sellTokenQuantity)
+        .setBuyTokenId(ByteString.copyFrom(buyTokenId))
+        .setBuyTokenQuantity(buyTokenQuantity);
+
+    TransactionExtention transactionExtention = blockingStubFull.marketSellAsset(builder.build());
+    if (transactionExtention == null) {
+      return null;
+    }
+    Return ret = transactionExtention.getResult();
+    if (!ret.getResult()) {
+      System.out.println("Code = " + ret.getCode());
+      System.out.println("Message = " + ret.getMessage().toStringUtf8());
+      return null;
+    }
+    Transaction transaction = transactionExtention.getTransaction();
+    if (transaction == null || transaction.getRawData().getContractCount() == 0) {
+      System.out.println("Transaction is empty");
+      return null;
+    }
+
+    if (transaction.getRawData().getContract(0).getType()
+        == ContractType.ShieldedTransferContract) {
+      return null;
+    }
+
+    transaction = signTransaction(ecKey, transaction);
+
+    String Txid = ByteArray.toHexString(Sha256Hash
+        .hash(CommonParameter.getInstance().isECKeyCryptoEngine(),
+            transaction1.getRawData().toByteArray()));
+
+    System.out.println("trigger txid = " + Txid);
+
+    return Txid;
+
   }
 }
