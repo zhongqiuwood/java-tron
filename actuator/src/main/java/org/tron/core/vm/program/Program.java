@@ -26,17 +26,14 @@ import static org.apache.commons.lang3.ArrayUtils.isEmpty;
 import static org.apache.commons.lang3.ArrayUtils.isNotEmpty;
 import static org.apache.commons.lang3.ArrayUtils.nullToEmpty;
 import static org.tron.common.utils.ByteUtil.stripLeadingZeroes;
+import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
 
+import com.google.common.collect.Lists;
 import com.google.protobuf.ByteString;
 import java.io.ByteArrayOutputStream;
 import java.math.BigInteger;
-import java.util.Arrays;
-import java.util.BitSet;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.NavigableSet;
-import java.util.Objects;
-import java.util.TreeSet;
+import java.util.*;
+
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.tuple.Pair;
@@ -51,13 +48,12 @@ import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.FastByteComparisons;
 import org.tron.common.utils.Utils;
 import org.tron.common.utils.WalletUtil;
-import org.tron.core.capsule.AccountCapsule;
-import org.tron.core.capsule.WitnessCapsule;
-import org.tron.core.capsule.BlockCapsule;
-import org.tron.core.capsule.ContractCapsule;
+import org.tron.core.capsule.*;
 import org.tron.core.db.TransactionTrace;
+import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.TronException;
+import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.utils.TransactionUtil;
 import org.tron.core.vm.EnergyCost;
 import org.tron.core.vm.MessageCall;
@@ -67,6 +63,10 @@ import org.tron.core.vm.VM;
 import org.tron.core.vm.VMConstant;
 import org.tron.core.vm.VMUtils;
 import org.tron.core.vm.config.VMConfig;
+import org.tron.core.vm.nativecontract.FreezeBalanceProcessor;
+import org.tron.core.vm.nativecontract.UnfreezeBalanceProcessor;
+import org.tron.core.vm.nativecontract.param.FreezeBalanceParam;
+import org.tron.core.vm.nativecontract.param.UnfreezeBalanceParam;
 import org.tron.core.vm.program.invoke.ProgramInvoke;
 import org.tron.core.vm.program.invoke.ProgramInvokeFactory;
 import org.tron.core.vm.program.invoke.ProgramInvokeFactoryImpl;
@@ -79,6 +79,7 @@ import org.tron.core.vm.trace.ProgramTraceListener;
 import org.tron.core.vm.utils.MUtil;
 import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.AccountType;
+import org.tron.protos.contract.Common;
 import org.tron.protos.contract.SmartContractOuterClass.SmartContract;
 import org.tron.protos.contract.SmartContractOuterClass.SmartContract.Builder;
 
@@ -1623,6 +1624,45 @@ public class Program {
     }
   }
 
+  public boolean freeze(DataWord delegatedAddress, DataWord freezeAmount, DataWord day, DataWord resourceType) {
+    Repository deposit = getContractState().newRepositoryChild();
+    FreezeBalanceProcessor freezeBalanceProcessor = new FreezeBalanceProcessor(deposit);
+    FreezeBalanceParam freezeBalanceParam = new FreezeBalanceParam();
+    freezeBalanceParam.setFrozenBalance(freezeAmount.longValue());
+    freezeBalanceParam.setFrozenDuration(day.longValue());
+    if(delegatedAddress != null && !delegatedAddress.isZero()) {
+      freezeBalanceParam.setReceiverAddress(delegatedAddress.getData());
+    }
+    byte[] owner = TransactionTrace.convertToTronAddress(getContractAddress().getLast20Bytes());
+    freezeBalanceParam.setOwnerAddress(owner);
+    //0 as bandwidth, 1 as energy.
+    freezeBalanceParam.setResource(resourceType.isZero() ? Common.ResourceCode.BANDWIDTH : Common.ResourceCode.ENERGY);
+    try{
+      freezeBalanceProcessor.validate(freezeBalanceParam);
+    }catch (ContractValidateException e){
+      throw new BytecodeExecutionException("validateForFreeze failure:%s", e.getMessage());
+    }
+    return freezeBalanceProcessor.execute(freezeBalanceParam);
+  }
+
+  public boolean unfreeze(DataWord delegatedAddress, DataWord resourceType) {
+    Repository deposit = getContractState().newRepositoryChild();
+    UnfreezeBalanceProcessor unfreezeBalanceProcessor = new UnfreezeBalanceProcessor(deposit);
+    UnfreezeBalanceParam unfreezeBalanceParam = new UnfreezeBalanceParam();
+    if(delegatedAddress != null && !delegatedAddress.isZero()) {
+      unfreezeBalanceParam.setReceiverAddress(delegatedAddress.getData());
+    }
+    byte[] owner = TransactionTrace.convertToTronAddress(getContractAddress().getLast20Bytes());
+    unfreezeBalanceParam.setOwnerAddress(owner);
+    //0 as bandwidth, 1 as energy.
+    unfreezeBalanceParam.setResource(resourceType.isZero() ? Common.ResourceCode.BANDWIDTH : Common.ResourceCode.ENERGY);
+    try{
+      unfreezeBalanceProcessor.validate(unfreezeBalanceParam);
+    }catch (ContractValidateException e){
+      throw new BytecodeExecutionException("validateForUnfreeze failure:%s", e.getMessage());
+    }
+    return unfreezeBalanceProcessor.execute(unfreezeBalanceParam);
+  }
   /**
    * Denotes problem when executing Ethereum bytecode. From blockchain and peer perspective this is
    * quite normal situation and doesn't mean exceptional situation in terms of the program

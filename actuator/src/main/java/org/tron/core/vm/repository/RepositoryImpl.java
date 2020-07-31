@@ -750,12 +750,17 @@ public class RepositoryImpl implements Repository {
     }
 
     long energyWeight = frozeBalance / 1_000_000L;
-    long totalEnergyLimit = getTotalEnergyCurrentLimit();
-    long totalEnergyWeight = getTotalEnergyWeight();
+    try {
+      long totalEnergyLimit = getTotalEnergyCurrentLimit();
+      long totalEnergyWeight = getTotalEnergyWeight();
 
-    assert totalEnergyWeight > 0;
+      assert totalEnergyWeight > 0;
 
-    return (long) (energyWeight * ((double) totalEnergyLimit / totalEnergyWeight));
+      return (long) (energyWeight * ((double) totalEnergyLimit / totalEnergyWeight));
+    }catch (Exception e){
+      logger.warn("get totalEnergyLimit or totalEnergyWeight fail");
+      return 0;
+    }
   }
 
   public long getHeadSlot() {
@@ -886,17 +891,25 @@ public class RepositoryImpl implements Repository {
   //The unit is trx
   @Override
   public void addTotalNetWeight(long amount) {
-    long totalNetWeight = getTotalNetWeight();
-    totalNetWeight += amount;
-    saveTotalNetWeight(totalNetWeight);
+    try {
+      long totalNetWeight = getTotalNetWeight();
+      totalNetWeight += amount;
+      saveTotalNetWeight(totalNetWeight);
+    } catch (Exception e){
+      logger.error("addTotalNetWeight fail, amount = {}", amount, e);
+    }
   }
 
   //The unit is trx
   @Override
   public void addTotalEnergyWeight(long amount) {
-    long totalEnergyWeight = getTotalEnergyWeight();
-    totalEnergyWeight += amount;
-    saveTotalEnergyWeight(totalEnergyWeight);
+    try {
+      long totalEnergyWeight = getTotalEnergyWeight();
+      totalEnergyWeight += amount;
+      saveTotalEnergyWeight(totalEnergyWeight);
+    } catch (Exception e){
+      logger.error("addTotalEnergyWeight fail, amount = {}", amount, e);
+    }
   }
 
   @Override

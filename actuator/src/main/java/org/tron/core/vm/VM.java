@@ -1429,6 +1429,27 @@ public class VM {
           program.step();
           break;
         }
+        case FREEZE: {
+          //todo: without delegatedAddress
+          DataWord delegatedAddress = program.stackPop();
+          DataWord freezeAmount = program.stackPop();
+          DataWord day = program.stackPop();
+          DataWord resourceType = program.stackPop(); //0 as bandwidth, 1 as energy.
+          boolean result = program.freeze(delegatedAddress, freezeAmount, day, resourceType );
+          program.stackPush(new DataWord(result ? 1 : 0));
+
+          program.step();
+        }
+        break;
+        case UNFREEZE: {
+          DataWord delegatedAddress = program.stackPop();
+          DataWord resourceType = program.stackPop(); //0 as bandwidth, 1 as energy.
+          boolean result = program.unfreeze(delegatedAddress, resourceType);
+          program.stackPush(new DataWord(result ? 1 : 0));
+
+          program.step();
+        }
+        break;
         case RETURN:
         case REVERT: {
           DataWord offset = program.stackPop();

@@ -7,15 +7,16 @@ import org.tron.common.utils.StringUtil;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.exception.BalanceInsufficientException;
 import org.tron.core.store.DelegationStore;
+import org.tron.core.vm.repository.Repository;
 import org.tron.core.vm.repository.RepositoryImpl;
 import org.tron.protos.Protocol;
 
 @Slf4j(topic = "contractService")
 public class ContractService {
 
-    private RepositoryImpl repository;
+    private Repository repository;
 
-    public ContractService(RepositoryImpl repository) {
+    public ContractService(Repository repository) {
         this.repository = repository;
     }
 
