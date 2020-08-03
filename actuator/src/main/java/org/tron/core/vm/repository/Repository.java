@@ -2,10 +2,7 @@ package org.tron.core.vm.repository;
 
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.core.capsule.*;
-import org.tron.core.store.AssetIssueStore;
-import org.tron.core.store.AssetIssueV2Store;
-import org.tron.core.store.DelegationStore;
-import org.tron.core.store.DynamicPropertiesStore;
+import org.tron.core.store.*;
 import org.tron.core.vm.program.Storage;
 import org.tron.protos.Protocol;
 
@@ -20,6 +17,8 @@ public interface Repository {
   DynamicPropertiesStore getDynamicPropertiesStore();
 
   DelegationStore getDelegationStore();
+
+  WitnessStore getWitnessStore();
 
   AccountCapsule createAccount(byte[] address, Protocol.AccountType type);
 

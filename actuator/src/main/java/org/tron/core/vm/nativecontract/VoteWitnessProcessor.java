@@ -9,10 +9,10 @@ import org.tron.common.utils.DecodeUtil;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.VotesCapsule;
-import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.store.WitnessStore;
-import org.tron.core.vm.repository.RepositoryImpl;
+import org.tron.core.vm.nativecontract.param.VoteWitnessParam;
+import org.tron.core.vm.repository.Repository;
 import org.tron.protos.Protocol;
 
 import java.util.Iterator;
@@ -23,36 +23,31 @@ import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
 import static org.tron.core.vm.nativecontract.ContractProcessorConstant.*;
 
 @Slf4j(topic = "Processor")
-public class VoteWitnessContractProcessor implements IContractProcessor {
+public class VoteWitnessProcessor implements IContractProcessor {
 
-    private RepositoryImpl repository;
+    private Repository repository;
 
-    public VoteWitnessContractProcessor(RepositoryImpl repository) {
+    public VoteWitnessProcessor(Repository repository) {
         this.repository = repository;
     }
 
     @Override
-    public boolean execute(Object contract) throws ContractExeException {
-        VoteWinessCapusle voteWinessCapusle = (VoteWinessCapusle) contract;
-        if (Objects.isNull(voteWinessCapusle)) {
-            throw new RuntimeException(CONTRACT_NULL);
-        }
-        try {
-            countVoteAccount(voteWinessCapusle);
-        } catch (Exception e) {
-            logger.debug(e.getMessage(), e);
-            throw new ContractExeException(e.getMessage());
-        }
+    public boolean execute(Object contract) {
+        VoteWitnessParam voteWitnessParam = (VoteWitnessParam) contract;
+        countVoteAccount(voteWitnessParam);
         return true;
     }
 
     @Override
     public boolean validate(Object contract) throws ContractValidateException {
-        VoteWinessCapusle voteWinessCapusle = (VoteWinessCapusle) contract;
+        VoteWitnessParam voteWitnessParam = (VoteWitnessParam) contract;
+        if (Objects.isNull(voteWitnessParam)) {
+            throw new ContractValidateException(CONTRACT_NULL);
+        }
         if (repository == null) {
             throw new ContractValidateException(ContractProcessorConstant.STORE_NOT_EXIST);
         }
-        byte[] ownerAddress = voteWinessCapusle.getAddress().toByteArray();
+        byte[] ownerAddress = voteWitnessParam.getOwneraddress();
         if (!DecodeUtil.addressValid(ownerAddress)) {
             throw new ContractValidateException("Invalid address");
         }
@@ -62,17 +57,17 @@ public class VoteWitnessContractProcessor implements IContractProcessor {
             throw new ContractValidateException(
                     ACCOUNT_EXCEPTION_STR + readableOwnerAddress + NOT_EXIST_STR);
         }
-        if (voteWinessCapusle.getVotesCount() == 0) {
+        if (voteWitnessParam.getVotesCount() == 0) {
             throw new ContractValidateException(
                     "VoteNumber must more than 0");
         }
-        if (voteWinessCapusle.getVotesCount() > MAX_VOTE_NUMBER) {
+        if (voteWitnessParam.getVotesCount() > MAX_VOTE_NUMBER) {
             throw new ContractValidateException(
                     "VoteNumber more than maxVoteNumber " + MAX_VOTE_NUMBER);
         }
         WitnessStore witnessStore = repository.getWitnessStore();
         try {
-            Iterator<Protocol.Vote> iterator = voteWinessCapusle.getVotesList().iterator();
+            Iterator<Protocol.Vote> iterator = voteWitnessParam.getVotesList().iterator();
             Long sum = 0L;
             while (iterator.hasNext()) {
                 Protocol.Vote vote = iterator.next();
@@ -113,9 +108,8 @@ public class VoteWitnessContractProcessor implements IContractProcessor {
         return true;
     }
 
-    private void countVoteAccount(VoteWinessCapusle voteWinessCapusle) {
-
-        byte[] ownerAddress = voteWinessCapusle.getAddress().toByteArray();
+    private void countVoteAccount(VoteWitnessParam voteWitnessParam) {
+        byte[] ownerAddress = voteWitnessParam.getOwneraddress();
         AccountCapsule accountCapsule = repository.getAccount(ownerAddress);
         VotesCapsule votesCapsule;
 
@@ -123,7 +117,7 @@ public class VoteWitnessContractProcessor implements IContractProcessor {
         contractService.withdrawReward(ownerAddress);
 
         if (repository.getVotesCapsule(ownerAddress) == null) {
-            votesCapsule = new VotesCapsule(voteWinessCapusle.getAddress(),
+            votesCapsule = new VotesCapsule(ByteString.copyFrom(voteWitnessParam.getOwneraddress()),
                     accountCapsule.getVotesList());
         } else {
             votesCapsule = repository.getVotesCapsule(ownerAddress);
@@ -132,7 +126,7 @@ public class VoteWitnessContractProcessor implements IContractProcessor {
         accountCapsule.clearVotes();
         votesCapsule.clearNewVotes();
 
-        voteWinessCapusle.getVotesList().forEach(vote -> {
+        voteWitnessParam.getVotesList().forEach(vote -> {
             logger.debug("countVoteAccount, address[{}]",
                     ByteArray.toHexString(vote.getVoteAddress().toByteArray()));
 
@@ -141,7 +135,6 @@ public class VoteWitnessContractProcessor implements IContractProcessor {
         });
         repository.putAccountValue(accountCapsule.createDbKey(), accountCapsule);
         repository.updateVotesCapsule(ownerAddress, votesCapsule);
-        repository.commit();
     }
 
     @Override

@@ -29,7 +29,6 @@ import static org.tron.common.utils.ByteUtil.stripLeadingZeroes;
 import static org.tron.core.config.Parameter.ChainConstant.FROZEN_PERIOD;
 import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
 
-import com.google.common.collect.Lists;
 import com.google.protobuf.ByteString;
 import java.io.ByteArrayOutputStream;
 import java.math.BigInteger;
@@ -48,10 +47,8 @@ import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.utils.*;
 import org.tron.core.capsule.*;
 import org.tron.core.db.TransactionTrace;
-import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.TronException;
-import org.tron.core.store.DynamicPropertiesStore;
 import org.tron.core.utils.TransactionUtil;
 import org.tron.core.vm.EnergyCost;
 import org.tron.core.vm.MessageCall;
@@ -64,8 +61,12 @@ import org.tron.core.vm.config.VMConfig;
 import org.tron.core.vm.nativecontract.ContractService;
 import org.tron.core.vm.nativecontract.FreezeBalanceProcessor;
 import org.tron.core.vm.nativecontract.UnfreezeBalanceProcessor;
+import org.tron.core.vm.nativecontract.VoteWitnessProcessor;
+import org.tron.core.vm.nativecontract.WithdrawRewardProcessor;
 import org.tron.core.vm.nativecontract.param.FreezeBalanceParam;
 import org.tron.core.vm.nativecontract.param.UnfreezeBalanceParam;
+import org.tron.core.vm.nativecontract.param.VoteWitnessParam;
+import org.tron.core.vm.nativecontract.param.WithdrawRewardParam;
 import org.tron.core.vm.program.invoke.ProgramInvoke;
 import org.tron.core.vm.program.invoke.ProgramInvokeFactory;
 import org.tron.core.vm.program.invoke.ProgramInvokeFactoryImpl;
@@ -1917,6 +1918,42 @@ public class Program {
       throw new BytecodeExecutionException("validateForUnfreeze failure:%s", e.getMessage());
     }
     return unfreezeBalanceProcessor.execute(unfreezeBalanceParam);
+  }
+
+  public boolean vote(DataWord srOffset, DataWord srSize, DataWord tronpowerOffset, DataWord tronpowerSize) {
+    Repository deposit = getContractState().newRepositoryChild();
+    Protocol.Vote vote =
+            Protocol.Vote.newBuilder().setVoteAddress(ByteString.copyFrom("".getBytes())).setVoteCount(1).build();
+    ArrayList<Protocol.Vote> votesList = new ArrayList<>();
+    votesList.add(vote);
+    VoteWitnessProcessor voteWitnessProcessor = new VoteWitnessProcessor(deposit);
+    VoteWitnessParam voteWitnessParam = new VoteWitnessParam();
+    voteWitnessParam.setVote(vote);
+    voteWitnessParam.setVotesList(votesList);
+    voteWitnessParam.setVotesCount(votesList.size());
+    byte[] owner = TransactionTrace.convertToTronAddress(getContractAddress().getLast20Bytes());
+    voteWitnessParam.setOwneraddress(owner);
+    try{
+      voteWitnessProcessor.validate(voteWitnessParam);
+    }catch (ContractValidateException e){
+      throw new BytecodeExecutionException("validateForVoteWitness failure:%s", e.getMessage());
+    }
+    return voteWitnessProcessor.execute(voteWitnessParam);
+  }
+
+  public boolean withdrawReward(DataWord targetAddress) {
+    Repository deposit = getContractState().newRepositoryChild();
+    WithdrawRewardProcessor withdrawRewardContractProcessor = new WithdrawRewardProcessor(deposit);
+    WithdrawRewardParam withdrawRewardParam = new WithdrawRewardParam();
+    if(targetAddress != null && !targetAddress.isZero()) {
+      withdrawRewardParam.setTargetAddress(targetAddress.getData());
+    }
+    try{
+      withdrawRewardContractProcessor.validate(withdrawRewardParam);
+    }catch (ContractValidateException e){
+      throw new BytecodeExecutionException("validateForWithdrawReward failure:%s", e.getMessage());
+    }
+    return withdrawRewardContractProcessor.execute(withdrawRewardParam);
   }
   /**
    * Denotes problem when executing Ethereum bytecode. From blockchain and peer perspective this is

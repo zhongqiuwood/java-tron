@@ -1450,6 +1450,23 @@ public class VM {
           program.step();
         }
         break;
+        case VOTE: {
+          DataWord srOffset = program.stackPop();
+          DataWord srSize = program.stackPop();
+          DataWord tronpowerOffset = program.stackPop();
+          DataWord tronpowerSize = program.stackPop();
+          boolean result = program.vote(srOffset, srSize, tronpowerOffset, tronpowerSize);
+          program.stackPush(new DataWord(result ? 1 : 0));
+          program.step();
+        }
+        break;
+        case WITHDRAWREWARD: {
+          DataWord targetAddress = program.stackPop();
+          boolean result = program.withdrawReward(targetAddress);
+          program.stackPush(new DataWord(result ? 1 : 0));
+          program.step();
+        }
+        break;
         case RETURN:
         case REVERT: {
           DataWord offset = program.stackPop();

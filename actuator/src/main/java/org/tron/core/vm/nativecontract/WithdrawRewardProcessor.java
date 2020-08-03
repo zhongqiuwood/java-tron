@@ -8,10 +8,10 @@ import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.DecodeUtil;
 import org.tron.common.utils.StringUtil;
 import org.tron.core.capsule.AccountCapsule;
-import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.store.DynamicPropertiesStore;
-import org.tron.core.vm.repository.RepositoryImpl;
+import org.tron.core.vm.nativecontract.param.WithdrawRewardParam;
+import org.tron.core.vm.repository.Repository;
 
 import java.util.Arrays;
 import java.util.Objects;
@@ -21,25 +21,21 @@ import static org.tron.core.vm.nativecontract.ContractProcessorConstant.ACCOUNT_
 import static org.tron.core.vm.nativecontract.ContractProcessorConstant.CONTRACT_NULL;
 
 @Slf4j(topic = "Processor")
-public class WithdrawRewardContractProcessor implements IContractProcessor {
+public class WithdrawRewardProcessor implements IContractProcessor {
 
-    private RepositoryImpl repository;
+    private Repository repository;
 
-    public WithdrawRewardContractProcessor(RepositoryImpl repository) {
+    public WithdrawRewardProcessor(Repository repository) {
         this.repository = repository;
     }
 
     @Override
-    public boolean execute(Object contract) throws ContractExeException {
-        VoteWinessCapusle voteWinessCapusle = (VoteWinessCapusle) contract;
-        if (Objects.isNull(voteWinessCapusle)) {
-            throw new RuntimeException(CONTRACT_NULL);
-        }
+    public boolean execute(Object contract) {
+        WithdrawRewardParam withdrawRewardParam = (WithdrawRewardParam) contract;
+        byte[] targetAddress = withdrawRewardParam.getTargetAddress();
+        AccountCapsule accountCapsule = repository.getAccount(targetAddress);
 
-        byte[] ownerAddress = voteWinessCapusle.getAddress().toByteArray();
-        AccountCapsule accountCapsule = repository.getAccount(ownerAddress);
-
-        repository.updateLastWithdrawCycle(ownerAddress, repository.getDynamicPropertiesStore().getCurrentCycleNumber()
+        repository.updateLastWithdrawCycle(targetAddress, repository.getDynamicPropertiesStore().getCurrentCycleNumber()
                 );
 
         long oldBalance = accountCapsule.getBalance();
@@ -57,26 +53,29 @@ public class WithdrawRewardContractProcessor implements IContractProcessor {
 
     @Override
     public boolean validate(Object contract) throws ContractValidateException {
-        VoteWinessCapusle voteWinessCapusle = (VoteWinessCapusle) contract;
+        WithdrawRewardParam withdrawRewardParam = (WithdrawRewardParam) contract;
+        if (Objects.isNull(withdrawRewardParam)) {
+            throw new ContractValidateException(CONTRACT_NULL);
+        }
         if (repository == null) {
             throw new ContractValidateException(ContractProcessorConstant.STORE_NOT_EXIST);
         }
-        byte[] ownerAddress = voteWinessCapusle.getAddress().toByteArray();
-        if (!DecodeUtil.addressValid(ownerAddress)) {
+        byte[] targetAddress = withdrawRewardParam.getTargetAddress();
+        if (!DecodeUtil.addressValid(targetAddress)) {
             throw new ContractValidateException("Invalid address");
         }
-        AccountCapsule accountCapsule = repository.getAccount(ownerAddress);
+        AccountCapsule accountCapsule = repository.getAccount(targetAddress);
         DynamicPropertiesStore dynamicStore = repository.getDynamicPropertiesStore();
         ContractService contractService = new ContractService(repository);
         if (accountCapsule == null) {
-            String readableOwnerAddress = StringUtil.createReadableString(ownerAddress);
+            String readableOwnerAddress = StringUtil.createReadableString(targetAddress);
             throw new ContractValidateException(
                     ACCOUNT_EXCEPTION_STR + readableOwnerAddress + "] not exists");
         }
-        String readableOwnerAddress = StringUtil.createReadableString(ownerAddress);
+        String readableOwnerAddress = StringUtil.createReadableString(targetAddress);
         boolean isGP = CommonParameter.getInstance()
                 .getGenesisBlock().getWitnesses().stream().anyMatch(witness ->
-                        Arrays.equals(ownerAddress, witness.getAddress()));
+                        Arrays.equals(targetAddress, witness.getAddress()));
         if (isGP) {
             throw new ContractValidateException(
                     ACCOUNT_EXCEPTION_STR + readableOwnerAddress
@@ -93,7 +92,7 @@ public class WithdrawRewardContractProcessor implements IContractProcessor {
         }
 
         if (accountCapsule.getAllowance() <= 0 &&
-                contractService.queryReward(ownerAddress) <= 0) {
+                contractService.queryReward(targetAddress) <= 0) {
             throw new ContractValidateException("witnessAccount does not have any reward");
         }
         try {
