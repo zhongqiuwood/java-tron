@@ -26,6 +26,7 @@ import static org.apache.commons.lang3.ArrayUtils.isEmpty;
 import static org.apache.commons.lang3.ArrayUtils.isNotEmpty;
 import static org.apache.commons.lang3.ArrayUtils.nullToEmpty;
 import static org.tron.common.utils.ByteUtil.stripLeadingZeroes;
+import static org.tron.core.config.Parameter.ChainConstant.FROZEN_PERIOD;
 import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
 
 import com.google.common.collect.Lists;
@@ -33,6 +34,7 @@ import com.google.protobuf.ByteString;
 import java.io.ByteArrayOutputStream;
 import java.math.BigInteger;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ArrayUtils;
@@ -43,11 +45,7 @@ import org.tron.common.parameter.CommonParameter;
 import org.tron.common.runtime.InternalTransaction;
 import org.tron.common.runtime.ProgramResult;
 import org.tron.common.runtime.vm.DataWord;
-import org.tron.common.utils.BIUtil;
-import org.tron.common.utils.ByteUtil;
-import org.tron.common.utils.FastByteComparisons;
-import org.tron.common.utils.Utils;
-import org.tron.common.utils.WalletUtil;
+import org.tron.common.utils.*;
 import org.tron.core.capsule.*;
 import org.tron.core.db.TransactionTrace;
 import org.tron.core.exception.ContractExeException;
@@ -63,6 +61,7 @@ import org.tron.core.vm.VM;
 import org.tron.core.vm.VMConstant;
 import org.tron.core.vm.VMUtils;
 import org.tron.core.vm.config.VMConfig;
+import org.tron.core.vm.nativecontract.ContractService;
 import org.tron.core.vm.nativecontract.FreezeBalanceProcessor;
 import org.tron.core.vm.nativecontract.UnfreezeBalanceProcessor;
 import org.tron.core.vm.nativecontract.param.FreezeBalanceParam;
@@ -533,6 +532,9 @@ public class Program {
 
     increaseNonce();
 
+    ContractService contractService = new ContractService(getContractState());
+    contractService.withdrawReward(owner);
+
     addInternalTx(null, owner, obtainer, balance, null, "suicide", nonce,
         getContractState().getAccount(owner).getAssetMapV2());
 
@@ -559,11 +561,264 @@ public class Program {
         throw new BytecodeExecutionException("transfer failure");
       }
     }
+    suicideFreezeBalanceAndVote(owner, obtainer, getContractState());
     getResult().addDeleteAccount(this.getContractAddress());
   }
 
   public Repository getContractState() {
     return this.contractState;
+  }
+
+  private void suicideFreezeBalanceAndVote(byte[] owner, byte[] obtainer, Repository repository){
+    FreezeBalanceProcessor freezeBalanceProcessor = new FreezeBalanceProcessor(repository);
+    UnfreezeBalanceProcessor unfreezeBalanceProcessor = new UnfreezeBalanceProcessor(repository);
+    DynamicPropertiesStore dynamicStore = repository.getDynamicPropertiesStore();
+    long duration = 3 * FROZEN_PERIOD;
+    long expireTime = dynamicStore.getLatestBlockHeaderTimestamp() + duration;
+    //process from->owner
+    DelegatedResourceAccountIndexCapsule delegatedIndex = repository.getDelegatedResourceAccountIndex(owner);
+    for(ByteString from : delegatedIndex.getFromAccountsList()){
+      byte[] fromAddress = from.toByteArray();
+      if(Arrays.equals(fromAddress, obtainer)){
+        fromAddress = new byte[fromAddress.length];
+        from = ByteString.copyFrom(fromAddress);
+      }
+      //modify DelegatedResourceStore
+      byte[] key = DelegatedResourceCapsule
+              .createDbKey(fromAddress, owner);
+      DelegatedResourceCapsule delegatedResourceCapsule = repository.getDelegatedResource(key);
+
+      byte[] newKey = DelegatedResourceCapsule
+              .createDbKey(fromAddress, obtainer);
+      DelegatedResourceCapsule newDelegatedResourceCapsule = repository.getDelegatedResource(newKey);
+      if(newDelegatedResourceCapsule == null) {
+        newDelegatedResourceCapsule = new DelegatedResourceCapsule(
+                ByteString.copyFrom(fromAddress),
+                ByteString.copyFrom(obtainer));
+      }
+
+      long bandwidthBalance = delegatedResourceCapsule.getFrozenBalanceForBandwidth();
+      delegatedResourceCapsule.setFrozenBalanceForBandwidth(0, 0);
+      newDelegatedResourceCapsule.addFrozenBalanceForBandwidth(bandwidthBalance, expireTime);
+
+      long energyBalance = delegatedResourceCapsule.getFrozenBalanceForEnergy();
+      delegatedResourceCapsule.setFrozenBalanceForEnergy(0, 0);
+      newDelegatedResourceCapsule.addFrozenBalanceForEnergy(energyBalance, expireTime);
+
+      repository.updateDelegatedResource(key, delegatedResourceCapsule);
+      repository.updateDelegatedResource(newKey, newDelegatedResourceCapsule);
+
+      //modify AccountStore
+      AccountCapsule obtainCapsule = repository.getAccount(obtainer);
+      obtainCapsule.addAcquiredDelegatedFrozenBalanceForBandwidth(bandwidthBalance);
+      obtainCapsule.addAcquiredDelegatedFrozenBalanceForEnergy(energyBalance);
+      repository.updateAccount(obtainer, obtainCapsule);
+
+      //modify DelegatedResourceAccountIndexStore
+      DelegatedResourceAccountIndexCapsule fromIndexCapsule = repository
+              .getDelegatedResourceAccountIndex(fromAddress);
+      if (fromIndexCapsule == null) {
+        fromIndexCapsule = new DelegatedResourceAccountIndexCapsule(
+                from);
+      }
+      List<ByteString> toAccountsList = new ArrayList<>(fromIndexCapsule.getToAccountsList());
+      toAccountsList.remove(ByteString.copyFrom(owner));
+      if (!toAccountsList.contains(ByteString.copyFrom(obtainer))) {
+        toAccountsList.add(ByteString.copyFrom(obtainer));
+      }
+      fromIndexCapsule.setAllToAccounts(toAccountsList);
+      repository.updateDelegatedResourceAccountIndex(fromAddress, fromIndexCapsule);
+
+      DelegatedResourceAccountIndexCapsule obtainIndexCapsule = repository
+              .getDelegatedResourceAccountIndex(obtainer);
+      if (obtainIndexCapsule == null) {
+        obtainIndexCapsule = new DelegatedResourceAccountIndexCapsule(
+                ByteString.copyFrom(obtainer));
+      }
+      List<ByteString> fromAccountsList = new ArrayList<>(obtainIndexCapsule
+              .getFromAccountsList());
+      if (!fromAccountsList.contains(from)) {
+        fromAccountsList.add(from);
+      }
+      obtainIndexCapsule.setAllFromAccounts(fromAccountsList);
+      repository.updateDelegatedResourceAccountIndex(owner, obtainIndexCapsule);
+    }
+    delegatedIndex.setAllFromAccounts(new ArrayList<>());
+    AccountCapsule ownerCapsule = repository.getAccount(owner);
+    ownerCapsule.setAcquiredDelegatedFrozenBalanceForBandwidth(0);
+    ownerCapsule.setAcquiredDelegatedFrozenBalanceForEnergy(0);
+
+    //process owner->to
+    for(ByteString to : delegatedIndex.getToAccountsList()){
+      byte[] toAddress = to.toByteArray();
+      if(Arrays.equals(toAddress, obtainer)){
+        toAddress = new byte[toAddress.length];
+        to = ByteString.copyFrom(toAddress);
+      }
+      //modify DelegatedResourceStore
+      byte[] key = DelegatedResourceCapsule
+              .createDbKey(owner, toAddress);
+      DelegatedResourceCapsule delegatedResourceCapsule = repository.getDelegatedResource(key);
+
+      byte[] newKey = DelegatedResourceCapsule
+              .createDbKey(obtainer, toAddress);
+      DelegatedResourceCapsule newDelegatedResourceCapsule = repository.getDelegatedResource(newKey);
+      if(newDelegatedResourceCapsule == null) {
+        newDelegatedResourceCapsule = new DelegatedResourceCapsule(
+                ByteString.copyFrom(obtainer), to);
+      }
+
+      long bandwidthBalance = delegatedResourceCapsule.getFrozenBalanceForBandwidth();
+      delegatedResourceCapsule.setFrozenBalanceForBandwidth(0, 0);
+      newDelegatedResourceCapsule.addFrozenBalanceForBandwidth(bandwidthBalance, expireTime);
+
+      long energyBalance = delegatedResourceCapsule.getFrozenBalanceForEnergy();
+      delegatedResourceCapsule.setFrozenBalanceForEnergy(0, 0);
+      newDelegatedResourceCapsule.addFrozenBalanceForEnergy(energyBalance, expireTime);
+
+      repository.updateDelegatedResource(key, delegatedResourceCapsule);
+      repository.updateDelegatedResource(newKey, newDelegatedResourceCapsule);
+
+      //modify AccountStore
+      AccountCapsule obtainCapsule = repository.getAccount(obtainer);
+      obtainCapsule.addDelegatedFrozenBalanceForBandwidth(bandwidthBalance);
+      obtainCapsule.addDelegatedFrozenBalanceForEnergy(energyBalance);
+      repository.updateAccount(obtainer, obtainCapsule);
+
+      //modify DelegatedResourceAccountIndexStore
+      DelegatedResourceAccountIndexCapsule toIndexCapsule = repository
+              .getDelegatedResourceAccountIndex(toAddress);
+      if (toIndexCapsule == null) {
+        toIndexCapsule = new DelegatedResourceAccountIndexCapsule(
+                to);
+      }
+      List<ByteString> fromAccountsList = new ArrayList<>(toIndexCapsule.getFromAccountsList());
+      fromAccountsList.remove(ByteString.copyFrom(owner));
+      if (!fromAccountsList.contains(ByteString.copyFrom(obtainer))) {
+        fromAccountsList.add(ByteString.copyFrom(obtainer));
+      }
+      toIndexCapsule.setAllFromAccounts(fromAccountsList);
+      repository.updateDelegatedResourceAccountIndex(toAddress, toIndexCapsule);
+
+      DelegatedResourceAccountIndexCapsule obtainIndexCapsule = repository
+              .getDelegatedResourceAccountIndex(obtainer);
+      if (obtainIndexCapsule == null) {
+        obtainIndexCapsule = new DelegatedResourceAccountIndexCapsule(
+                ByteString.copyFrom(obtainer));
+      }
+      List<ByteString> toAccountsList = new ArrayList<>(obtainIndexCapsule
+              .getToAccountsList());
+      if (!toAccountsList.contains(to)) {
+        toAccountsList.add(to);
+      }
+      obtainIndexCapsule.setAllToAccounts(toAccountsList);
+      repository.updateDelegatedResourceAccountIndex(owner, obtainIndexCapsule);
+    }
+    delegatedIndex.setAllToAccounts(new ArrayList<>());
+    ownerCapsule.setDelegatedFrozenBalanceForBandwidth(0);
+    ownerCapsule.setDelegatedFrozenBalanceForEnergy(0);
+
+    //process owner->owner
+    {
+      long bandwidthBalance = ownerCapsule.getFrozenBalance();
+      long bandwidthExpire = ownerCapsule.getFrozenList().get(0).getExpireTime();
+      long energyBalance = ownerCapsule.getAccountResource()
+              .getFrozenBalanceForEnergy().getFrozenBalance();
+      long energyExpire = ownerCapsule.getAccountResource()
+              .getFrozenBalanceForEnergy().getExpireTime();
+
+      //modify AccountStore
+      AccountCapsule obtainCapsule = repository.getAccount(obtainer);
+      obtainCapsule.addDelegatedFrozenBalanceForBandwidth(bandwidthBalance);
+      obtainCapsule.addDelegatedFrozenBalanceForEnergy(energyBalance);
+      repository.updateAccount(obtainer, obtainCapsule);
+
+      ownerCapsule.addAcquiredDelegatedFrozenBalanceForBandwidth(bandwidthBalance);
+      ownerCapsule.addAcquiredDelegatedFrozenBalanceForEnergy(energyBalance);
+
+      byte[] key = DelegatedResourceCapsule.createDbKey(obtainer, owner);
+      //modify DelegatedResourceStore
+      DelegatedResourceCapsule delegatedResourceCapsule = repository.getDelegatedResource(key);
+      if (delegatedResourceCapsule != null) {
+          delegatedResourceCapsule.addFrozenBalanceForBandwidth(bandwidthBalance, bandwidthExpire);
+          delegatedResourceCapsule.addFrozenBalanceForEnergy(energyBalance, energyExpire);
+      } else {
+        delegatedResourceCapsule = new DelegatedResourceCapsule(
+                ByteString.copyFrom(obtainer),
+                ByteString.copyFrom(owner));
+          delegatedResourceCapsule.setFrozenBalanceForBandwidth(bandwidthBalance, bandwidthExpire);
+          delegatedResourceCapsule.setFrozenBalanceForEnergy(energyBalance, energyExpire);
+      }
+      repository.updateDelegatedResource(key, delegatedResourceCapsule);
+
+      //modify DelegatedResourceAccountIndexStore
+      {
+        DelegatedResourceAccountIndexCapsule delegatedResourceAccountIndexCapsule = repository
+                .getDelegatedResourceAccountIndex(obtainer);
+        if (delegatedResourceAccountIndexCapsule == null) {
+          delegatedResourceAccountIndexCapsule = new DelegatedResourceAccountIndexCapsule(
+                  ByteString.copyFrom(obtainer));
+        }
+        List<ByteString> toAccountsList = delegatedResourceAccountIndexCapsule.getToAccountsList();
+        if (!toAccountsList.contains(ByteString.copyFrom(owner))) {
+          delegatedResourceAccountIndexCapsule.addToAccount(ByteString.copyFrom(owner));
+        }
+        repository.updateDelegatedResourceAccountIndex(obtainer, delegatedResourceAccountIndexCapsule);
+      }
+      {
+        DelegatedResourceAccountIndexCapsule delegatedResourceAccountIndexCapsule = repository
+                .getDelegatedResourceAccountIndex(owner);
+        if (delegatedResourceAccountIndexCapsule == null) {
+          delegatedResourceAccountIndexCapsule = new DelegatedResourceAccountIndexCapsule(
+                  ByteString.copyFrom(owner));
+        }
+        List<ByteString> fromAccountsList = delegatedResourceAccountIndexCapsule
+                .getFromAccountsList();
+        if (!fromAccountsList.contains(ByteString.copyFrom(obtainer))) {
+          delegatedResourceAccountIndexCapsule.addFromAccount(ByteString.copyFrom(obtainer));
+        }
+        repository.updateDelegatedResourceAccountIndex(owner, delegatedResourceAccountIndexCapsule);
+      }
+    }
+
+    //vote
+    {
+      AccountCapsule obtainCapsule = repository.getAccount(obtainer);
+      VotesCapsule ownerVotesCapsule = repository.getVotesCapsule(owner);
+      VotesCapsule obtainVotesCapsule = repository.getVotesCapsule(obtainer);
+
+      if (obtainVotesCapsule == null && ownerVotesCapsule == null) {
+        ownerCapsule.getVotesList().forEach(vote -> {
+          obtainCapsule.addVotes(vote.getVoteAddress(), vote.getVoteCount());
+        });
+      } else {
+        if(obtainVotesCapsule == null){
+          obtainVotesCapsule = new VotesCapsule(obtainCapsule.getAddress(),
+                  obtainCapsule.getVotesList(), obtainCapsule.getVotesList());
+        }
+        if(ownerVotesCapsule == null){
+          ownerVotesCapsule = new VotesCapsule(ownerCapsule.getAddress(),
+                  ownerCapsule.getVotesList(), ownerCapsule.getVotesList());
+        }
+        ownerCapsule.getVotesList().forEach(vote -> {
+          obtainCapsule.addVotes(vote.getVoteAddress(), vote.getVoteCount());
+        });
+        for (Protocol.Vote vote : ownerVotesCapsule.getOldVotes()) {
+          obtainVotesCapsule.addOldVotes(vote.getVoteAddress(), vote.getVoteCount());
+        }
+        for (Protocol.Vote vote : ownerVotesCapsule.getNewVotes()) {
+          obtainVotesCapsule.addNewVotes(vote.getVoteAddress(), vote.getVoteCount());
+        }
+
+        repository.updateVotesCapsule(owner, ownerVotesCapsule);
+        repository.updateVotesCapsule(obtainer, obtainVotesCapsule);
+      }
+
+      repository.updateAccount(obtainer, obtainCapsule);
+    }
+
+    repository.updateAccount(owner, ownerCapsule);
+    repository.updateDelegatedResourceAccountIndex(owner, delegatedIndex);
   }
 
   @SuppressWarnings("ThrowableResultOfMethodCallIgnored")

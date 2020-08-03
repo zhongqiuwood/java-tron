@@ -76,7 +76,7 @@ public class UnfreezeBalanceProcessor  implements IContractProcessor{
 
             AccountCapsule receiverCapsule = repository.getAccount(receiverAddress);
             if (dynamicStore.getAllowTvmConstantinople() == 0 ||
-                    (receiverCapsule != null && receiverCapsule.getType() != Protocol.AccountType.Contract)) {
+                    (receiverCapsule != null)) {
                 switch (resource) {
                     case BANDWIDTH:
                         if (dynamicStore.getAllowTvmSolidity059() == 1

@@ -391,6 +391,15 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
         .build();
   }
 
+  public void setDelegatedFrozenBalanceForEnergy(long balance){
+    AccountResource newAccountResource = getAccountResource().toBuilder()
+            .setDelegatedFrozenBalanceForEnergy(balance).build();
+
+    this.account = this.account.toBuilder()
+            .setAccountResource(newAccountResource)
+            .build();
+  }
+
   public void addAcquiredDelegatedFrozenBalanceForEnergy(long balance) {
     AccountResource newAccountResource = getAccountResource().toBuilder()
         .setAcquiredDelegatedFrozenBalanceForEnergy(
