@@ -20,11 +20,7 @@ package org.tron.core.vm.program;
 
 import static java.lang.StrictMath.min;
 import static java.lang.String.format;
-import static org.apache.commons.lang3.ArrayUtils.EMPTY_BYTE_ARRAY;
-import static org.apache.commons.lang3.ArrayUtils.getLength;
-import static org.apache.commons.lang3.ArrayUtils.isEmpty;
-import static org.apache.commons.lang3.ArrayUtils.isNotEmpty;
-import static org.apache.commons.lang3.ArrayUtils.nullToEmpty;
+import static org.apache.commons.lang3.ArrayUtils.*;
 import static org.tron.common.utils.ByteUtil.stripLeadingZeroes;
 import static org.tron.core.config.Parameter.ChainConstant.FROZEN_PERIOD;
 import static org.tron.core.config.Parameter.ChainConstant.TRX_PRECISION;
@@ -121,6 +117,8 @@ public class Program {
   private byte previouslyExecutedOp;
   private boolean stopped;
   private ProgramPrecompile programPrecompile;
+  private static final int addressLength = 20;
+  private static final int unit256Length = 32;
 
   public Program(byte[] ops, ProgramInvoke programInvoke) {
     this(ops, programInvoke, null);
@@ -1921,18 +1919,26 @@ public class Program {
   }
 
   public boolean vote(DataWord srOffset, DataWord srSize, DataWord tronpowerOffset, DataWord tronpowerSize) {
-    Repository deposit = getContractState().newRepositoryChild();
-    Protocol.Vote vote =
-            Protocol.Vote.newBuilder().setVoteAddress(ByteString.copyFrom("".getBytes())).setVoteCount(1).build();
+    byte[] addressBytes = memoryChunk(srOffset.intValue(), srSize.intValue());
+    byte[] countBytes = memoryChunk(tronpowerOffset.intValue(), tronpowerSize.intValue());
+    if(addressBytes.length % addressLength != 0 || countBytes.length % unit256Length != 0 || addressBytes.length/addressLength != countBytes.length/unit256Length) {
+        throw new BytecodeExecutionException("validateForVoteWitness failure:%s", "invalid address or vote count");
+    }
     ArrayList<Protocol.Vote> votesList = new ArrayList<>();
-    votesList.add(vote);
+    for(int i = 0; i < addressBytes.length/addressLength; i++) {
+        byte[] address = Arrays.copyOfRange(addressBytes,addressLength*i, addressLength*(i+1));
+        byte[] count = Arrays.copyOfRange(countBytes,unit256Length*i, unit256Length*(i+1));
+        Protocol.Vote vote =
+                Protocol.Vote.newBuilder().setVoteAddress(ByteString.copyFrom(TransactionTrace.convertToTronAddress(address))).setVoteCount(Long.valueOf(count.toString())).build();
+        votesList.add(vote);
+    }
+    Repository deposit = getContractState().newRepositoryChild();
     VoteWitnessProcessor voteWitnessProcessor = new VoteWitnessProcessor(deposit);
     VoteWitnessParam voteWitnessParam = new VoteWitnessParam();
-    voteWitnessParam.setVote(vote);
     voteWitnessParam.setVotesList(votesList);
     voteWitnessParam.setVotesCount(votesList.size());
     byte[] owner = TransactionTrace.convertToTronAddress(getContractAddress().getLast20Bytes());
-    voteWitnessParam.setOwneraddress(owner);
+    voteWitnessParam.setOwnerAddress(owner);
     try{
       voteWitnessProcessor.validate(voteWitnessParam);
     }catch (ContractValidateException e){

@@ -8,11 +8,9 @@ import java.util.ArrayList;
 @Data
 public class VoteWitnessParam {
 
-    private byte[] owneraddress;
+    private byte[] ownerAddress;
 
     private int votesCount;
-
-    private Protocol.Vote vote;
 
     private ArrayList<Protocol.Vote> votesList;
 

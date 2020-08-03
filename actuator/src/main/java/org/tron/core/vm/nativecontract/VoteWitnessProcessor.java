@@ -47,7 +47,7 @@ public class VoteWitnessProcessor implements IContractProcessor {
         if (repository == null) {
             throw new ContractValidateException(ContractProcessorConstant.STORE_NOT_EXIST);
         }
-        byte[] ownerAddress = voteWitnessParam.getOwneraddress();
+        byte[] ownerAddress = voteWitnessParam.getOwnerAddress();
         if (!DecodeUtil.addressValid(ownerAddress)) {
             throw new ContractValidateException("Invalid address");
         }
@@ -109,7 +109,7 @@ public class VoteWitnessProcessor implements IContractProcessor {
     }
 
     private void countVoteAccount(VoteWitnessParam voteWitnessParam) {
-        byte[] ownerAddress = voteWitnessParam.getOwneraddress();
+        byte[] ownerAddress = voteWitnessParam.getOwnerAddress();
         AccountCapsule accountCapsule = repository.getAccount(ownerAddress);
         VotesCapsule votesCapsule;
 
@@ -117,7 +117,7 @@ public class VoteWitnessProcessor implements IContractProcessor {
         contractService.withdrawReward(ownerAddress);
 
         if (repository.getVotesCapsule(ownerAddress) == null) {
-            votesCapsule = new VotesCapsule(ByteString.copyFrom(voteWitnessParam.getOwneraddress()),
+            votesCapsule = new VotesCapsule(ByteString.copyFrom(voteWitnessParam.getOwnerAddress()),
                     accountCapsule.getVotesList());
         } else {
             votesCapsule = repository.getVotesCapsule(ownerAddress);

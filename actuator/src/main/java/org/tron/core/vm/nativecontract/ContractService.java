@@ -73,7 +73,6 @@ public class ContractService {
         repository.updateBeginCycle(address, endCycle);
         repository.updateEndCycle(address, endCycle + 1);
         repository.updateAccountVote(address,endCycle,  accountCapsule);
-        repository.commit();
         logger.info("adjust {} allowance {}, now currentCycle {}, beginCycle {}, endCycle {}, "
                         + "account vote {},", Hex.toHexString(address), reward, currentCycle,
                 beginCycle, endCycle, accountCapsule.getVotesList());
@@ -116,8 +115,6 @@ public class ContractService {
         accountCapsule.setAllowance(allowance + amount);
         repository.putAccountValue(accountCapsule.createDbKey(), accountCapsule);
     }
-
-
 
     public long queryReward(byte[] address) {
         if (!repository.getDynamicPropertiesStore().allowChangeDelegation()) {
