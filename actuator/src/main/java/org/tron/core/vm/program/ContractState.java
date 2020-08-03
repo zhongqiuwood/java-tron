@@ -157,11 +157,6 @@ public class ContractState implements Repository, ProgramListenerAware {
   }
 
   @Override
-  public long getRewardBalance(byte[] address) {
-    return repository.getRewardBalance(address);
-  }
-
-  @Override
   public Repository newRepositoryChild() {
     return repository.newRepositoryChild();
   }

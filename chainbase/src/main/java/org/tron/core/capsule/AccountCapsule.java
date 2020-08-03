@@ -312,10 +312,6 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
     return this.account.getBalance();
   }
 
-  public long getRewardBalance() {
-    return this.account.getRewardBalance();
-  }
-
   public void setBalance(long balance) {
     this.account = this.account.toBuilder().setBalance(balance).build();
   }

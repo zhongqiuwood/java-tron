@@ -579,12 +579,6 @@ public class RepositoryImpl implements Repository {
   }
 
   @Override
-  public long getRewardBalance(byte[] address) {
-    AccountCapsule accountCapsule = getAccount(address);
-    return accountCapsule == null ? 0L : accountCapsule.getRewardBalance();
-  }
-
-  @Override
   public void setParent(Repository repository) {
     parent = repository;
   }

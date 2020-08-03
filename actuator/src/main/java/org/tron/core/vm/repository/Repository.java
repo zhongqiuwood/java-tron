@@ -88,8 +88,6 @@ public interface Repository {
 
   long addBalance(byte[] address, long value);
 
-  long getRewardBalance(byte[] address);
-
   Repository newRepositoryChild();
 
   void setParent(Repository deposit);

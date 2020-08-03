@@ -1342,8 +1342,8 @@ public class Program {
   }
 
   public DataWord getRewardBalance(DataWord address) {
-    long rewardBalance = getContractState()
-            .getRewardBalance(TransactionTrace.convertToTronAddress(address.getLast20Bytes()));
+    ContractService contractService = new ContractService(getContractState());
+    long rewardBalance = contractService.queryReward(TransactionTrace.convertToTronAddress(address.getLast20Bytes()));
     return new DataWord(rewardBalance);
   }
 
