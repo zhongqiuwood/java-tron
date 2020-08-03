@@ -137,13 +137,4 @@ public class VoteWitnessProcessor implements IContractProcessor {
         repository.updateVotesCapsule(ownerAddress, votesCapsule);
     }
 
-    @Override
-    public ByteString getOwnerAddress() throws InvalidProtocolBufferException {
-        return null;
-    }
-
-    @Override
-    public long calcFee() {
-        return 0;
-    }
 }

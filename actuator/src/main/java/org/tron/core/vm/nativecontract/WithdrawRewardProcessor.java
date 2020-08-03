@@ -105,13 +105,4 @@ public class WithdrawRewardProcessor implements IContractProcessor {
         return true;
     }
 
-    @Override
-    public ByteString getOwnerAddress() throws InvalidProtocolBufferException {
-        return null;
-    }
-
-    @Override
-    public long calcFee() {
-        return 0;
-    }
 }

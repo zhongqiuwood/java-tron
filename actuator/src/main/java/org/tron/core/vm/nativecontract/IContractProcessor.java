@@ -11,7 +11,4 @@ public interface IContractProcessor {
 
     boolean validate(Object contract) throws ContractValidateException;
 
-    ByteString getOwnerAddress() throws InvalidProtocolBufferException;
-
-    long calcFee();
 }

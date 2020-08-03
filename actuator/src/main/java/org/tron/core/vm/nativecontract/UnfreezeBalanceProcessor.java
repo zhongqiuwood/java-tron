@@ -39,10 +39,8 @@ public class UnfreezeBalanceProcessor  implements IContractProcessor{
         byte[] receiverAddress = unfreezeBalanceParam.getReceiverAddress();
         Common.ResourceCode resource = unfreezeBalanceParam.getResource();
 
-        long fee = calcFee();
         DynamicPropertiesStore dynamicStore = repository.getDynamicPropertiesStore();
 
-        //
         ContractService contractService = new ContractService(repository);
         contractService.withdrawReward(ownerAddress);
 
@@ -363,16 +361,6 @@ public class UnfreezeBalanceProcessor  implements IContractProcessor{
         }
 
         return true;
-    }
-
-    @Override
-    public ByteString getOwnerAddress() throws InvalidProtocolBufferException {
-        return null;
-    }
-
-    @Override
-    public long calcFee() {
-        return 0;
     }
 
 }
