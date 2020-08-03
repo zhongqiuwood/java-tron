@@ -46,8 +46,6 @@ public class FreezeBalanceProcessor implements IContractProcessor{
         byte[] receiverAddress = freezeBalanceParam.getReceiverAddress();
         Common.ResourceCode resource = freezeBalanceParam.getResource();
 
-
-        long fee = calcFee();
         DynamicPropertiesStore dynamicStore = repository.getDynamicPropertiesStore();
         AccountCapsule accountCapsule = repository.getAccount(ownerAddress);
 
@@ -203,16 +201,6 @@ public class FreezeBalanceProcessor implements IContractProcessor{
         }
 
         return true;
-    }
-
-    @Override
-    public ByteString getOwnerAddress() throws InvalidProtocolBufferException {
-        return null;
-    }
-
-    @Override
-    public long calcFee() {
-        return 0;
     }
 
     private void delegateResource(byte[] ownerAddress, byte[] receiverAddress, boolean isBandwidth,
