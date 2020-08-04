@@ -935,6 +935,11 @@ public class Wallet {
         .setValue(dbManager.getDynamicPropertiesStore().getAllowPBFT())
         .build());
 
+    builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
+        .setKey("getAllowTVMVote")
+        .setValue(dbManager.getDynamicPropertiesStore().getAllowTVMVote())
+        .build());
+
     return builder.build();
   }
 
