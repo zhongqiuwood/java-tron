@@ -6387,7 +6387,7 @@ public class PublicMethed {
     if (!ret.getResult()) {
       System.out.println("Code = " + ret.getCode());
       System.out.println("Message = " + ret.getMessage().toStringUtf8());
-      return null;
+      return ret.getMessage().toStringUtf8();
     }
     Transaction transaction = transactionExtention.getTransaction();
     if (transaction == null || transaction.getRawData().getContractCount() == 0) {
