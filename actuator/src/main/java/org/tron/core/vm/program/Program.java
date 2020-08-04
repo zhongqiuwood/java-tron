@@ -1902,10 +1902,10 @@ public class Program {
     FreezeBalanceParam freezeBalanceParam = new FreezeBalanceParam();
     freezeBalanceParam.setFrozenBalance(freezeAmount.longValue());
     freezeBalanceParam.setFrozenDuration(day.longValue());
-    if(delegatedAddress != null && !delegatedAddress.isZero()) {
+    byte[] owner = TransactionTrace.convertToTronAddress(getContractAddress().getLast20Bytes());
+    if(delegatedAddress != null && !delegatedAddress.isZero() && !Arrays.equals(delegatedAddress.getData(), owner)) {
       freezeBalanceParam.setReceiverAddress(delegatedAddress.getData());
     }
-    byte[] owner = TransactionTrace.convertToTronAddress(getContractAddress().getLast20Bytes());
     freezeBalanceParam.setOwnerAddress(owner);
     //0 as bandwidth, 1 as energy.
     freezeBalanceParam.setResource(resourceType.isZero() ? Common.ResourceCode.BANDWIDTH : Common.ResourceCode.ENERGY);
@@ -1921,10 +1921,10 @@ public class Program {
     Repository deposit = getContractState().newRepositoryChild();
     UnfreezeBalanceProcessor unfreezeBalanceProcessor = new UnfreezeBalanceProcessor(deposit);
     UnfreezeBalanceParam unfreezeBalanceParam = new UnfreezeBalanceParam();
-    if(delegatedAddress != null && !delegatedAddress.isZero()) {
+    byte[] owner = TransactionTrace.convertToTronAddress(getContractAddress().getLast20Bytes());
+    if(delegatedAddress != null && !delegatedAddress.isZero() && !Arrays.equals(delegatedAddress.getData(), owner)) {
       unfreezeBalanceParam.setReceiverAddress(delegatedAddress.getData());
     }
-    byte[] owner = TransactionTrace.convertToTronAddress(getContractAddress().getLast20Bytes());
     unfreezeBalanceParam.setOwnerAddress(owner);
     //0 as bandwidth, 1 as energy.
     unfreezeBalanceParam.setResource(resourceType.isZero() ? Common.ResourceCode.BANDWIDTH : Common.ResourceCode.ENERGY);
