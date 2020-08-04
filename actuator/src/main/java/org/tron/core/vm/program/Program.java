@@ -29,6 +29,7 @@ import com.google.protobuf.ByteString;
 import java.io.ByteArrayOutputStream;
 import java.math.BigInteger;
 import java.util.*;
+import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 import lombok.extern.slf4j.Slf4j;
@@ -787,11 +788,7 @@ public class Program {
       VotesCapsule ownerVotesCapsule = repository.getVotesCapsule(owner);
       VotesCapsule obtainVotesCapsule = repository.getVotesCapsule(obtainer);
 
-      if (obtainVotesCapsule == null && ownerVotesCapsule == null) {
-        ownerCapsule.getVotesList().forEach(vote -> {
-          obtainCapsule.addVotes(vote.getVoteAddress(), vote.getVoteCount());
-        });
-      } else {
+      if (obtainVotesCapsule != null || ownerVotesCapsule != null) {
         if(obtainVotesCapsule == null){
           obtainVotesCapsule = new VotesCapsule(obtainCapsule.getAddress(),
                   obtainCapsule.getVotesList(), obtainCapsule.getVotesList());
@@ -800,19 +797,39 @@ public class Program {
           ownerVotesCapsule = new VotesCapsule(ownerCapsule.getAddress(),
                   ownerCapsule.getVotesList(), ownerCapsule.getVotesList());
         }
-        ownerCapsule.getVotesList().forEach(vote -> {
-          obtainCapsule.addVotes(vote.getVoteAddress(), vote.getVoteCount());
-        });
-        for (Protocol.Vote vote : ownerVotesCapsule.getOldVotes()) {
-          obtainVotesCapsule.addOldVotes(vote.getVoteAddress(), vote.getVoteCount());
+
+        Map<ByteString, Long> ownerOldVotes = ownerVotesCapsule.getOldVotes().stream().collect(
+                Collectors.toMap(Protocol.Vote::getVoteAddress, Protocol.Vote::getVoteCount, Long::sum));
+        List<Protocol.Vote> obtainOldVotes = new ArrayList<>(obtainVotesCapsule.getOldVotes());
+
+        obtainVotesCapsule.clearOldVotes();
+        for (Protocol.Vote vote : obtainOldVotes) {
+          obtainVotesCapsule.addOldVotes(vote.getVoteAddress(), vote.getVoteCount() +
+                  ownerOldVotes.getOrDefault(vote.getVoteAddress(), 0L));
         }
-        for (Protocol.Vote vote : ownerVotesCapsule.getNewVotes()) {
-          obtainVotesCapsule.addNewVotes(vote.getVoteAddress(), vote.getVoteCount());
+
+        Map<ByteString, Long> ownerNewVotes = ownerVotesCapsule.getNewVotes().stream().collect(
+                Collectors.toMap(Protocol.Vote::getVoteAddress, Protocol.Vote::getVoteCount, Long::sum));
+        List<Protocol.Vote> obtainNewVotes = new ArrayList<>(obtainVotesCapsule.getNewVotes());
+
+        obtainVotesCapsule.clearNewVotes();
+        for (Protocol.Vote vote : obtainNewVotes) {
+          obtainVotesCapsule.addNewVotes(vote.getVoteAddress(), vote.getVoteCount() +
+                  ownerNewVotes.getOrDefault(vote.getVoteAddress(), 0L));
         }
 
         repository.updateVotesCapsule(owner, ownerVotesCapsule);
         repository.updateVotesCapsule(obtainer, obtainVotesCapsule);
       }
+      Map<ByteString, Long> ownerAccountVotes = ownerCapsule.getVotesList().stream().collect(
+              Collectors.toMap(Protocol.Vote::getVoteAddress, Protocol.Vote::getVoteCount, Long::sum));
+      List<Protocol.Vote> obtainAccountVotes = new ArrayList<>(obtainCapsule.getVotesList());
+
+      obtainCapsule.clearVotes();
+      obtainAccountVotes.forEach(vote -> {
+        obtainCapsule.addVotes(vote.getVoteAddress(), vote.getVoteCount() +
+                ownerAccountVotes.getOrDefault(vote.getVoteAddress(), 0L));
+      });
 
       repository.updateAccount(obtainer, obtainCapsule);
     }
