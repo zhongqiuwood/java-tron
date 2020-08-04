@@ -561,10 +561,10 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     }
 
     try {
-      this.getAllowTVMVote();
+      this.getAllowTvmVote();
     } catch (IllegalArgumentException e) {
-      this.saveAllowTVMVote(
-              CommonParameter.getInstance().getAllowTVMVote());
+      this.saveAllowTvmVote(
+              CommonParameter.getInstance().getAllowTvmVote());
     }
 
     try {
@@ -1591,12 +1591,12 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
             () -> new IllegalArgumentException(msg));
   }
 
-  public void saveAllowTVMVote(long allowTVMVote) {
+  public void saveAllowTvmVote(long allowTvmVote) {
     this.put(DynamicPropertiesStore.ALLOW_TVM_VOTE,
-            new BytesCapsule(ByteArray.fromLong(allowTVMVote)));
+            new BytesCapsule(ByteArray.fromLong(allowTvmVote)));
   }
 
-  public long getAllowTVMVote() {
+  public long getAllowTvmVote() {
     String msg = "not found ALLOW_TVM_VOTE";
     return Optional.ofNullable(getUnchecked(ALLOW_TVM_VOTE))
             .map(BytesCapsule::getData)

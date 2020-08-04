@@ -172,7 +172,7 @@ public class Args extends CommonParameter {
     PARAMETER.agreeNodeCount = MAX_ACTIVE_WITNESS_NUM * 2 / 3 + 1;
     PARAMETER.allowPBFT = 0;
     PARAMETER.allowShieldedTRC20Transaction = 0;
-    PARAMETER.allowTVMVote = 0;
+    PARAMETER.allowTvmVote = 0;
   }
 
   /**
@@ -697,7 +697,7 @@ public class Args extends CommonParameter {
       //  INSTANCE.agreeNodeCount = MAX_ACTIVE_WITNESS_NUM * 2 / 3 + 1;
     }
 
-    PARAMETER.allowTVMVote =
+    PARAMETER.allowTvmVote =
             config.hasPath(Constant.COMMITTEE_ALLOW_TVM_VOTE) ? config
                     .getInt(Constant.COMMITTEE_ALLOW_TVM_VOTE) : 0;
     initBackupProperty(config);

@@ -936,8 +936,8 @@ public class Wallet {
         .build());
 
     builder.addChainParameter(Protocol.ChainParameters.ChainParameter.newBuilder()
-        .setKey("getAllowTVMVote")
-        .setValue(dbManager.getDynamicPropertiesStore().getAllowTVMVote())
+        .setKey("getAllowTvmVote")
+        .setValue(dbManager.getDynamicPropertiesStore().getAllowTvmVote())
         .build());
 
     return builder.build();
