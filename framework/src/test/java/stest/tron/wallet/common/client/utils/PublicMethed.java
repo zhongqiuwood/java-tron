@@ -6443,6 +6443,34 @@ public class PublicMethed {
     return Txid;
   }
 
+
+  /**
+   * constructor.
+   */
+
+  public static Return marketCancelOrderGetResposne(byte[] owner, String priKey, byte[] orderId,
+      WalletGrpc.WalletBlockingStub blockingStubFull){
+
+    ECKey temKey = null;
+    try {
+      BigInteger priK = new BigInteger(priKey, 16);
+      temKey = ECKey.fromPrivate(priK);
+    } catch (Exception ex) {
+      ex.printStackTrace();
+    }
+    ECKey ecKey = temKey;
+
+    MarketCancelOrderContract.Builder builder = MarketCancelOrderContract.newBuilder();
+    builder.setOwnerAddress(ByteString.copyFrom(owner)).setOrderId(ByteString.copyFrom(orderId));
+
+    TransactionExtention transactionExtention = blockingStubFull.marketCancelOrder(builder.build());
+
+    if (transactionExtention == null) {
+      return null;
+    }
+    return transactionExtention.getResult();
+  }
+
   /**
    * constructor.
    */
