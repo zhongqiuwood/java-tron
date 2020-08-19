@@ -65,6 +65,7 @@ import org.tron.api.GrpcAPI.TransactionApprovedList;
 import org.tron.api.GrpcAPI.TransactionExtention;
 import org.tron.api.GrpcAPI.TransactionInfoList;
 import org.tron.api.WalletGrpc;
+import org.tron.api.WalletGrpc.WalletBlockingStub;
 import org.tron.api.WalletSolidityGrpc;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.ECKey.ECDSASignature;
@@ -6357,6 +6358,36 @@ public class PublicMethed {
 
     System.out.println("trigger txid = " + Txid);
     return Txid;
+
+  }
+
+  /**
+   * constructor.
+   */
+  public static Return marketSellAssetGetResposne(byte[] owner, String priKey, byte[] sellTokenId,
+      long sellTokenQuantity, byte[] buyTokenId, long buyTokenQuantity,
+      WalletBlockingStub blockingStubFull) {
+
+    ECKey temKey = null;
+    try {
+      BigInteger priK = new BigInteger(priKey, 16);
+      temKey = ECKey.fromPrivate(priK);
+    } catch (Exception ex) {
+      ex.printStackTrace();
+    }
+    ECKey ecKey = temKey;
+
+    MarketSellAssetContract.Builder builder = MarketSellAssetContract.newBuilder();
+    builder
+        .setOwnerAddress(ByteString.copyFrom(owner))
+        .setSellTokenId(ByteString.copyFrom(sellTokenId))
+        .setSellTokenQuantity(sellTokenQuantity)
+        .setBuyTokenId(ByteString.copyFrom(buyTokenId))
+        .setBuyTokenQuantity(buyTokenQuantity);
+
+    TransactionExtention transactionExtention = blockingStubFull.marketSellAsset(builder.build());
+
+    return transactionExtention.getResult();
 
   }
 
