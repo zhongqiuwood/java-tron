@@ -24,7 +24,7 @@ import zmq.socket.pubsub.Pub;
 
 @Slf4j
 
-public class MarketSellAsset100 {
+public class MarketSellAsset003 {
 
   private static final long now = System.currentTimeMillis();
   private static final String name = "testAssetIssue003_" + Long.toString(now);
@@ -94,7 +94,7 @@ public class MarketSellAsset100 {
   }
 
 
-  @Test(enabled = true,description = "取消订单")
+  @Test(enabled = true,description = "CancelOrder")
   void MarketCancelAssetTest001() {
 
     String txid = PublicMethed.marketSellAsset(testAddress001,testKey001,assetAccountId001,100,trx
@@ -123,7 +123,7 @@ public class MarketSellAsset100 {
 
   }
 
-  @Test(enabled = true,description = "取消已取消的订单，报错")
+  @Test(enabled = true,description = "Cancel a cancelled order ")
   void MarketCancelAssetTest002() {
 
     String txid = PublicMethed.marketSellAsset(testAddress001,testKey001,assetAccountId001,100,trx
