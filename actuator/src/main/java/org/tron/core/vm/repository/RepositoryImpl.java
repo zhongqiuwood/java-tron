@@ -227,7 +227,7 @@ public class RepositoryImpl implements Repository {
   @Override
   public void createContract(byte[] address, ContractCapsule contractCapsule) {
     Key key = Key.create(address);
-    Value value = Value.create(contractCapsule.getData(), Type.VALUE_TYPE_CREATE);
+    Value value = Value.create(contractCapsule.getInstance(), Type.VALUE_TYPE_CREATE);
     contractCache.put(key, value);
   }
 
@@ -254,7 +254,7 @@ public class RepositoryImpl implements Repository {
   @Override
   public void updateContract(byte[] address, ContractCapsule contractCapsule) {
     Key key = Key.create(address);
-    Value value = Value.create(contractCapsule.getData(), Type.VALUE_TYPE_DIRTY);
+    Value value = Value.create(contractCapsule.getInstance(), Type.VALUE_TYPE_DIRTY);
     contractCache.put(key, value);
   }
 

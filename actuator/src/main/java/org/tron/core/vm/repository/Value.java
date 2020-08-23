@@ -94,6 +94,10 @@ public class Value {
     return new Value(any, Type.VALUE_TYPE_NORMAL);
   }
 
+  public static Value create(SmartContractOuterClass.SmartContract any, int type) {
+    return new Value(any, type);
+  }
+
   /**
    * @return
    */
