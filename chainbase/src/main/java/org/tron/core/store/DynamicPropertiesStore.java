@@ -22,6 +22,8 @@ import org.tron.core.config.Parameter;
 import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.db.TronStoreWithRevoking;
 import org.tron.core.db2.common.WrappedByteArray;
+import org.tron.core.exception.BadItemException;
+import org.tron.core.exception.ItemNotFoundException;
 import org.tron.protos.Protocol;
 
 @Slf4j(topic = "DB")
@@ -159,7 +161,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
       .build();
 
   @Override
-  public BytesCapsule get(byte[] key) {
+  public BytesCapsule get(byte[] key) throws BadItemException, ItemNotFoundException {
     return getUnchecked(key);
   }
 
