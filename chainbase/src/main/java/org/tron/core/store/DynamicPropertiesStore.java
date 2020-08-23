@@ -167,7 +167,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   @Override
   public BytesCapsule getUnchecked(byte[] key) {
-    if (accountStore.isSync()) {
+    if (accountStore != null && accountStore.isSync()) {
       WrappedByteArray value = cache.getIfPresent(WrappedByteArray.of(key));
       if (value != null) {
         return new BytesCapsule(WrappedByteArray.copyOf(value.getBytes()).getBytes());
@@ -178,7 +178,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
     BytesCapsule bytesCapsule = super.getUnchecked(key);
 
-    if (accountStore.isSync()) {
+    if (accountStore != null && accountStore.isSync()) {
       cache.put(WrappedByteArray.of(key), WrappedByteArray.copyOf(bytesCapsule.getData()));
     }
     return bytesCapsule;
@@ -191,7 +191,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
     }
 
     super.put(key, item);
-    if (accountStore.isSync()) {
+    if (accountStore != null && accountStore.isSync()) {
       cache.put(WrappedByteArray.of(key), WrappedByteArray.copyOf(item.getData()));
     }
   }
@@ -200,7 +200,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   public void delete(byte[] key) {
     super.delete(key);
 
-    if (accountStore.isSync()) {
+    if (accountStore != null && accountStore.isSync()) {
       cache.invalidate(WrappedByteArray.of(key));
     }
   }
