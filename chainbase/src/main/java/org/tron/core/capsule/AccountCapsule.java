@@ -40,7 +40,7 @@ import org.tron.protos.contract.AccountContract.AccountUpdateContract;
 @Slf4j(topic = "capsule")
 public class AccountCapsule implements ProtoCapsule<Account>, Comparable<AccountCapsule> {
 
-  private Account.Builder account;
+  private Account account;
 
 
   /**
@@ -48,7 +48,7 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
    */
   public AccountCapsule(byte[] data) {
     try {
-      this.account = Account.parseFrom(data).toBuilder();
+      this.account = Account.parseFrom(data);
     } catch (InvalidProtocolBufferException e) {
       logger.debug(e.getMessage());
     }
@@ -58,12 +58,13 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
    * initial account capsule.
    */
   public AccountCapsule(ByteString accountName, ByteString address, AccountType accountType,
-      long balance) {
+                        long balance) {
     this.account = Account.newBuilder()
         .setAccountName(accountName)
         .setType(accountType)
         .setAddress(address)
-        .setBalance(balance);
+        .setBalance(balance)
+        .build();
   }
 
   /**
@@ -73,14 +74,15 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
     this.account = Account.newBuilder()
         .setType(contract.getType())
         .setAddress(contract.getAccountAddress())
-        .setTypeValue(contract.getTypeValue());
+        .setTypeValue(contract.getTypeValue())
+        .build();
   }
 
   /**
    * construct account from AccountCreateContract and createTime.
    */
   public AccountCapsule(final AccountCreateContract contract, long createTime,
-      boolean withDefaultPermission, DynamicPropertiesStore dynamicPropertiesStore) {
+                        boolean withDefaultPermission, DynamicPropertiesStore dynamicPropertiesStore) {
     if (withDefaultPermission) {
       Permission owner = createDefaultOwnerPermission(contract.getAccountAddress());
       Permission active = createDefaultActivePermission(contract.getAccountAddress(),
@@ -92,13 +94,15 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
           .setTypeValue(contract.getTypeValue())
           .setCreateTime(createTime)
           .setOwnerPermission(owner)
-          .addActivePermission(active);
+          .addActivePermission(active)
+          .build();
     } else {
       this.account = Account.newBuilder()
           .setType(contract.getType())
           .setAddress(contract.getAccountAddress())
           .setTypeValue(contract.getTypeValue())
-          .setCreateTime(createTime);
+          .setCreateTime(createTime)
+          .build();
     }
   }
 
@@ -114,29 +118,31 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
    * get account from address and account name.
    */
   public AccountCapsule(ByteString address, ByteString accountName,
-      AccountType accountType) {
+                        AccountType accountType) {
     this.account = Account.newBuilder()
         .setType(accountType)
         .setAccountName(accountName)
-        .setAddress(address);
+        .setAddress(address)
+        .build();
   }
 
   /**
    * get account from address.
    */
   public AccountCapsule(ByteString address,
-      AccountType accountType) {
+                        AccountType accountType) {
     this.account = Account.newBuilder()
         .setType(accountType)
-        .setAddress(address);
+        .setAddress(address)
+        .build();
   }
 
   /**
    * get account from address.
    */
   public AccountCapsule(ByteString address,
-      AccountType accountType, long createTime,
-      boolean withDefaultPermission, DynamicPropertiesStore dynamicPropertiesStore) {
+                        AccountType accountType, long createTime,
+                        boolean withDefaultPermission, DynamicPropertiesStore dynamicPropertiesStore) {
     if (withDefaultPermission) {
       Permission owner = createDefaultOwnerPermission(address);
       Permission active = createDefaultActivePermission(address, dynamicPropertiesStore);
@@ -146,12 +152,14 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
           .setAddress(address)
           .setCreateTime(createTime)
           .setOwnerPermission(owner)
-          .addActivePermission(active);
+          .addActivePermission(active)
+          .build();
     } else {
       this.account = Account.newBuilder()
           .setType(accountType)
           .setAddress(address)
-          .setCreateTime(createTime);
+          .setCreateTime(createTime)
+          .build();
     }
 
   }
@@ -160,7 +168,7 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
    * get account from address.
    */
   public AccountCapsule(Account account) {
-    this.account = account.toBuilder();
+    this.account = account;
   }
 
   private static ByteString getActiveDefaultOperations(
@@ -185,7 +193,7 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
   }
 
   public static Permission createDefaultActivePermission(ByteString address,
-      DynamicPropertiesStore dynamicPropertiesStore) {
+                                                         DynamicPropertiesStore dynamicPropertiesStore) {
     Key.Builder key = Key.newBuilder();
     key.setAddress(address);
     key.setWeight(1);
@@ -228,16 +236,16 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
   }
 
   public byte[] getData() {
-    return this.account.build().toByteArray();
+    return this.account.toByteArray();
   }
 
   @Override
   public Account getInstance() {
-    return this.account.build();
+    return this.account;
   }
 
   public void setInstance(Account account) {
-    this.account = account.toBuilder();
+    this.account = account;
   }
 
   public ByteString getAddress() {
@@ -264,7 +272,7 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
    * set account name
    */
   public void setAccountName(byte[] name) {
-    account.setAccountName(ByteString.copyFrom(name));
+    this.account = this.account.toBuilder().setAccountName(ByteString.copyFrom(name)).build();
   }
 
   public ByteString getAccountId() {
@@ -275,11 +283,11 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
    * set account id
    */
   public void setAccountId(byte[] id) {
-    this.account.setAccountId(ByteString.copyFrom(id));
+    this.account = this.account.toBuilder().setAccountId(ByteString.copyFrom(id)).build();
   }
 
   public void setDefaultWitnessPermission(DynamicPropertiesStore dynamicPropertiesStore) {
-    Builder builder = this.account;
+    Builder builder = this.account.toBuilder();
     Permission witness = createDefaultWitnessPermission(this.getAddress());
     if (!this.account.hasOwnerPermission()) {
       Permission owner = createDefaultOwnerPermission(this.getAddress());
@@ -289,7 +297,7 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
       Permission active = createDefaultActivePermission(this.getAddress(), dynamicPropertiesStore);
       builder.addActivePermission(active);
     }
-    this.account = builder.setWitnessPermission(witness);
+    this.account = builder.setWitnessPermission(witness).build();
   }
 
   public byte[] getWitnessPermissionAddress() {
@@ -305,7 +313,7 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
   }
 
   public void setBalance(long balance) {
-    this.account.setBalance(balance);
+    this.account = this.account.toBuilder().setBalance(balance).build();
   }
 
   public long getLatestOperationTime() {
@@ -313,7 +321,7 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
   }
 
   public void setLatestOperationTime(long latest_time) {
-    this.account.setLatestOprationTime(latest_time);
+    this.account = this.account.toBuilder().setLatestOprationTime(latest_time).build();
   }
 
   public long getLatestConsumeTime() {
@@ -321,7 +329,7 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
   }
 
   public void setLatestConsumeTime(long latest_time) {
-    this.account.setLatestConsumeTime(latest_time);
+    this.account = this.account.toBuilder().setLatestConsumeTime(latest_time).build();
   }
 
   public long getLatestConsumeFreeTime() {
@@ -329,12 +337,12 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
   }
 
   public void setLatestConsumeFreeTime(long latest_time) {
-    this.account.setLatestConsumeFreeTime(latest_time);
+    this.account = this.account.toBuilder().setLatestConsumeFreeTime(latest_time).build();
   }
 
   public void addDelegatedFrozenBalanceForBandwidth(long balance) {
-    this.account.setDelegatedFrozenBalanceForBandwidth(
-        this.account.getDelegatedFrozenBalanceForBandwidth() + balance);
+    this.account = this.account.toBuilder().setDelegatedFrozenBalanceForBandwidth(
+        this.account.getDelegatedFrozenBalanceForBandwidth() + balance).build();
   }
 
   public long getAcquiredDelegatedFrozenBalanceForBandwidth() {
@@ -342,12 +350,14 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
   }
 
   public void setAcquiredDelegatedFrozenBalanceForBandwidth(long balance) {
-    this.account.setAcquiredDelegatedFrozenBalanceForBandwidth(balance);
+    this.account = this.account.toBuilder().setAcquiredDelegatedFrozenBalanceForBandwidth(balance)
+        .build();
   }
 
   public void addAcquiredDelegatedFrozenBalanceForBandwidth(long balance) {
-    this.account.setAcquiredDelegatedFrozenBalanceForBandwidth(
-        this.account.getAcquiredDelegatedFrozenBalanceForBandwidth() + balance);
+    this.account = this.account.toBuilder().setAcquiredDelegatedFrozenBalanceForBandwidth(
+        this.account.getAcquiredDelegatedFrozenBalanceForBandwidth() + balance)
+        .build();
   }
 
   public long getAcquiredDelegatedFrozenBalanceForEnergy() {
@@ -358,7 +368,9 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
     AccountResource newAccountResource = getAccountResource().toBuilder()
         .setAcquiredDelegatedFrozenBalanceForEnergy(balance).build();
 
-    this.account.setAccountResource(newAccountResource);
+    this.account = this.account.toBuilder()
+        .setAccountResource(newAccountResource)
+        .build();
   }
 
   public long getDelegatedFrozenBalanceForEnergy() {
@@ -370,7 +382,9 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
   }
 
   public void setDelegatedFrozenBalanceForBandwidth(long balance) {
-    this.account.setDelegatedFrozenBalanceForBandwidth(balance);
+    this.account = this.account.toBuilder()
+        .setDelegatedFrozenBalanceForBandwidth(balance)
+        .build();
   }
 
   public void addAcquiredDelegatedFrozenBalanceForEnergy(long balance) {
@@ -378,7 +392,9 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
         .setAcquiredDelegatedFrozenBalanceForEnergy(
             getAccountResource().getAcquiredDelegatedFrozenBalanceForEnergy() + balance).build();
 
-    this.account.setAccountResource(newAccountResource);
+    this.account = this.account.toBuilder()
+        .setAccountResource(newAccountResource)
+        .build();
   }
 
   public void addDelegatedFrozenBalanceForEnergy(long balance) {
@@ -386,7 +402,9 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
         .setDelegatedFrozenBalanceForEnergy(
             getAccountResource().getDelegatedFrozenBalanceForEnergy() + balance).build();
 
-    this.account.setAccountResource(newAccountResource).build();
+    this.account = this.account.toBuilder()
+        .setAccountResource(newAccountResource)
+        .build();
   }
 
   @Override
@@ -398,23 +416,33 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
    * set votes.
    */
   public void addVotes(ByteString voteAddress, long voteAdd) {
-    this.account.addVotes(Vote.newBuilder().setVoteAddress(voteAddress).setVoteCount(voteAdd).build()).build();
+    this.account = this.account.toBuilder()
+        .addVotes(Vote.newBuilder().setVoteAddress(voteAddress).setVoteCount(voteAdd).build())
+        .build();
   }
 
   public void clearAssetV2() {
-    this.account.clearAssetV2();
+    this.account = this.account.toBuilder()
+        .clearAssetV2()
+        .build();
   }
 
   public void clearLatestAssetOperationTimeV2() {
-    this.account.clearLatestAssetOperationTimeV2();
+    this.account = this.account.toBuilder()
+        .clearLatestAssetOperationTimeV2()
+        .build();
   }
 
   public void clearFreeAssetNetUsageV2() {
-    this.account.clearFreeAssetNetUsageV2();
+    this.account = this.account.toBuilder()
+        .clearFreeAssetNetUsageV2()
+        .build();
   }
 
   public void clearVotes() {
-    this.account.clearVotes();
+    this.account = this.account.toBuilder()
+        .clearVotes()
+        .build();
   }
 
   /**
@@ -453,7 +481,7 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
   }
 
   public boolean assetBalanceEnoughV2(byte[] key, long amount,
-      DynamicPropertiesStore dynamicPropertiesStore) {
+                                      DynamicPropertiesStore dynamicPropertiesStore) {
     Map<String, Long> assetMap;
     String nameKey;
     Long currentAmount;
@@ -478,7 +506,8 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
     String nameKey = ByteArray.toStr(key);
     Long currentAmount = assetMap.get(nameKey);
     if (amount > 0 && null != currentAmount && amount <= currentAmount) {
-      this.account.putAsset(nameKey, Math.subtractExact(currentAmount, amount));
+      this.account = this.account.toBuilder()
+          .putAsset(nameKey, Math.subtractExact(currentAmount, amount)).build();
       return true;
     }
 
@@ -489,7 +518,7 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
    * reduce asset amount.
    */
   public boolean reduceAssetAmountV2(byte[] key, long amount,
-      DynamicPropertiesStore dynamicPropertiesStore, AssetIssueStore assetIssueStore) {
+                                     DynamicPropertiesStore dynamicPropertiesStore, AssetIssueStore assetIssueStore) {
     //key is token name
     if (dynamicPropertiesStore.getAllowSameTokenName() == 0) {
       Map<String, Long> assetMap = this.account.getAssetMap();
@@ -498,8 +527,10 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
       String nameKey = ByteArray.toStr(key);
       Long currentAmount = assetMap.get(nameKey);
       if (amount > 0 && null != currentAmount && amount <= currentAmount) {
-        this.account.putAsset(nameKey, Math.subtractExact(currentAmount, amount))
-            .putAssetV2(tokenID, Math.subtractExact(currentAmount, amount));
+        this.account = this.account.toBuilder()
+            .putAsset(nameKey, Math.subtractExact(currentAmount, amount))
+            .putAssetV2(tokenID, Math.subtractExact(currentAmount, amount))
+            .build();
         return true;
       }
     }
@@ -509,7 +540,9 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
       Map<String, Long> assetMapV2 = this.account.getAssetV2Map();
       Long currentAmount = assetMapV2.get(tokenID);
       if (amount > 0 && null != currentAmount && amount <= currentAmount) {
-        this.account.putAssetV2(tokenID, Math.subtractExact(currentAmount, amount));
+        this.account = this.account.toBuilder()
+            .putAssetV2(tokenID, Math.subtractExact(currentAmount, amount))
+            .build();
         return true;
       }
     }
@@ -527,7 +560,8 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
     if (currentAmount == null) {
       currentAmount = 0L;
     }
-    this.account.putAsset(nameKey, Math.addExact(currentAmount, amount));
+    this.account = this.account.toBuilder().putAsset(nameKey, Math.addExact(currentAmount, amount))
+        .build();
     return true;
   }
 
@@ -535,7 +569,7 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
    * add asset amount.
    */
   public boolean addAssetAmountV2(byte[] key, long amount,
-      DynamicPropertiesStore dynamicPropertiesStore, AssetIssueStore assetIssueStore) {
+                                  DynamicPropertiesStore dynamicPropertiesStore, AssetIssueStore assetIssueStore) {
     //key is token name
     if (dynamicPropertiesStore.getAllowSameTokenName() == 0) {
       Map<String, Long> assetMap = this.account.getAssetMap();
@@ -546,8 +580,10 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
       if (currentAmount == null) {
         currentAmount = 0L;
       }
-      this.account.putAsset(nameKey, Math.addExact(currentAmount, amount))
-          .putAssetV2(tokenID, Math.addExact(currentAmount, amount));
+      this.account = this.account.toBuilder()
+          .putAsset(nameKey, Math.addExact(currentAmount, amount))
+          .putAssetV2(tokenID, Math.addExact(currentAmount, amount))
+          .build();
     }
     //key is token id
     if (dynamicPropertiesStore.getAllowSameTokenName() == 1) {
@@ -557,7 +593,9 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
       if (currentAmount == null) {
         currentAmount = 0L;
       }
-      this.account.putAssetV2(tokenIDStr, Math.addExact(currentAmount, amount));
+      this.account = this.account.toBuilder()
+          .putAssetV2(tokenIDStr, Math.addExact(currentAmount, amount))
+          .build();
     }
     return true;
   }
@@ -572,7 +610,7 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
       return false;
     }
 
-    this.account.putAsset(nameKey, value);
+    this.account = this.account.toBuilder().putAsset(nameKey, value).build();
 
     return true;
   }
@@ -584,7 +622,9 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
       return false;
     }
 
-    this.account.putAssetV2(tokenID, value);
+    this.account = this.account.toBuilder()
+        .putAssetV2(tokenID, value)
+        .build();
     return true;
   }
 
@@ -592,7 +632,7 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
    * add asset.
    */
   public boolean addAssetMapV2(Map<String, Long> assetMap) {
-    this.account.putAllAssetV2(assetMap);
+    this.account = this.account.toBuilder().putAllAssetV2(assetMap).build();
     return true;
   }
 
@@ -616,7 +656,7 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
   }
 
   public boolean addAllLatestAssetOperationTimeV2(Map<String, Long> map) {
-    this.account.putAllLatestAssetOperationTimeV2(map);
+    this.account = this.account.toBuilder().putAllLatestAssetOperationTimeV2(map).build();
     return true;
   }
 
@@ -637,11 +677,11 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
   }
 
   public void putLatestAssetOperationTimeMap(String key, Long value) {
-    this.account.putLatestAssetOperationTime(key, value);
+    this.account = this.account.toBuilder().putLatestAssetOperationTime(key, value).build();
   }
 
   public void putLatestAssetOperationTimeMapV2(String key, Long value) {
-    this.account.putLatestAssetOperationTimeV2(key, value);
+    this.account = this.account.toBuilder().putLatestAssetOperationTimeV2(key, value).build();
   }
 
   public int getFrozenCount() {
@@ -686,7 +726,7 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
 
   public void setAssetIssuedName(byte[] nameKey) {
     ByteString assetIssuedName = ByteString.copyFrom(nameKey);
-    this.account.setAssetIssuedName(assetIssuedName);
+    this.account = this.account.toBuilder().setAssetIssuedName(assetIssuedName).build();
   }
 
   public ByteString getAssetIssuedID() {
@@ -695,7 +735,7 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
 
   public void setAssetIssuedID(byte[] id) {
     ByteString assetIssuedID = ByteString.copyFrom(id);
-    this.account.setAssetIssuedID(assetIssuedID);
+    this.account = this.account.toBuilder().setAssetIssuedID(assetIssuedID).build();
   }
 
   public long getAllowance() {
@@ -703,7 +743,7 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
   }
 
   public void setAllowance(long allowance) {
-    this.account.setAllowance(allowance);
+    this.account = this.account.toBuilder().setAllowance(allowance).build();
   }
 
   public long getLatestWithdrawTime() {
@@ -712,7 +752,9 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
 
   //for test only
   public void setLatestWithdrawTime(long latestWithdrawTime) {
-    this.account.setLatestWithdrawTime(latestWithdrawTime);
+    this.account = this.account.toBuilder()
+        .setLatestWithdrawTime(latestWithdrawTime)
+        .build();
   }
 
   public boolean getIsWitness() {
@@ -720,7 +762,7 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
   }
 
   public void setIsWitness(boolean isWitness) {
-    this.account.setIsWitness(isWitness);
+    this.account = this.account.toBuilder().setIsWitness(isWitness).build();
   }
 
   public boolean getIsCommittee() {
@@ -728,7 +770,7 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
   }
 
   public void setIsCommittee(boolean isCommittee) {
-    this.account.setIsCommittee(isCommittee);
+    this.account = this.account.toBuilder().setIsCommittee(isCommittee).build();
   }
 
   public void setFrozenForBandwidth(long frozenBalance, long expireTime) {
@@ -758,7 +800,9 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
         .setExpireTime(expireTime)
         .build();
 
-    this.account.addFrozen(newFrozen);
+    this.account = this.account.toBuilder()
+        .addFrozen(newFrozen)
+        .build();
   }
 
   public long getNetUsage() {
@@ -766,7 +810,8 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
   }
 
   public void setNetUsage(long netUsage) {
-    this.account.setNetUsage(netUsage);
+    this.account = this.account.toBuilder()
+        .setNetUsage(netUsage).build();
   }
 
   public AccountResource getAccountResource() {
@@ -782,7 +827,9 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
     AccountResource newAccountResource = getAccountResource().toBuilder()
         .setFrozenBalanceForEnergy(newFrozenForEnergy).build();
 
-    this.account.setAccountResource(newAccountResource);
+    this.account = this.account.toBuilder()
+        .setAccountResource(newAccountResource)
+        .build();
   }
 
   public long getEnergyFrozenBalance() {
@@ -794,8 +841,10 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
   }
 
   public void setEnergyUsage(long energyUsage) {
-    this.account.setAccountResource(
-            this.account.getAccountResource().toBuilder().setEnergyUsage(energyUsage).build());
+    this.account = this.account.toBuilder()
+        .setAccountResource(
+            this.account.getAccountResource().toBuilder().setEnergyUsage(energyUsage).build())
+        .build();
   }
 
   public long getAllFrozenBalanceForEnergy() {
@@ -807,9 +856,10 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
   }
 
   public void setLatestConsumeTimeForEnergy(long latest_time) {
-    this.account.setAccountResource(
+    this.account = this.account.toBuilder()
+        .setAccountResource(
             this.account.getAccountResource().toBuilder().setLatestConsumeTimeForEnergy(latest_time)
-                .build());
+                .build()).build();
   }
 
   public long getFreeNetUsage() {
@@ -817,11 +867,12 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
   }
 
   public void setFreeNetUsage(long freeNetUsage) {
-    this.account.setFreeNetUsage(freeNetUsage);
+    this.account = this.account.toBuilder()
+        .setFreeNetUsage(freeNetUsage).build();
   }
 
   public boolean addAllFreeAssetNetUsageV2(Map<String, Long> map) {
-    this.account.putAllFreeAssetNetUsageV2(map);
+    this.account = this.account.toBuilder().putAllFreeAssetNetUsageV2(map).build();
     return true;
   }
 
@@ -842,11 +893,13 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
   }
 
   public void putFreeAssetNetUsage(String s, long freeAssetNetUsage) {
-    this.account.putFreeAssetNetUsage(s, freeAssetNetUsage);
+    this.account = this.account.toBuilder()
+        .putFreeAssetNetUsage(s, freeAssetNetUsage).build();
   }
 
   public void putFreeAssetNetUsageV2(String s, long freeAssetNetUsage) {
-    this.account.putFreeAssetNetUsageV2(s, freeAssetNetUsage);
+    this.account = this.account.toBuilder()
+        .putFreeAssetNetUsageV2(s, freeAssetNetUsage).build();
   }
 
   public long getStorageLimit() {
@@ -857,7 +910,9 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
     AccountResource accountResource = this.account.getAccountResource();
     accountResource = accountResource.toBuilder().setStorageLimit(limit).build();
 
-    this.account.setAccountResource(accountResource);
+    this.account = this.account.toBuilder()
+        .setAccountResource(accountResource)
+        .build();
   }
 
   public long getStorageUsage() {
@@ -868,7 +923,9 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
     AccountResource accountResource = this.account.getAccountResource();
     accountResource = accountResource.toBuilder().setStorageUsage(usage).build();
 
-    this.account.setAccountResource(accountResource);
+    this.account = this.account.toBuilder()
+        .setAccountResource(accountResource)
+        .build();
   }
 
   public long getStorageLeft() {
@@ -883,7 +940,9 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
     AccountResource accountResource = this.account.getAccountResource();
     accountResource = accountResource.toBuilder().setLatestExchangeStorageTime(time).build();
 
-    this.account.setAccountResource(accountResource);
+    this.account = this.account.toBuilder()
+        .setAccountResource(accountResource)
+        .build();
   }
 
   public void addStorageUsage(long storageUsage) {
@@ -894,7 +953,9 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
     accountResource = accountResource.toBuilder()
         .setStorageUsage(accountResource.getStorageUsage() + storageUsage).build();
 
-    this.account.setAccountResource(accountResource);
+    this.account = this.account.toBuilder()
+        .setAccountResource(accountResource)
+        .build();
   }
 
   public Permission getPermissionById(int id) {
@@ -919,7 +980,7 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
   }
 
   public void updatePermissions(Permission owner, Permission witness, List<Permission> actives) {
-    Builder builder = this.account;
+    Builder builder = this.account.toBuilder();
     owner = owner.toBuilder().setId(0).build();
     builder.setOwnerPermission(owner);
     if (builder.getIsWitness()) {
@@ -931,21 +992,21 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
       Permission permission = actives.get(i).toBuilder().setId(i + 2).build();
       builder.addActivePermission(permission);
     }
-    this.account = builder;
+    this.account = builder.build();
   }
 
   public void updateAccountType(AccountType accountType) {
-    this.account.setType(accountType);
+    this.account = this.account.toBuilder().setType(accountType).build();
   }
 
   // just for vm create2 instruction
   public void clearDelegatedResource() {
-    Builder builder = account;
+    Builder builder = account.toBuilder();
     AccountResource newAccountResource = getAccountResource().toBuilder()
         .setAcquiredDelegatedFrozenBalanceForEnergy(0L).build();
     builder.setAccountResource(newAccountResource);
     builder.setAcquiredDelegatedFrozenBalanceForBandwidth(0L);
-    this.account = builder;
+    this.account = builder.build();
   }
 
 }
