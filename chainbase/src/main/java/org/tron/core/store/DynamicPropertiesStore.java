@@ -1949,11 +1949,11 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   public byte[] statsByVersion(int version) {
     String statsKey = FORK_PREFIX + version;
-    return revokingDB.getUnchecked(statsKey.getBytes());
+    return getUnchecked(statsKey.getBytes()).getData();
   }
 
   public boolean getForked() {
-    byte[] value = revokingDB.getUnchecked(FORK_CONTROLLER);
+    byte[] value = getUnchecked(FORK_CONTROLLER).getData();
     return value == null ? Boolean.FALSE : Boolean.valueOf(new String(value));
   }
 
