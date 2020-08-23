@@ -156,7 +156,7 @@ public class RepositoryImpl implements Repository {
   public AccountCapsule createAccount(byte[] address, Protocol.AccountType type) {
     Key key = new Key(address);
     AccountCapsule account = new AccountCapsule(ByteString.copyFrom(address), type);
-    accountCache.put(key, new Value(account.getData(), Type.VALUE_TYPE_CREATE));
+    accountCache.put(key, new Value(account.getInstance(), Type.VALUE_TYPE_CREATE));
     return account;
   }
 
@@ -168,7 +168,7 @@ public class RepositoryImpl implements Repository {
         ByteString.copyFromUtf8(accountName),
         type);
 
-    accountCache.put(key, new Value(account.getData(), Type.VALUE_TYPE_CREATE));
+    accountCache.put(key, new Value(account.getInstance(), Type.VALUE_TYPE_CREATE));
     return account;
   }
 
@@ -187,7 +187,7 @@ public class RepositoryImpl implements Repository {
     }
 
     if (accountCapsule != null) {
-      accountCache.put(key, Value.create(accountCapsule.getData()));
+      accountCache.put(key, Value.create(accountCapsule.getInstance()));
     }
     return accountCapsule;
   }
@@ -261,7 +261,7 @@ public class RepositoryImpl implements Repository {
   @Override
   public void updateAccount(byte[] address, AccountCapsule accountCapsule) {
     Key key = Key.create(address);
-    Value value = Value.create(accountCapsule.getData(), Type.VALUE_TYPE_DIRTY);
+    Value value = Value.create(accountCapsule.getInstance(), Type.VALUE_TYPE_DIRTY);
     accountCache.put(key, value);
   }
 
@@ -386,7 +386,7 @@ public class RepositoryImpl implements Repository {
     }
     accountCapsule.setBalance(Math.addExact(balance, value));
     Key key = Key.create(address);
-    Value val = Value.create(accountCapsule.getData(),
+    Value val = Value.create(accountCapsule.getInstance(),
         Type.VALUE_TYPE_DIRTY | accountCache.get(key).getType().getType());
     accountCache.put(key, val);
     return accountCapsule.getBalance();
@@ -432,7 +432,7 @@ public class RepositoryImpl implements Repository {
   @Override
   public void putAccountValue(byte[] address, AccountCapsule accountCapsule) {
     Key key = new Key(address);
-    accountCache.put(key, new Value(accountCapsule.getData(), Type.VALUE_TYPE_CREATE));
+    accountCache.put(key, new Value(accountCapsule.getInstance(), Type.VALUE_TYPE_CREATE));
   }
 
   @Override
@@ -462,7 +462,7 @@ public class RepositoryImpl implements Repository {
               getAssetIssueStore());
     }
     Key key = Key.create(address);
-    Value V = Value.create(accountCapsule.getData(),
+    Value V = Value.create(accountCapsule.getInstance(),
         Type.VALUE_TYPE_DIRTY | accountCache.get(key).getType().getType());
     accountCache.put(key, V);
     return accountCapsule.getAssetMapV2().get(new String(tokenIdWithoutLeadingZero));
@@ -614,7 +614,7 @@ public class RepositoryImpl implements Repository {
         getDynamicPropertiesStore().getLatestBlockHeaderTimestamp(), withDefaultPermission,
         getDynamicPropertiesStore());
 
-    accountCache.put(key, new Value(account.getData(), Type.VALUE_TYPE_CREATE));
+    accountCache.put(key, new Value(account.getInstance(), Type.VALUE_TYPE_CREATE));
     return account;
   }
 

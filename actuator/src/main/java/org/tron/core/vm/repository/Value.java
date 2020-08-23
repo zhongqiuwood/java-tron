@@ -15,6 +15,7 @@ import org.tron.core.capsule.VotesCapsule;
 import org.tron.core.capsule.WitnessCapsule;
 import org.tron.core.exception.BadItemException;
 import org.tron.core.vm.config.VMConfig;
+import org.tron.protos.Protocol;
 import org.tron.protos.contract.SmartContractOuterClass;
 
 public class Value {
@@ -90,11 +91,11 @@ public class Value {
     return new Value(any, Type.VALUE_TYPE_NORMAL);
   }
 
-  public static Value create(SmartContractOuterClass.SmartContract any) {
+  public static Value create(Object any) {
     return new Value(any, Type.VALUE_TYPE_NORMAL);
   }
 
-  public static Value create(SmartContractOuterClass.SmartContract any, int type) {
+  public static Value create(Object any, int type) {
     return new Value(any, type);
   }
 
@@ -144,10 +145,10 @@ public class Value {
    * @return
    */
   public AccountCapsule getAccount() {
-    if (ArrayUtils.isEmpty(any)) {
+    if (o == null) {
       return null;
     }
-    return new AccountCapsule(any);
+    return new AccountCapsule((Protocol.Account) o);
   }
 
   /**
