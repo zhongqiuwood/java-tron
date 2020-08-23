@@ -46,6 +46,7 @@ dependencies {
     compile project(":common")
     compile project(":crypto")
     compile 'org.reflections:reflections:0.9.11'
+    compile 'com.github.ben-manes.caffeine:caffeine:2.8.5'
 }
 
 

@@ -1,5 +1,7 @@
 package org.tron.core.store;
 
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import com.google.protobuf.ByteString;
 import com.typesafe.config.ConfigObject;
 import java.util.Comparator;
@@ -9,6 +11,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.OptionalLong;
 
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
@@ -23,7 +26,10 @@ import org.tron.core.capsule.BlockBalanceTraceCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.db.TronStoreWithRevoking;
 import org.tron.core.db.accountstate.AccountStateCallBackUtils;
+import org.tron.core.db2.common.Key;
+import org.tron.core.db2.common.WrappedByteArray;
 import org.tron.core.exception.BadItemException;
+import org.tron.protos.Protocol;
 import org.tron.protos.contract.BalanceContract.TransactionBalanceTrace;
 import org.tron.protos.contract.BalanceContract.TransactionBalanceTrace.Operation;
 
@@ -42,6 +48,11 @@ public class AccountStore extends TronStoreWithRevoking<AccountCapsule> {
   @Autowired
   private AccountTraceStore accountTraceStore;
 
+  private Cache<WrappedByteArray, Protocol.Account> accountCache = Caffeine.newBuilder()
+      .expireAfterAccess(7, TimeUnit.DAYS)
+      .expireAfterWrite(7, TimeUnit.DAYS)
+      .build();
+
   @Autowired
   private AccountStore(@Value("account") String dbName) {
     super(dbName);
@@ -59,13 +70,39 @@ public class AccountStore extends TronStoreWithRevoking<AccountCapsule> {
 
   @Override
   public AccountCapsule get(byte[] key) {
+    return getUnchecked(key);
+  }
+
+  @Override
+  public AccountCapsule getUnchecked(byte[] key) {
+    if (isSync()) {
+      Protocol.Account account = accountCache.getIfPresent(WrappedByteArray.of(key));
+      if (account != null) {
+        return new AccountCapsule(account);
+      }
+    } else {
+      accountCache.invalidateAll();
+    }
+
     byte[] value = revokingDB.getUnchecked(key);
-    return ArrayUtils.isEmpty(value) ? null : new AccountCapsule(value);
+    if (ArrayUtils.isEmpty(value)) {
+      return null;
+    }
+
+    AccountCapsule accountCapsule = new AccountCapsule(value);
+    if (isSync()) {
+      accountCache.put(WrappedByteArray.of(key), accountCapsule.getInstance());
+    }
+    return accountCapsule;
   }
 
   @Override
   public void put(byte[] key, AccountCapsule item) {
-    AccountCapsule old = super.getUnchecked(key);
+    if (Objects.isNull(key) || Objects.isNull(item)) {
+      return;
+    }
+
+    AccountCapsule old = get(key);
     if (old == null) {
       if (item.getBalance() != 0) {
         recordBalance(item, item.getBalance());
@@ -83,12 +120,15 @@ public class AccountStore extends TronStoreWithRevoking<AccountCapsule> {
     }
 
     super.put(key, item);
+    if (isSync()) {
+      accountCache.put(WrappedByteArray.of(key), item.getInstance());
+    }
     accountStateCallBackUtils.accountCallBack(key, item);
   }
 
   @Override
   public void delete(byte[] key) {
-    AccountCapsule old = super.getUnchecked(key);
+    AccountCapsule old = get(key);
     if (old != null) {
       recordBalance(old, -old.getBalance());
     }
@@ -98,6 +138,9 @@ public class AccountStore extends TronStoreWithRevoking<AccountCapsule> {
       accountTraceStore.recordBalanceWithBlock(key, blockId.getNum(), 0);
     }
 
+    if (isSync()) {
+      accountCache.invalidate(WrappedByteArray.of(key));
+    }
     super.delete(key);
   }
 
@@ -159,4 +202,13 @@ public class AccountStore extends TronStoreWithRevoking<AccountCapsule> {
     balanceTraceStore.setCurrentTransactionBalanceTrace(transactionBalanceTrace);
   }
 
+  public boolean isSync() {
+    BlockBalanceTraceCapsule balanceTraceCapsule = balanceTraceStore.getCurrentBlockBalanceTraceCapsule();
+    if (balanceTraceCapsule == null) {
+      return false;
+    }
+
+    long timestamp = balanceTraceCapsule.getTimestamp();
+    return System.currentTimeMillis() - timestamp >= 3600_1000L;
+  }
 }
