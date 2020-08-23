@@ -246,7 +246,7 @@ public class RepositoryImpl implements Repository {
     }
 
     if (contractCapsule != null) {
-      contractCache.put(key, Value.create(contractCapsule.getData()));
+      contractCache.put(key, Value.create(contractCapsule.getInstance()));
     }
     return contractCapsule;
   }

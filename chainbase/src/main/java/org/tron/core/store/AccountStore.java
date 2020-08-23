@@ -209,6 +209,6 @@ public class AccountStore extends TronStoreWithRevoking<AccountCapsule> {
     }
 
     long timestamp = balanceTraceCapsule.getTimestamp();
-    return System.currentTimeMillis() - timestamp >= 3600_1000L;
+    return System.currentTimeMillis() - timestamp >= 3600_000L;
   }
 }
