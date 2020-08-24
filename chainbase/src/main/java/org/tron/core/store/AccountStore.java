@@ -48,6 +48,9 @@ public class AccountStore extends TronStoreWithRevoking<AccountCapsule> {
   @Autowired
   private AccountTraceStore accountTraceStore;
 
+  @Autowired
+  private DynamicPropertiesStore dynamicPropertiesStore;
+
   private Cache<WrappedByteArray, Protocol.Account> accountCache = Caffeine.newBuilder()
       .expireAfterAccess(7, TimeUnit.DAYS)
       .expireAfterWrite(7, TimeUnit.DAYS)
@@ -203,12 +206,7 @@ public class AccountStore extends TronStoreWithRevoking<AccountCapsule> {
   }
 
   public boolean isSync() {
-    BlockBalanceTraceCapsule balanceTraceCapsule = balanceTraceStore.getCurrentBlockBalanceTraceCapsule();
-    if (balanceTraceCapsule == null) {
-      return false;
-    }
-
-    long timestamp = balanceTraceCapsule.getTimestamp();
+    long timestamp = dynamicPropertiesStore.getLatestBlockHeaderTimestamp();
     return System.currentTimeMillis() - timestamp >= 3600_000L;
   }
 }
