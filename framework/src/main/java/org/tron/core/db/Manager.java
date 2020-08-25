@@ -1315,7 +1315,7 @@ public class Manager {
     TransactionRetCapsule transactionRetCapsule =
         new TransactionRetCapsule(block);
     try {
-      if (chainBaseManager.getAccountStore().isSync()) {
+      if (getDynamicPropertiesStore().getAllowShieldedTransaction() != 0) {
         merkleContainer.resetCurrentMerkleTree();
       }
 
@@ -1336,7 +1336,7 @@ public class Manager {
     } finally {
       accountStateCallBack.exceptionFinish();
     }
-    if (chainBaseManager.getAccountStore().isSync()) {
+    if (getDynamicPropertiesStore().getAllowShieldedTransaction() != 0) {
       merkleContainer.saveCurrentMerkleTreeAsBestMerkleTree(block.getNum());
     }
     block.setResult(transactionRetCapsule);
