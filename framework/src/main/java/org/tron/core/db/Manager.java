@@ -1315,7 +1315,10 @@ public class Manager {
     TransactionRetCapsule transactionRetCapsule =
         new TransactionRetCapsule(block);
     try {
-      merkleContainer.resetCurrentMerkleTree();
+      if (chainBaseManager.getAccountStore().isSync()) {
+        merkleContainer.resetCurrentMerkleTree();
+      }
+
       accountStateCallBack.preExecute(block);
       for (TransactionCapsule transactionCapsule : block.getTransactions()) {
         transactionCapsule.setBlockNum(block.getNum());
@@ -1333,7 +1336,9 @@ public class Manager {
     } finally {
       accountStateCallBack.exceptionFinish();
     }
-    merkleContainer.saveCurrentMerkleTreeAsBestMerkleTree(block.getNum());
+    if (chainBaseManager.getAccountStore().isSync()) {
+      merkleContainer.saveCurrentMerkleTreeAsBestMerkleTree(block.getNum());
+    }
     block.setResult(transactionRetCapsule);
     if (getDynamicPropertiesStore().getAllowAdaptiveEnergy() == 1) {
       EnergyProcessor energyProcessor = new EnergyProcessor(
