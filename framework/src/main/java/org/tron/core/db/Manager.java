@@ -600,10 +600,6 @@ public class Manager {
   }
 
   void validateDup(TransactionCapsule transactionCapsule) throws DupTransactionException {
-    if (chainBaseManager.getAccountStore().isSync()) {
-      return;
-    }
-
     if (containsTransaction(transactionCapsule)) {
       logger.debug(ByteArray.toHexString(transactionCapsule.getTransactionId().getBytes()));
       throw new DupTransactionException("dup trans");
@@ -611,6 +607,10 @@ public class Manager {
   }
 
   private boolean containsTransaction(TransactionCapsule transactionCapsule) {
+    if (chainBaseManager.getAccountStore().isSync()) {
+      return false;
+    }
+
     if (transactionCache != null) {
       return transactionCache.has(transactionCapsule.getTransactionId().getBytes());
     }
