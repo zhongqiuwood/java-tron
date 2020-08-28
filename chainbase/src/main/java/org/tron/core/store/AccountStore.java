@@ -4,31 +4,25 @@ import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.google.protobuf.ByteString;
 import com.typesafe.config.ConfigObject;
-import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.OptionalLong;
 
-import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
+import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.ArrayUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.tron.common.utils.Commons;
-import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.AccountCapsule;
-import org.tron.core.capsule.BlockBalanceTraceCapsule;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.db.TronStoreWithRevoking;
 import org.tron.core.db.accountstate.AccountStateCallBackUtils;
-import org.tron.core.db2.common.Key;
 import org.tron.core.db2.common.WrappedByteArray;
-import org.tron.core.exception.BadItemException;
 import org.tron.protos.Protocol;
 import org.tron.protos.contract.BalanceContract.TransactionBalanceTrace;
 import org.tron.protos.contract.BalanceContract.TransactionBalanceTrace.Operation;
@@ -51,10 +45,15 @@ public class AccountStore extends TronStoreWithRevoking<AccountCapsule> {
   @Autowired
   private DynamicPropertiesStore dynamicPropertiesStore;
 
-  private Cache<WrappedByteArray, Protocol.Account> accountCache = Caffeine.newBuilder()
-      .expireAfterAccess(7, TimeUnit.DAYS)
-      .expireAfterWrite(7, TimeUnit.DAYS)
+  private Cache<WrappedByteArray, Protocol.Account> cache = Caffeine.newBuilder()
       .build();
+
+  @Getter
+  @Setter
+  private boolean done;
+  @Getter
+  @Setter
+  private boolean replay;
 
   @Autowired
   private AccountStore(@Value("account") String dbName) {
@@ -79,12 +78,12 @@ public class AccountStore extends TronStoreWithRevoking<AccountCapsule> {
   @Override
   public AccountCapsule getUnchecked(byte[] key) {
     if (isSync()) {
-      Protocol.Account account = accountCache.getIfPresent(WrappedByteArray.of(key));
+      Protocol.Account account = cache.getIfPresent(WrappedByteArray.of(key));
       if (account != null) {
         return new AccountCapsule(account);
+      } else {
+        return null;
       }
-    } else {
-      accountCache.invalidateAll();
     }
 
     byte[] value = revokingDB.getUnchecked(key);
@@ -92,11 +91,7 @@ public class AccountStore extends TronStoreWithRevoking<AccountCapsule> {
       return null;
     }
 
-    AccountCapsule accountCapsule = new AccountCapsule(value);
-    if (isSync()) {
-      accountCache.put(WrappedByteArray.of(key), accountCapsule.getInstance());
-    }
-    return accountCapsule;
+    return new AccountCapsule(value);
   }
 
   @Override
@@ -122,9 +117,10 @@ public class AccountStore extends TronStoreWithRevoking<AccountCapsule> {
       }
     }
 
-    super.put(key, item);
     if (isSync()) {
-      accountCache.put(WrappedByteArray.of(key), item.getInstance());
+      cache.put(WrappedByteArray.of(key), item.getInstance());
+    } else {
+      super.put(key, item);
     }
     accountStateCallBackUtils.accountCallBack(key, item);
   }
@@ -142,7 +138,7 @@ public class AccountStore extends TronStoreWithRevoking<AccountCapsule> {
     }
 
     if (isSync()) {
-      accountCache.invalidate(WrappedByteArray.of(key));
+      cache.invalidate(WrappedByteArray.of(key));
     }
     super.delete(key);
   }
@@ -206,7 +202,14 @@ public class AccountStore extends TronStoreWithRevoking<AccountCapsule> {
   }
 
   public boolean isSync() {
-    long timestamp = dynamicPropertiesStore.getLatestBlockHeaderTimestamp();
-    return System.currentTimeMillis() - timestamp >= 3600_000L;
+    return replay && !done;
+  }
+
+  public void flush() {
+    for (Map.Entry<WrappedByteArray, Protocol.Account> e : cache.asMap().entrySet()) {
+      revokingDB.put(e.getKey().getBytes(), e.getValue().toByteArray());
+    }
+
+    cache.invalidateAll();
   }
 }

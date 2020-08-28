@@ -10,6 +10,7 @@ import org.tron.core.config.args.Args;
 import org.tron.core.consensus.ConsensusService;
 import org.tron.core.db.Manager;
 import org.tron.core.net.TronNetService;
+import org.tron.core.services.ReplayBlock;
 
 @Slf4j(topic = "app")
 @Component
@@ -28,6 +29,9 @@ public class ApplicationImpl implements Application {
 
   @Autowired
   private ConsensusService consensusService;
+
+  @Autowired
+  private ReplayBlock replayBlock;
 
   @Override
   public void setOptions(Args args) {
@@ -54,8 +58,9 @@ public class ApplicationImpl implements Application {
    * start up the app.
    */
   public void startup() {
-    tronNetService.start();
     consensusService.start();
+    replayBlock.execute();
+    tronNetService.start();
   }
 
   @Override

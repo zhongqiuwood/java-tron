@@ -104,8 +104,8 @@ public class FullNode {
     }
 
     appT.initServices(parameter);
-    appT.startServices();
     appT.startup();
+    appT.startServices();
 
     rpcApiService.blockUntilShutdown();
   }
