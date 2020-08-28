@@ -9,9 +9,10 @@ import org.tron.common.utils.ByteArray;
 import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.db.TronStoreWithRevoking;
 import org.tron.core.exception.ItemNotFoundException;
+import org.tron.protos.contract.Common;
 
 @Component
-public class TreeBlockIndexStore extends TronStoreWithRevoking<BytesCapsule> {
+public class TreeBlockIndexStore extends TronStoreWithRevoking<BytesCapsule, Common.ByteArray> {
 
 
   @Autowired

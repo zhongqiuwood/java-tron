@@ -25,10 +25,11 @@ import org.tron.core.db2.common.WrappedByteArray;
 import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ItemNotFoundException;
 import org.tron.protos.Protocol;
+import org.tron.protos.contract.Common;
 
 @Slf4j(topic = "DB")
 @Component
-public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> {
+public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule, Common.ByteArray> {
 
   private static final byte[] LATEST_BLOCK_HEADER_TIMESTAMP = "latest_block_header_timestamp"
       .getBytes();
@@ -155,54 +156,9 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   @Autowired
   private AccountStore accountStore;
 
-  private Cache<WrappedByteArray, WrappedByteArray> cache = Caffeine.newBuilder()
-      .expireAfterAccess(7, TimeUnit.DAYS)
-      .expireAfterWrite(7, TimeUnit.DAYS)
-      .build();
-
   @Override
   public BytesCapsule get(byte[] key) throws BadItemException, ItemNotFoundException {
     return getUnchecked(key);
-  }
-
-  @Override
-  public BytesCapsule getUnchecked(byte[] key) {
-    if (accountStore != null && accountStore.isSync()) {
-      WrappedByteArray value = cache.getIfPresent(WrappedByteArray.of(key));
-      if (value != null) {
-        return new BytesCapsule(WrappedByteArray.copyOf(value.getBytes()).getBytes());
-      }
-    } else {
-      cache.invalidateAll();
-    }
-
-    BytesCapsule bytesCapsule = super.getUnchecked(key);
-
-    if (accountStore != null && accountStore.isSync()) {
-      cache.put(WrappedByteArray.of(key), WrappedByteArray.copyOf(bytesCapsule.getData()));
-    }
-    return bytesCapsule;
-  }
-
-  @Override
-  public void put(byte[] key, BytesCapsule item) {
-    if (Objects.isNull(key) || Objects.isNull(item)) {
-      return;
-    }
-
-    super.put(key, item);
-    if (accountStore != null && accountStore.isSync()) {
-      cache.put(WrappedByteArray.of(key), WrappedByteArray.copyOf(item.getData()));
-    }
-  }
-
-  @Override
-  public void delete(byte[] key) {
-    super.delete(key);
-
-    if (accountStore != null && accountStore.isSync()) {
-      cache.invalidate(WrappedByteArray.of(key));
-    }
   }
 
   @Autowired

@@ -9,9 +9,10 @@ import org.tron.common.parameter.CommonParameter;
 import org.tron.core.capsule.TransactionInfoCapsule;
 import org.tron.core.db.TronStoreWithRevoking;
 import org.tron.core.exception.BadItemException;
+import org.tron.protos.Protocol;
 
 @Component
-public class TransactionHistoryStore extends TronStoreWithRevoking<TransactionInfoCapsule> {
+public class TransactionHistoryStore extends TronStoreWithRevoking<TransactionInfoCapsule, Protocol.TransactionInfo> {
 
   @Autowired
   public TransactionHistoryStore(@Value("transactionHistoryStore") String dbName) {

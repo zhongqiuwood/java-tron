@@ -9,9 +9,10 @@ import org.springframework.stereotype.Component;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.db.TronStoreWithRevoking;
+import org.tron.protos.contract.Common;
 
 @Component
-public class AccountIndexStore extends TronStoreWithRevoking<BytesCapsule> {
+public class AccountIndexStore extends TronStoreWithRevoking<BytesCapsule, Common.ByteArray> {
 
   @Autowired
   public AccountIndexStore(@Value("account-index") String dbName) {

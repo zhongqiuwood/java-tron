@@ -5,9 +5,10 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.exception.ItemNotFoundException;
+import org.tron.protos.contract.Common;
 
 @Component
-public class RecentBlockStore extends TronStoreWithRevoking<BytesCapsule> {
+public class RecentBlockStore extends TronStoreWithRevoking<BytesCapsule, Common.ByteArray> {
 
   @Autowired
   private RecentBlockStore(@Value("recent-block") String dbName) {

@@ -23,6 +23,7 @@ import org.tron.core.db.RevokingDatabase;
 import org.tron.core.db.TronStoreWithRevoking;
 import org.tron.core.db2.SnapshotRootTest.ProtoCapsuleTest;
 import org.tron.core.exception.RevokingStoreIllegalStateException;
+import org.tron.protos.contract.Common;
 
 @Slf4j
 public class RevokingDbWithCacheOldValueTest {
@@ -260,7 +261,7 @@ public class RevokingDbWithCacheOldValueTest {
 
   }
 
-  private static class TestRevokingTronStore extends TronStoreWithRevoking<ProtoCapsuleTest> {
+  private static class TestRevokingTronStore extends TronStoreWithRevoking<ProtoCapsuleTest, Common.ByteArray> {
 
     protected TestRevokingTronStore(String dbName, RevokingDatabase revokingDatabase) {
       super(dbName, revokingDatabase);

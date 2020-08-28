@@ -27,10 +27,11 @@ import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.exception.BadItemException;
+import org.tron.protos.Protocol;
 
 @Slf4j(topic = "DB")
 @Component
-public class BlockStore extends TronStoreWithRevoking<BlockCapsule> {
+public class BlockStore extends TronStoreWithRevoking<BlockCapsule, Protocol.Block> {
 
   @Autowired
   private BlockStore(@Value("block") String dbName) {

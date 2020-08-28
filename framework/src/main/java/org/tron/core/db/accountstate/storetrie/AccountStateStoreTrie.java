@@ -13,10 +13,11 @@ import org.tron.core.db.accountstate.AccountStateEntity;
 import org.tron.core.db.accountstate.TrieService;
 import org.tron.core.db2.common.DB;
 import org.tron.core.trie.TrieImpl;
+import org.tron.protos.contract.Common;
 
 @Slf4j(topic = "AccountState")
 @Component
-public class AccountStateStoreTrie extends TronStoreWithRevoking<BytesCapsule> implements
+public class AccountStateStoreTrie extends TronStoreWithRevoking<BytesCapsule, Common.ByteArray> implements
     DB<byte[], BytesCapsule> {
 
   @Autowired

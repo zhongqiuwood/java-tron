@@ -35,7 +35,7 @@ import org.tron.protos.contract.BalanceContract.TransactionBalanceTrace.Operatio
 
 @Slf4j(topic = "DB")
 @Component
-public class AccountStore extends TronStoreWithRevoking<AccountCapsule> {
+public class AccountStore extends TronStoreWithRevoking<AccountCapsule, Protocol.Account> {
 
   private static Map<String, byte[]> assertsAddress = new HashMap<>(); // key = name , value = address
 
@@ -47,14 +47,6 @@ public class AccountStore extends TronStoreWithRevoking<AccountCapsule> {
 
   @Autowired
   private AccountTraceStore accountTraceStore;
-
-  @Autowired
-  private DynamicPropertiesStore dynamicPropertiesStore;
-
-  private Cache<WrappedByteArray, Protocol.Account> accountCache = Caffeine.newBuilder()
-      .expireAfterAccess(7, TimeUnit.DAYS)
-      .expireAfterWrite(7, TimeUnit.DAYS)
-      .build();
 
   @Autowired
   private AccountStore(@Value("account") String dbName) {
@@ -74,29 +66,6 @@ public class AccountStore extends TronStoreWithRevoking<AccountCapsule> {
   @Override
   public AccountCapsule get(byte[] key) {
     return getUnchecked(key);
-  }
-
-  @Override
-  public AccountCapsule getUnchecked(byte[] key) {
-    if (isSync()) {
-      Protocol.Account account = accountCache.getIfPresent(WrappedByteArray.of(key));
-      if (account != null) {
-        return new AccountCapsule(account);
-      }
-    } else {
-      accountCache.invalidateAll();
-    }
-
-    byte[] value = revokingDB.getUnchecked(key);
-    if (ArrayUtils.isEmpty(value)) {
-      return null;
-    }
-
-    AccountCapsule accountCapsule = new AccountCapsule(value);
-    if (isSync()) {
-      accountCache.put(WrappedByteArray.of(key), accountCapsule.getInstance());
-    }
-    return accountCapsule;
   }
 
   @Override
@@ -123,9 +92,6 @@ public class AccountStore extends TronStoreWithRevoking<AccountCapsule> {
     }
 
     super.put(key, item);
-    if (isSync()) {
-      accountCache.put(WrappedByteArray.of(key), item.getInstance());
-    }
     accountStateCallBackUtils.accountCallBack(key, item);
   }
 
@@ -141,9 +107,6 @@ public class AccountStore extends TronStoreWithRevoking<AccountCapsule> {
       accountTraceStore.recordBalanceWithBlock(key, blockId.getNum(), 0);
     }
 
-    if (isSync()) {
-      accountCache.invalidate(WrappedByteArray.of(key));
-    }
     super.delete(key);
   }
 
@@ -205,8 +168,4 @@ public class AccountStore extends TronStoreWithRevoking<AccountCapsule> {
     balanceTraceStore.setCurrentTransactionBalanceTrace(transactionBalanceTrace);
   }
 
-  public boolean isSync() {
-    long timestamp = dynamicPropertiesStore.getLatestBlockHeaderTimestamp();
-    return System.currentTimeMillis() - timestamp >= 3600_000L;
-  }
 }

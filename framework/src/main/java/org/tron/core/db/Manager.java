@@ -607,7 +607,7 @@ public class Manager {
   }
 
   private boolean containsTransaction(TransactionCapsule transactionCapsule) {
-    if (chainBaseManager.getAccountStore().isSync()) {
+    if (Args.getInstance().isReplay()) {
       return false;
     }
 

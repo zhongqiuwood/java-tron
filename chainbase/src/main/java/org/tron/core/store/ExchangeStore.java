@@ -10,9 +10,10 @@ import org.springframework.stereotype.Component;
 import org.tron.core.capsule.ExchangeCapsule;
 import org.tron.core.db.TronStoreWithRevoking;
 import org.tron.core.exception.ItemNotFoundException;
+import org.tron.protos.Protocol;
 
 @Component
-public class ExchangeStore extends TronStoreWithRevoking<ExchangeCapsule> {
+public class ExchangeStore extends TronStoreWithRevoking<ExchangeCapsule, Protocol.Exchange> {
 
   @Autowired
   protected ExchangeStore(@Value("exchange") String dbName) {

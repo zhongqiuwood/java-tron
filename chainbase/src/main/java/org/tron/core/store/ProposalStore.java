@@ -10,9 +10,10 @@ import org.springframework.stereotype.Component;
 import org.tron.core.capsule.ProposalCapsule;
 import org.tron.core.db.TronStoreWithRevoking;
 import org.tron.core.exception.ItemNotFoundException;
+import org.tron.protos.Protocol;
 
 @Component
-public class ProposalStore extends TronStoreWithRevoking<ProposalCapsule> {
+public class ProposalStore extends TronStoreWithRevoking<ProposalCapsule, Protocol.Proposal> {
 
   @Autowired
   public ProposalStore(@Value("proposal") String dbName) {

@@ -6,9 +6,10 @@ import org.springframework.stereotype.Component;
 import org.tron.core.capsule.MarketOrderCapsule;
 import org.tron.core.db.TronStoreWithRevoking;
 import org.tron.core.exception.ItemNotFoundException;
+import org.tron.protos.Protocol;
 
 @Component
-public class MarketOrderStore extends TronStoreWithRevoking<MarketOrderCapsule> {
+public class MarketOrderStore extends TronStoreWithRevoking<MarketOrderCapsule, Protocol.MarketOrder> {
 
   @Autowired
   protected MarketOrderStore(@Value("market_order") String dbName) {

@@ -10,10 +10,11 @@ import org.tron.common.utils.ByteArray;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.db.TronStoreWithRevoking;
+import org.tron.protos.contract.Common;
 
 @Slf4j
 @Component
-public class DelegationStore extends TronStoreWithRevoking<BytesCapsule> {
+public class DelegationStore extends TronStoreWithRevoking<BytesCapsule, Common.ByteArray> {
 
   public static final long REMARK = -1L;
   public static final int DEFAULT_BROKERAGE = 20;

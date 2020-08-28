@@ -1,6 +1,9 @@
 package org.tron.core.capsule;
 
-public class BytesCapsule implements ProtoCapsule {
+import com.google.protobuf.ByteString;
+import org.tron.protos.contract.Common;
+
+public class BytesCapsule implements ProtoCapsule<Common.ByteArray> {
 
   private byte[] bytes;
 
@@ -14,7 +17,7 @@ public class BytesCapsule implements ProtoCapsule {
   }
 
   @Override
-  public Object getInstance() {
-    return null;
+  public Common.ByteArray getInstance() {
+    return Common.ByteArray.newBuilder().setData(ByteString.copyFrom(bytes)).build();
   }
 }

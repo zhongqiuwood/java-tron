@@ -10,9 +10,10 @@ import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BlockCapsule.BlockId;
 import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.exception.ItemNotFoundException;
+import org.tron.protos.contract.Common;
 
 @Component
-public class BlockIndexStore extends TronStoreWithRevoking<BytesCapsule> {
+public class BlockIndexStore extends TronStoreWithRevoking<BytesCapsule, Common.ByteArray> {
 
 
   @Autowired

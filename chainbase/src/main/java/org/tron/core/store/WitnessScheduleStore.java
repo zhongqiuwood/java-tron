@@ -11,10 +11,11 @@ import org.springframework.stereotype.Component;
 import org.tron.common.utils.ByteArray;
 import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.db.TronStoreWithRevoking;
+import org.tron.protos.contract.Common;
 
 @Slf4j(topic = "DB")
 @Component
-public class WitnessScheduleStore extends TronStoreWithRevoking<BytesCapsule> {
+public class WitnessScheduleStore extends TronStoreWithRevoking<BytesCapsule, Common.ByteArray> {
 
   private static final byte[] ACTIVE_WITNESSES = "active_witnesses".getBytes();
   private static final byte[] CURRENT_SHUFFLED_WITNESSES = "current_shuffled_witnesses".getBytes();

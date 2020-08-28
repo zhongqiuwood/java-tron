@@ -22,6 +22,7 @@ import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ItemNotFoundException;
+import org.tron.protos.Protocol;
 
 @Slf4j
 public class MarketPairPriceToOrderStoreWithCacheOldValueTest {
@@ -174,7 +175,7 @@ public class MarketPairPriceToOrderStoreWithCacheOldValueTest {
   }
 
   private static class TestRevokingTronStore extends
-      TronStoreWithRevoking<MarketOrderIdListCapsule> {
+      TronStoreWithRevoking<MarketOrderIdListCapsule, Protocol.MarketOrderIdList> {
 
     private TestRevokingTronStore(String dbName, Options options,
         RevokingDatabase revokingDatabase) {

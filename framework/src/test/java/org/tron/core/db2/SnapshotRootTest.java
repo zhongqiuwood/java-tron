@@ -1,5 +1,6 @@
 package org.tron.core.db2;
 
+import com.google.protobuf.ByteString;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -24,6 +25,7 @@ import org.tron.core.db2.RevokingDbWithCacheNewValueTest.TestRevokingTronStore;
 import org.tron.core.db2.core.Snapshot;
 import org.tron.core.db2.core.SnapshotManager;
 import org.tron.core.db2.core.SnapshotRoot;
+import org.tron.protos.contract.Common;
 
 public class SnapshotRootTest {
 
@@ -116,7 +118,7 @@ public class SnapshotRootTest {
   @NoArgsConstructor
   @AllArgsConstructor
   @EqualsAndHashCode
-  public static class ProtoCapsuleTest implements ProtoCapsule<Object> {
+  public static class ProtoCapsuleTest implements ProtoCapsule<Common.ByteArray> {
 
     private byte[] value;
 
@@ -126,8 +128,8 @@ public class SnapshotRootTest {
     }
 
     @Override
-    public Object getInstance() {
-      return value;
+    public Common.ByteArray getInstance() {
+      return Common.ByteArray.newBuilder().setData(ByteString.copyFrom(value)).build();
     }
 
     @Override

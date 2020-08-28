@@ -15,13 +15,15 @@
 
 package org.tron.core.capsule;
 
+import com.google.protobuf.ByteString;
 import java.util.Arrays;
 import lombok.extern.slf4j.Slf4j;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.Sha256Hash;
+import org.tron.protos.contract.Common;
 
 @Slf4j(topic = "capsule")
-public class CodeCapsule implements ProtoCapsule<byte[]> {
+public class CodeCapsule implements ProtoCapsule<Common.ByteArray> {
 
   private byte[] code;
 
@@ -40,8 +42,8 @@ public class CodeCapsule implements ProtoCapsule<byte[]> {
   }
 
   @Override
-  public byte[] getInstance() {
-    return this.code;
+  public Common.ByteArray getInstance() {
+    return Common.ByteArray.newBuilder().setData(ByteString.copyFrom(code)).build();
   }
 
   @Override

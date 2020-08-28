@@ -41,7 +41,7 @@ import org.tron.protos.contract.BalanceContract.TransactionBalanceTrace;
 
 @Component
 @Slf4j(topic = "DB")
-public class AccountTraceStore extends TronStoreWithRevoking<AccountTraceCapsule>  {
+public class AccountTraceStore extends TronStoreWithRevoking<AccountTraceCapsule, BalanceContract.AccountTrace>  {
 
   @Autowired
   protected AccountTraceStore(@Value("account-trace") String dbName) {

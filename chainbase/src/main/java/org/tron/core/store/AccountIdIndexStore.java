@@ -9,10 +9,11 @@ import org.springframework.stereotype.Component;
 import org.tron.core.capsule.AccountCapsule;
 import org.tron.core.capsule.BytesCapsule;
 import org.tron.core.db.TronStoreWithRevoking;
+import org.tron.protos.contract.Common;
 
 //todo : need Compatibility test
 @Component
-public class AccountIdIndexStore extends TronStoreWithRevoking<BytesCapsule> {
+public class AccountIdIndexStore extends TronStoreWithRevoking<BytesCapsule, Common.ByteArray> {
 
   @Autowired
   public AccountIdIndexStore(@Value("accountid-index") String dbName) {

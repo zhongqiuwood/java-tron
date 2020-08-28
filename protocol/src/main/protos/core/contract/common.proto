@@ -10,3 +10,7 @@ enum ResourceCode {
   BANDWIDTH = 0x00;
   ENERGY = 0x01;
 }
+
+message ByteArray {
+  bytes data = 1;
+}

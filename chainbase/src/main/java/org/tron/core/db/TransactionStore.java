@@ -13,10 +13,11 @@ import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.db.KhaosDatabase.KhaosBlock;
 import org.tron.core.exception.BadItemException;
+import org.tron.protos.Protocol;
 
 @Slf4j(topic = "DB")
 @Component
-public class TransactionStore extends TronStoreWithRevoking<TransactionCapsule> {
+public class TransactionStore extends TronStoreWithRevoking<TransactionCapsule, Protocol.Transaction> {
 
   @Autowired
   private BlockStore blockStore;

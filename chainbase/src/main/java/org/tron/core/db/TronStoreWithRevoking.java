@@ -1,18 +1,24 @@
 package org.tron.core.db;
 
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import com.google.common.collect.Iterators;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Streams;
+import com.google.common.primitives.Bytes;
 import com.google.common.reflect.TypeToken;
+import com.google.protobuf.GeneratedMessageV3;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Paths;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Objects;
 import javax.annotation.PostConstruct;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.ArrayUtils;
 import org.iq80.leveldb.Options;
 import org.iq80.leveldb.WriteOptions;
 import org.rocksdb.DirectComparator;
@@ -20,26 +26,37 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.tron.common.parameter.CommonParameter;
 import org.tron.common.storage.leveldb.LevelDbDataSourceImpl;
 import org.tron.common.storage.rocksdb.RocksDbDataSourceImpl;
+import org.tron.common.utils.ByteArray;
+import org.tron.common.utils.ByteUtil;
 import org.tron.common.utils.StorageUtils;
 import org.tron.core.capsule.ProtoCapsule;
 import org.tron.core.db2.common.DB;
 import org.tron.core.db2.common.IRevokingDB;
 import org.tron.core.db2.common.LevelDB;
 import org.tron.core.db2.common.RocksDB;
+import org.tron.core.db2.common.WrappedByteArray;
 import org.tron.core.db2.core.Chainbase;
 import org.tron.core.db2.core.ITronChainBase;
 import org.tron.core.db2.core.RevokingDBWithCachingOldValue;
 import org.tron.core.db2.core.SnapshotRoot;
 import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ItemNotFoundException;
+import org.tron.protos.Protocol;
+import org.tron.protos.contract.Common;
 
 
 @Slf4j(topic = "DB")
-public abstract class TronStoreWithRevoking<T extends ProtoCapsule> implements ITronChainBase<T> {
+public abstract class TronStoreWithRevoking<T extends ProtoCapsule<U>, U extends GeneratedMessageV3> implements ITronChainBase<T> {
 
   @Getter // only for unit test
   protected IRevokingDB revokingDB;
+
+  private Cache<WrappedByteArray, U> cache = Caffeine.newBuilder().build();
+
   private TypeToken<T> token = new TypeToken<T>(getClass()) {
+  };
+
+  private TypeToken<U> uTypeToken = new TypeToken<U>(getClass()) {
   };
 
   @Autowired
@@ -113,7 +130,18 @@ public abstract class TronStoreWithRevoking<T extends ProtoCapsule> implements I
 
   @PostConstruct
   private void init() {
+    initCache();
     revokingDatabase.add(revokingDB);
+  }
+
+  private void initCache() {
+    for (Map.Entry<byte[], byte[]> e : revokingDB) {
+      try {
+        cache.put(WrappedByteArray.of(e.getKey()), of(e.getValue()).getInstance());
+      } catch (BadItemException ex) {
+        ex.printStackTrace();
+      }
+    }
   }
 
   @Override
@@ -122,24 +150,48 @@ public abstract class TronStoreWithRevoking<T extends ProtoCapsule> implements I
       return;
     }
 
-    revokingDB.put(key, item.getData());
+    if (CommonParameter.getInstance().isReplay()) {
+      U u = item.getInstance();
+      cache.put(WrappedByteArray.of(key), u);
+    } else {
+      revokingDB.put(key, item.getData());
+    }
   }
 
   @Override
   public void delete(byte[] key) {
     revokingDB.delete(key);
+    if (CommonParameter.getInstance().isReplay()) {
+      cache.invalidate(WrappedByteArray.of(key));
+    }
   }
 
   @Override
   public T get(byte[] key) throws ItemNotFoundException, BadItemException {
+    if (CommonParameter.getInstance().isReplay()) {
+      U u = cache.getIfPresent(WrappedByteArray.of(key));
+      if (u != null) {
+        return of(u);
+      }
+    }
+
     return of(revokingDB.get(key));
   }
 
   @Override
   public T getUnchecked(byte[] key) {
-    byte[] value = revokingDB.getUnchecked(key);
-
     try {
+      if (CommonParameter.getInstance().isReplay()) {
+        U u = cache.getIfPresent(WrappedByteArray.of(key));
+        if (u != null) {
+          return of(u);
+        }
+      }
+
+      byte[] value = revokingDB.getUnchecked(key);
+      if (value == null) {
+        return null;
+      }
       return of(value);
     } catch (BadItemException e) {
       return null;
@@ -157,8 +209,23 @@ public abstract class TronStoreWithRevoking<T extends ProtoCapsule> implements I
     }
   }
 
+  public T of(U value) throws BadItemException {
+    try {
+      Constructor constructor = token.getRawType().getConstructor(uTypeToken.getRawType());
+      @SuppressWarnings("unchecked")
+      T t = (T) constructor.newInstance(value);
+      return t;
+    } catch (NoSuchMethodException | IllegalAccessException | InstantiationException | InvocationTargetException e) {
+      throw new BadItemException(e.getMessage());
+    }
+  }
+
   @Override
   public boolean has(byte[] key) {
+    if (CommonParameter.getInstance().isReplay()) {
+      return cache.getIfPresent(WrappedByteArray.of(key)) != null;
+    }
+
     return revokingDB.has(key);
   }
 
@@ -179,6 +246,18 @@ public abstract class TronStoreWithRevoking<T extends ProtoCapsule> implements I
 
   @Override
   public Iterator<Map.Entry<byte[], T>> iterator() {
+    if (CommonParameter.getInstance().isReplay()) {
+      return Iterators.transform(cache.asMap().entrySet().stream()
+          .sorted((e1, e2) -> ByteUtil.compare(e1.getKey().getBytes(), e2.getKey().getBytes()))
+          .iterator(), e -> {
+        try {
+          return Maps.immutableEntry(e.getKey().getBytes(), of(e.getValue()));
+        } catch (BadItemException e1) {
+          throw new RuntimeException(e1);
+        }
+      });
+    }
+
     return Iterators.transform(revokingDB.iterator(), e -> {
       try {
         return Maps.immutableEntry(e.getKey(), of(e.getValue()));
@@ -189,10 +268,24 @@ public abstract class TronStoreWithRevoking<T extends ProtoCapsule> implements I
   }
 
   public long size() {
+    if (CommonParameter.getInstance().isReplay()) {
+      return cache.asMap().size();
+    }
+
     return Streams.stream(revokingDB.iterator()).count();
   }
 
   public void setCursor(Chainbase.Cursor cursor) {
     revokingDB.setCursor(cursor);
+  }
+
+  public void flush() {
+    for (Map.Entry<WrappedByteArray, U> e : cache.asMap().entrySet()) {
+      if (e.getValue() instanceof Common.ByteArray) {
+        revokingDB.put(e.getKey().getBytes(), ((Common.ByteArray) e.getValue()).getData().toByteArray());
+      } else {
+        revokingDB.put(e.getKey().getBytes(), e.getValue().toByteArray());
+      }
+    }
   }
 }

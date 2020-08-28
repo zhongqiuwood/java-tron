@@ -31,7 +31,7 @@ import java.util.Objects;
 
 @Component
 @Slf4j(topic = "DB")
-public class BalanceTraceStore extends TronStoreWithRevoking<BlockBalanceTraceCapsule>  {
+public class BalanceTraceStore extends TronStoreWithRevoking<BlockBalanceTraceCapsule, BalanceContract.BlockBalanceTrace>  {
 
   @Getter
   private BlockCapsule.BlockId currentBlockId;

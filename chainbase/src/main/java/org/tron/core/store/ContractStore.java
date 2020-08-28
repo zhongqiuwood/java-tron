@@ -20,16 +20,7 @@ import org.tron.protos.contract.SmartContractOuterClass.SmartContract;
 
 @Slf4j(topic = "DB")
 @Component
-public class ContractStore extends TronStoreWithRevoking<ContractCapsule> {
-
-  @Autowired
-  private AccountStore accountStore;
-
-  private Cache<WrappedByteArray, SmartContract> contractCache = Caffeine.newBuilder()
-      .expireAfterAccess(7, TimeUnit.DAYS)
-      .expireAfterWrite(7, TimeUnit.DAYS)
-      .build();
-
+public class ContractStore extends TronStoreWithRevoking<ContractCapsule, SmartContract> {
 
   @Autowired
   private ContractStore(@Value("contract") String dbName) {
@@ -39,49 +30,6 @@ public class ContractStore extends TronStoreWithRevoking<ContractCapsule> {
   @Override
   public ContractCapsule get(byte[] key) {
     return getUnchecked(key);
-  }
-
-  @Override
-  public ContractCapsule getUnchecked(byte[] key) {
-    if (accountStore.isSync()) {
-      SmartContract contract = contractCache.getIfPresent(WrappedByteArray.of(key));
-      if (contract != null) {
-        return new ContractCapsule(contract);
-      }
-    } else {
-      contractCache.invalidateAll();
-    }
-
-    byte[] value = revokingDB.getUnchecked(key);
-    if (ArrayUtils.isEmpty(value)) {
-      return null;
-    }
-
-    ContractCapsule contractCapsule = new ContractCapsule(value);
-    if (accountStore.isSync()) {
-      contractCache.put(WrappedByteArray.of(key), contractCapsule.getInstance());
-    }
-    return contractCapsule;
-  }
-
-  @Override
-  public void put(byte[] key, ContractCapsule item) {
-    if (Objects.isNull(key) || Objects.isNull(item)) {
-      return;
-    }
-
-    revokingDB.put(key, item.getData());
-    if (accountStore.isSync()) {
-      contractCache.put(WrappedByteArray.of(key), item.getInstance());
-    }
-  }
-
-  @Override
-  public void delete(byte[] key) {
-    revokingDB.delete(key);
-    if (accountStore.isSync()) {
-      contractCache.invalidate(WrappedByteArray.of(key));
-    }
   }
 
   /**
