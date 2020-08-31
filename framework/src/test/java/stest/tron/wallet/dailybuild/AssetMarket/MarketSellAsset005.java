@@ -143,30 +143,7 @@ public class MarketSellAsset005 {
 
   }
 
-  @Test(enabled = true,description = "Create an order to sell Trc10 and buy Trx")
-  void test03SellTrc10BuyTrx() {
 
-    long balanceAfter = PublicMethed.queryAccount(testKey001, blockingStubFull).getBalance();
-    Long devAssetCountAfter = PublicMethed
-        .getAssetIssueValue(testAddress001,assetAccountId, blockingStubFull);
-
-
-    String txid = PublicMethed.marketSellAsset(testAddress001,testKey001,assetAccountId001,15,trx,1,blockingStubFull);
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
-    Optional<TransactionInfo> TransactionInfo = PublicMethed
-        .getTransactionInfoById(txid, blockingStubFull);
-    logger.info("transaction: " + TransactionInfo);
-//    Assert.assertEquals(TransactionInfo.get());
-
-//    Optional<MarketOrderList> orderList = PublicMethed
-//        .getMarketOrderByAccount(testAddress001, blockingStubFull);
-//    PublicMethed.waitProduceNextBlock(blockingStubFull);
-//    Assert.assertTrue(orderList.get().getOrdersCount() == 1);
-//    transaction = PublicMethed
-//        .getTransactionById(txid, blockingStubFull);
-//    Assert.assertEquals(transaction.get().getRet(0).getRet().toString(), "SUCESS");
-
-  }
 
 
 

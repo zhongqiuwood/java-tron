@@ -86,19 +86,18 @@ public class MarketSellAsset004 {
         PublicMethed.queryAccount(testAddress002, blockingStubFull).getAssetIssuedID().toByteArray();
   }
 
-  @Test(enabled = true,description = "同一账户100个订单")
-  void MarketCancelAssetTest001() {
-    System.out.println("地址1私钥："+testKey001);
-    System.out.println("地址2私钥："+testKey002);
-    int a = 0;
-    PublicMethed.marketSellAsset(testAddress001, testKey001, assetAccountId001, 2, trx
-        , 1, blockingStubFull);
+//  @Test(enabled = true,description = "100 orders in the same account")
+//  void MarketCancelAssetTest001() {
 
-    PublicMethed.waitProduceNextBlock(blockingStubFull);
+//    int a = 0;
+//    PublicMethed.marketSellAsset(testAddress001, testKey001, assetAccountId001, 2, trx
+//        , 1, blockingStubFull);
+//
+//    PublicMethed.waitProduceNextBlock(blockingStubFull);
+//
+//  }
 
-  }
-
-  @Test(enabled = true,description = "下单金额超过余额")
+  @Test(enabled = true,description = "The order amount exceeds the balance")
   void MarketCancelAssetTest002() {
 
     String txid = PublicMethed.marketSellAsset(testAddress001,testKey001,assetAccountId001,100,trx
