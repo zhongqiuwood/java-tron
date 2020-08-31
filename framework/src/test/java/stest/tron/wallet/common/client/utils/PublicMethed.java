@@ -38,6 +38,7 @@ import org.tron.api.GrpcAPI;
 import org.tron.api.GrpcAPI.AccountNetMessage;
 import org.tron.api.GrpcAPI.AccountResourceMessage;
 import org.tron.api.GrpcAPI.AssetIssueList;
+import org.tron.api.GrpcAPI.BlockExtention;
 import org.tron.api.GrpcAPI.BytesMessage;
 import org.tron.api.GrpcAPI.DecryptNotes;
 import org.tron.api.GrpcAPI.DecryptNotes.NoteTx;
@@ -65,6 +66,7 @@ import org.tron.api.GrpcAPI.TransactionApprovedList;
 import org.tron.api.GrpcAPI.TransactionExtention;
 import org.tron.api.GrpcAPI.TransactionInfoList;
 import org.tron.api.WalletGrpc;
+import org.tron.api.WalletGrpc.WalletBlockingStub;
 import org.tron.api.WalletSolidityGrpc;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.crypto.ECKey.ECDSASignature;
@@ -516,6 +518,18 @@ public class PublicMethed {
     GrpcAPI.NumberMessage.Builder builder = GrpcAPI.NumberMessage.newBuilder();
     builder.setNum(blockNum);
     return blockingStubFull.getBlockByNum(builder.build());
+  }
+
+  /**
+   * constructor.
+   */
+
+  public static BlockExtention getBlock2(long blockNum,
+    WalletBlockingStub blockingStubFull) {
+    Wallet.setAddressPreFixByte(CommonConstant.ADD_PRE_FIX_BYTE_MAINNET);
+    GrpcAPI.NumberMessage.Builder builder = GrpcAPI.NumberMessage.newBuilder();
+    builder.setNum(blockNum);
+    return blockingStubFull.getBlockByNum2(builder.build());
   }
 
   /**
@@ -2343,9 +2357,6 @@ public class PublicMethed {
     texBuilder.setTxid(transactionExtention.getTxid());
     transactionExtention = texBuilder.build();
 
-    byte[] contractAddress = generateContractAddress(transactionExtention.getTransaction(), owner);
-    System.out.println(
-        "Your smart contract address will be: " + WalletClient.encode58Check(contractAddress));
     if (transactionExtention == null) {
       return null;
     }
@@ -2364,7 +2375,7 @@ public class PublicMethed {
     System.out.println("txid = " + ByteArray.toHexString(Sha256Hash
         .hash(CommonParameter.getInstance().isECKeyCryptoEngine(),
             transaction.getRawData().toByteArray())));
-    contractAddress = generateContractAddress(transaction, owner);
+    byte[] contractAddress = generateContractAddress(transaction, owner);
     System.out.println(
         "Your smart contract address will be: " + WalletClient.encode58Check(contractAddress));
 
@@ -4769,7 +4780,7 @@ public class PublicMethed {
     logger.debug("solFile: " + solFile);
     logger.debug("outputPath: " + outputPath);
     String cmd =
-        compile + " --optimize --bin --abi --overwrite " + absolutePath + "/" + solFile + " -o "
+        compile + " --optimize --evm-version istanbul  --bin --abi --overwrite " + absolutePath + "/" + solFile + " -o "
             + absolutePath + "/" + outputPath;
     logger.debug("cmd: " + cmd);
 
@@ -5116,6 +5127,11 @@ public class PublicMethed {
     if (argsStr.equalsIgnoreCase("#")) {
       logger.info("argsstr is #");
       argsStr = "";
+    }
+    if (tokenId.equalsIgnoreCase("") || tokenId.equalsIgnoreCase("#")) {
+      logger.info("tokenid is 0");
+      tokenId = "0";
+
     }
 
     byte[] owner = ownerAddress;
