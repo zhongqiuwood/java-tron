@@ -33,7 +33,6 @@ public class WitnessStore extends TronStoreWithRevoking<WitnessCapsule, Protocol
 
   @Override
   public WitnessCapsule get(byte[] key) {
-    byte[] value = revokingDB.getUnchecked(key);
-    return ArrayUtils.isEmpty(value) ? null : new WitnessCapsule(value);
+    return getUnchecked(key);
   }
 }

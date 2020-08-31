@@ -18,7 +18,6 @@ public class VotesStore extends TronStoreWithRevoking<VotesCapsule, Protocol.Vot
 
   @Override
   public VotesCapsule get(byte[] key) {
-    byte[] value = revokingDB.getUnchecked(key);
-    return ArrayUtils.isEmpty(value) ? null : new VotesCapsule(value);
+    return getUnchecked(key);
   }
 }

@@ -23,10 +23,12 @@ public class CodeStore extends TronStoreWithRevoking<CodeCapsule, Common.ByteArr
     return getUnchecked(key);
   }
 
+  @Deprecated
   public long getTotalCodes() {
     return Streams.stream(revokingDB.iterator()).count();
   }
 
+  @Deprecated
   public byte[] findCodeByHash(byte[] hash) {
     return revokingDB.getUnchecked(hash);
   }

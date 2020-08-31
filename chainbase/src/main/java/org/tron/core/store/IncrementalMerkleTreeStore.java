@@ -21,13 +21,11 @@ public class IncrementalMerkleTreeStore
 
   @Override
   public IncrementalMerkleTreeCapsule get(byte[] key) {
-    byte[] value = revokingDB.getUnchecked(key);
-    return ArrayUtils.isEmpty(value) ? null : new IncrementalMerkleTreeCapsule(value);
+    return getUnchecked(key);
   }
 
   public boolean contain(byte[] key) {
-    byte[] value = revokingDB.getUnchecked(key);
-    return !ArrayUtils.isEmpty(value);
+    return has(key);
   }
 
 }

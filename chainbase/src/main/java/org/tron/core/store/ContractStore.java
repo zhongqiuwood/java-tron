@@ -43,7 +43,11 @@ public class ContractStore extends TronStoreWithRevoking<ContractCapsule, SmartC
    * find a transaction  by it's id.
    */
   public byte[] findContractByHash(byte[] trxHash) {
-    return revokingDB.getUnchecked(trxHash);
+    return getBytes(trxHash);
+  }
+
+  public boolean contains(byte[] trxhash) {
+    return has(trxhash);
   }
 
   /**

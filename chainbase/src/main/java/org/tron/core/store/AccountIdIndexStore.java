@@ -41,18 +41,13 @@ public class AccountIdIndexStore extends TronStoreWithRevoking<BytesCapsule, Com
   @Override
   public BytesCapsule get(byte[] key) {
     byte[] lowerCaseKey = getLowerCaseAccountId(key);
-    byte[] value = revokingDB.getUnchecked(lowerCaseKey);
-    if (ArrayUtils.isEmpty(value)) {
-      return null;
-    }
-    return new BytesCapsule(value);
+    return getUnchecked(lowerCaseKey);
   }
 
   @Override
   public boolean has(byte[] key) {
     byte[] lowerCaseKey = getLowerCaseAccountId(key);
-    byte[] value = revokingDB.getUnchecked(lowerCaseKey);
-    return !ArrayUtils.isEmpty(value);
+    return super.has(lowerCaseKey);
   }
 
 }

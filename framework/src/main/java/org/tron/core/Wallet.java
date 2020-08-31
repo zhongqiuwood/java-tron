@@ -2448,10 +2448,7 @@ public class Wallet {
     ContractStore contractStore = chainBaseManager.getContractStore();
     byte[] contractAddress = triggerSmartContract.getContractAddress()
         .toByteArray();
-    byte[] isContractExist = contractStore
-        .findContractByHash(contractAddress);
-
-    if (ArrayUtils.isEmpty(isContractExist)) {
+    if (contractStore.contains(contractAddress)) {
       throw new ContractValidateException(
           "No contract or not a smart contract");
     }

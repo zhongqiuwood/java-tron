@@ -26,8 +26,7 @@ public class DelegationStore extends TronStoreWithRevoking<BytesCapsule, Common.
 
   @Override
   public BytesCapsule get(byte[] key) {
-    byte[] value = revokingDB.getUnchecked(key);
-    return ArrayUtils.isEmpty(value) ? null : new BytesCapsule(value);
+    return getUnchecked(key);
   }
 
   public void addBlockReward(long cycle, byte[] address, long value) {

@@ -21,9 +21,7 @@ public class DelegatedResourceStore extends TronStoreWithRevoking<DelegatedResou
 
   @Override
   public DelegatedResourceCapsule get(byte[] key) {
-
-    byte[] value = revokingDB.getUnchecked(key);
-    return ArrayUtils.isEmpty(value) ? null : new DelegatedResourceCapsule(value);
+    return getUnchecked(key);
   }
 
   @Deprecated
