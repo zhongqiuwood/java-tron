@@ -74,9 +74,8 @@ public class RefineBenchMarkTest {
         long billion20 = 20000000000L;
         long billion40 = 40000000000L;
 
-        for(int i = 1; i <= 10; i++) {
-            //System.out.println("第"+i+"次");
-            for (Map.Entry<Byte, byte[]> entry : opMap.entrySet()) {
+        for (Map.Entry<Byte, byte[]> entry : opMap.entrySet()) {
+            for(int i = 1; i <= 10; i++) {
                 VM vm = new VM();
                 vm.targetOp = entry.getKey();
                 invoke = new ProgramInvokeMockImpl();
@@ -92,7 +91,7 @@ public class RefineBenchMarkTest {
                 //System.out.println(String.format("\"%s(0x%02x)\"\t\t\t\t%d\t\t\t\t%f",
                 //       OpCode.code(entry.getKey()),entry.getKey(), vm.count,time));
                 System.out.println(String.format("%d,%s(0x%02x),%d,%d,%f",
-                        i,OpCode.code(entry.getKey()),entry.getKey(), vm.timeAll,vm.count,
+                        i, OpCode.code(entry.getKey()), entry.getKey(), vm.timeAll, vm.count,
                         time));
             }
             System.out.println("-----");
