@@ -425,13 +425,18 @@ public class PrecompiledContracts {
 
         int sLength = data.length < 128 ? data.length - 96 : 32;
         System.arraycopy(data, 96, s, 0, sLength);
-
+        //long start = System.nanoTime();
         SignatureInterface signature = SignUtils.fromComponents(r, s, v[31]
             , CommonParameter.getInstance().isECKeyCryptoEngine());
+        //long end = System.nanoTime();
+        //System.out.println("signature cost: " + (end-start));
+        //long start1 = System.nanoTime();
         if (validateV(v) && signature.validateComponents()) {
           out = new DataWord(SignUtils.signatureToAddress(h, signature
               , CommonParameter.getInstance().isECKeyCryptoEngine()));
         }
+        //long end1= System.nanoTime();
+        //System.out.println("signatureToAddress cost: " + (end1-start1));
       } catch (Throwable any) {
       }
 

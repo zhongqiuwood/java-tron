@@ -9,6 +9,7 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.tuple.Pair;
 import org.spongycastle.util.encoders.Hex;
 import org.springframework.util.StringUtils;
 import org.tron.common.runtime.vm.DataWord;
@@ -85,7 +86,13 @@ public class VM {
     return energyCost;
   }
 
+  public long timeAll = 0;
+  public long count = 0;
+  public byte targetOp = 0x00;
   public void step(Program program) {
+    long startTime = 0;
+    byte currentOp = program.getCurrentOp();
+    startTime = System.nanoTime();
     if (config.vmTrace()) {
       program.saveOpTrace();
     }
@@ -343,8 +350,26 @@ public class VM {
          * Stop and Arithmetic Operations
          */
         case STOP: {
-          program.setHReturn(EMPTY_BYTE_ARRAY);
-          program.stop();
+          //program.setHReturn(EMPTY_BYTE_ARRAY);
+          //program.stop();
+
+          Pair<Boolean, byte[]> out = PrecompiledContracts.getContractForAddress(new DataWord(
+                  "0000000000000000000000000000000000000000000000000000000000000001"))
+                  .execute(new byte[]{0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                          0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                  0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                          0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                          0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+                          0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x1b,
+                          0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02,
+                          0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02,
+                          0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02,
+                          0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02,
+                          0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02, 0x02,
+                  0x02, 0x02});
+          program.step();
         }
         break;
         case ADD: {
@@ -1545,6 +1570,13 @@ public class VM {
       throw e;
     } finally {
       program.fullTrace();
+      long endTime = System.nanoTime();
+      if(currentOp == targetOp){
+//        long runTime = 0xffffffffffffffffL - startTime + endTime;
+        long runTime = endTime - startTime;
+        timeAll += runTime;
+        count++;
+      }
     }
   }
 

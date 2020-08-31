@@ -725,7 +725,7 @@ public enum OpCode {
 
   private void checkCall() {
     if (!isCall()) {
-      throw new RuntimeException("Opcode is not a call: " + this);
+//      throw new RuntimeException("Opcode is not a call: " + this);
     }
   }
 

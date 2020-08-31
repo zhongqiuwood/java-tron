@@ -110,7 +110,7 @@ public class VMConfig {
   }
 
   public static boolean allowTvmConstantinople() {
-    return ALLOW_TVM_CONSTANTINOPLE;
+    return true;
   }
 
   public static boolean allowMultiSign() {
