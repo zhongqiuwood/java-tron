@@ -77,7 +77,8 @@ public class RefineBenchMarkTest {
         long billion40 = 40000000000L;
 
         String msg;
-        BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter("OriginalBenchMark.txt")) ;
+        BufferedWriter bufferedWriter =
+                new BufferedWriter(new FileWriter("RefineBenchMark.txt")) ;
         for (Map.Entry<Byte, byte[]> entry : opMap.entrySet()) {
             bufferedWriter.write("-------->" + OpCode.code(entry.getKey()) + "\n");
             for(int i = 1; i <= 10; i++) {
