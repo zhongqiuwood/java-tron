@@ -73,6 +73,7 @@ public class RefineBenchMarkTest {
         long billion10 = 10000000000L;
         long billion20 = 20000000000L;
         long billion40 = 40000000000L;
+        long count = 500000;
 
         for (Map.Entry<Byte, byte[]> entry : opMap.entrySet()) {
             for(int i = 1; i <= 10; i++) {
@@ -83,7 +84,7 @@ public class RefineBenchMarkTest {
                 InternalTransaction interTrx = new InternalTransaction(trx, InternalTransaction.TrxType.TRX_UNKNOWN_TYPE);
                 program = new Program(entry.getValue(), invoke, interTrx);
 
-                while (vm.timeAll < billion) {
+                while (vm.count < count) {
                     vm.step(program);
                 }
 
