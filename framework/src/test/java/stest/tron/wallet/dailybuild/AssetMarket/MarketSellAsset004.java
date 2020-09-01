@@ -86,16 +86,6 @@ public class MarketSellAsset004 {
         PublicMethed.queryAccount(testAddress002, blockingStubFull).getAssetIssuedID().toByteArray();
   }
 
-//  @Test(enabled = true,description = "100 orders in the same account")
-//  void MarketCancelAssetTest001() {
-
-//    int a = 0;
-//    PublicMethed.marketSellAsset(testAddress001, testKey001, assetAccountId001, 2, trx
-//        , 1, blockingStubFull);
-//
-//    PublicMethed.waitProduceNextBlock(blockingStubFull);
-//
-//  }
 
   @Test(enabled = true,description = "The order amount exceeds the balance")
   void MarketCancelAssetTest002() {

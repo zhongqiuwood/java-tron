@@ -3,6 +3,8 @@ package stest.tron.wallet.dailybuild.AssetMarket;
 import com.google.protobuf.ByteString;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
+
+import java.util.Map;
 import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 import org.testng.Assert;
@@ -12,6 +14,7 @@ import org.tron.api.WalletGrpc;
 import org.tron.common.crypto.ECKey;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Utils;
+import org.tron.protos.Protocol;
 import org.tron.protos.Protocol.Account;
 import org.tron.protos.Protocol.Block;
 import org.tron.protos.Protocol.MarketPriceList;
@@ -40,7 +43,8 @@ public class MarketSellAsset005 {
       .getString("defaultParameter.assetDescription");
   String url = Configuration.getByPath("testng.conf")
       .getString("defaultParameter.assetUrl");
-
+  long sellTokenQuantity = 100;
+  long buyTokenQuantity = 50;
   byte [] trx = ByteArray.fromString("_");
 
 
@@ -95,57 +99,76 @@ public class MarketSellAsset005 {
   @Test(enabled = true,description = "Create an order to sell Trx and buy Trc10")
   void test01SellTrxBuyTrc10() {
     long balanceAfter = PublicMethed.queryAccount(testKey001, blockingStubFull).getBalance();
-    Long devAssetCountAfter = PublicMethed
-        .getAssetIssueValue(testAddress001,assetAccountId, blockingStubFull);
 
+    Map<String, Long> beforeAsset001 = PublicMethed.queryAccount(testAddress001, blockingStubFull)
+            .getAssetV2Map();
 
-    String txid = PublicMethed.marketSellAsset(testAddress002,testKey002,trx,1,assetAccountId001,10,blockingStubFull);
+    String txid = PublicMethed.marketSellAsset(testAddress002,testKey002,trx,
+            sellTokenQuantity,assetAccountId001,
+            buyTokenQuantity,blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
     Optional<Transaction> transaction = PublicMethed
         .getTransactionById(txid, blockingStubFull);
     logger.info("transaction: " + transaction);
     Assert.assertEquals(transaction.get().getRet(0).getRet().toString(), "SUCESS");
 
-    Optional<MarketOrderList> orderList = PublicMethed
-        .getMarketOrderByAccount(testAddress002, blockingStubFull);
+    logger.info("beforeAsset001: " + beforeAsset001);
+
+    txid = PublicMethed.marketSellAsset(testAddress001, testKey001, assetAccountId001,
+            sellTokenQuantity * 2,
+            trx, buyTokenQuantity * 2, blockingStubFull);
+
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    Assert.assertTrue(orderList.get().getOrdersCount() == 1);
-    transaction = PublicMethed
-        .getTransactionById(txid, blockingStubFull);
-    Assert.assertEquals(transaction.get().getRet(0).getRet().toString(), "SUCESS");
+    Assert.assertNotNull(txid);
+
+
+    Map<String, Long> afterAsset001 = PublicMethed.queryAccount(testAddress001, blockingStubFull)
+            .getAssetV2Map();
+
+    logger.info("afterAsset001: " + afterAsset001);
+
+    String assetId001 = ByteArray.toStr(assetAccountId001);
+    Assert.assertEquals((beforeAsset001.get(assetId001) - sellTokenQuantity * 2),
+            afterAsset001.get(assetId001).longValue());
 
   }
 
   @Test(enabled = true,description = "Create an order to sell Trc10 and buy Trx")
   void test02SellTrc10BuyTrx() {
     long balanceAfter = PublicMethed.queryAccount(testKey001, blockingStubFull).getBalance();
-    Long devAssetCountAfter = PublicMethed
-        .getAssetIssueValue(testAddress001,assetAccountId, blockingStubFull);
 
+    Map<String, Long> beforeAsset001 = PublicMethed.queryAccount(testAddress001, blockingStubFull)
+            .getAssetV2Map();
 
-    String txid = PublicMethed.marketSellAsset(testAddress001,testKey001,assetAccountId001,5,trx,1,blockingStubFull);
+    String txid = PublicMethed.marketSellAsset(testAddress002,testKey002,assetAccountId001,
+            sellTokenQuantity,trx,
+            buyTokenQuantity,blockingStubFull);
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    Optional<TransactionInfo> TransactionInfo = PublicMethed
-        .getTransactionInfoById(txid, blockingStubFull);
-    logger.info("transaction: " + TransactionInfo);
     Optional<Transaction> transaction = PublicMethed
-        .getTransactionById(txid, blockingStubFull);
+            .getTransactionById(txid, blockingStubFull);
     logger.info("transaction: " + transaction);
     Assert.assertEquals(transaction.get().getRet(0).getRet().toString(), "SUCESS");
 
-    Optional<MarketOrderList> orderList = PublicMethed
-        .getMarketOrderByAccount(testAddress001, blockingStubFull);
+    logger.info("beforeAsset001: " + beforeAsset001);
+
+    txid = PublicMethed.marketSellAsset(testAddress001, testKey001, trx,
+            sellTokenQuantity * 2,
+            assetAccountId001, buyTokenQuantity * 2, blockingStubFull);
+
     PublicMethed.waitProduceNextBlock(blockingStubFull);
-    Assert.assertTrue(orderList.get().getOrdersCount() == 1);
-    transaction = PublicMethed
-        .getTransactionById(txid, blockingStubFull);
-    Assert.assertEquals(transaction.get().getRet(0).getRet().toString(), "SUCESS");
+    Assert.assertNotNull(txid);
+
+
+    Map<String, Long> afterAsset001 = PublicMethed.queryAccount(testAddress001, blockingStubFull)
+            .getAssetV2Map();
+
+    logger.info("afterAsset001: " + afterAsset001);
+
+    String assetId001 = ByteArray.toStr(assetAccountId001);
+    Assert.assertEquals((beforeAsset001.get(assetId001) - sellTokenQuantity * 2),
+            afterAsset001.get(assetId001).longValue());
 
   }
-
-
-
-
 
 
 
