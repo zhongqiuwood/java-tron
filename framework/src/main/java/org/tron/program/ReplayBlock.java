@@ -1,7 +1,9 @@
 package org.tron.program;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import javax.annotation.PostConstruct;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -13,6 +15,7 @@ import org.tron.core.config.args.Args;
 import org.tron.core.db.BlockStore;
 import org.tron.core.db.Manager;
 import org.tron.core.store.AccountStore;
+import org.tron.core.store.DynamicPropertiesStore;
 
 
 @Component
@@ -28,6 +31,16 @@ public class ReplayBlock {
   @Autowired
   private AccountStore accountStore;
 
+  @Autowired
+  private DynamicPropertiesStore dynamicPropertiesStore;
+
+  private Boolean[] processBar = new Boolean[100];
+
+  @PostConstruct
+  private void init() {
+    Arrays.fill(processBar, Boolean.FALSE);
+  }
+
   public void execute() {
     if (!Args.getInstance().isReplay()) {
       return;
@@ -42,6 +55,23 @@ public class ReplayBlock {
     }
 
     long latestNumber = blockCapsules.get(0).getNum();
+    long currentNumber = dynamicPropertiesStore.getLatestBlockHeaderNumber();
+    if (currentNumber >= latestNumber) {
+      logger.info("*************** there is not blocks that needed replay. ***************");
+      return;
+    }
+
+    logger.info("process block {}", currentNumber / latestNumber);
+
+    currentNumber += 1;
+    for (; currentNumber <= latestNumber; currentNumber++) {
+      List<BlockCapsule> capsules = blockStore.getLimitNumber(currentNumber, 1);
+      if (CollectionUtils.isEmpty(capsules)) {
+        break;
+      }
+
+
+    }
     for (Map.Entry<byte[], BlockCapsule> entry : blockStore) {
       logger.info("block: {}", entry.getValue().getNum());
       try {
