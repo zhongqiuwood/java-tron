@@ -206,7 +206,6 @@ public class AccountStore extends TronStoreWithRevoking<AccountCapsule> {
   }
 
   public boolean isSync() {
-    long timestamp = dynamicPropertiesStore.getLatestBlockHeaderTimestamp();
-    return System.currentTimeMillis() - timestamp >= 3600_000L;
+    return dynamicPropertiesStore.isSync();
   }
 }

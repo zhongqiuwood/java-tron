@@ -60,6 +60,10 @@ public class FullNode {
       logger.info("not in debug mode, it will check energy time");
     }
 
+    if (Args.getInstance().isPrintBlock()) {
+      new CurrentBlock().print();
+    }
+
     DefaultListableBeanFactory beanFactory = new DefaultListableBeanFactory();
     beanFactory.setAllowCircularReferences(false);
     TronApplicationContext context =
