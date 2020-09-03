@@ -1,12 +1,18 @@
 package org.tron.core.store;
 
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
+import com.google.common.primitives.Longs;
 import com.google.protobuf.ByteString;
 import java.util.Arrays;
+import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.IntStream;
 
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.ArrayUtils;
 import org.joda.time.DateTime;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -15,10 +21,16 @@ import org.tron.common.parameter.CommonParameter;
 import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.Sha256Hash;
 import org.tron.core.capsule.BytesCapsule;
+import org.tron.core.capsule.StorageRowCapsule;
 import org.tron.core.config.Parameter;
 import org.tron.core.config.Parameter.ChainConstant;
 import org.tron.core.db.TronStoreWithRevoking;
 import org.tron.protos.contract.Common;
+
+import org.tron.core.db2.common.WrappedByteArray;
+import org.tron.core.exception.BadItemException;
+import org.tron.core.exception.ItemNotFoundException;
+import org.tron.protos.Protocol;
 
 @Slf4j(topic = "DB")
 @Component
@@ -150,8 +162,58 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
   private static final byte[] MARKET_CANCEL_FEE = "MARKET_CANCEL_FEE".getBytes();
   private static final byte[] MARKET_QUANTITY_LIMIT = "MARKET_QUANTITY_LIMIT".getBytes();
 
+  private Cache<WrappedByteArray, WrappedByteArray> cache = Caffeine.newBuilder()
+      .expireAfterAccess(7, TimeUnit.DAYS)
+      .expireAfterWrite(7, TimeUnit.DAYS)
+      .build();
+
+  @Override
+  public BytesCapsule get(byte[] key) throws BadItemException, ItemNotFoundException {
+    return getUnchecked(key);
+  }
+
+  @Override
+  public BytesCapsule getUnchecked(byte[] key) {
+    if (isSync()) {
+      WrappedByteArray value = cache.getIfPresent(WrappedByteArray.of(key));
+      if (value != null) {
+        return new BytesCapsule(WrappedByteArray.copyOf(value.getBytes()).getBytes());
+      }
+    } else {
+      cache.invalidateAll();
+    }
+
+    BytesCapsule bytesCapsule = super.getUnchecked(key);
+
+    if (isSync()) {
+      cache.put(WrappedByteArray.of(key), WrappedByteArray.copyOf(bytesCapsule.getData()));
+    }
+    return bytesCapsule;
+  }
+
+  @Override
+  public void put(byte[] key, BytesCapsule item) {
+    if (Objects.isNull(key) || Objects.isNull(item)) {
+      return;
+    }
+
+    super.put(key, item);
+    if (isSync()) {
+      cache.put(WrappedByteArray.of(key), WrappedByteArray.copyOf(item.getData()));
+    }
+  }
+
+  @Override
+  public void delete(byte[] key) {
+    super.delete(key);
+
+    if (isSync()) {
+      cache.invalidate(WrappedByteArray.of(key));
+    }
+  }
+
   @Autowired
-  private DynamicPropertiesStore(@Value("properties") String dbName) {
+  public DynamicPropertiesStore(@Value("properties") String dbName) {
     super(dbName);
 
     try {
@@ -1959,7 +2021,7 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   public byte[] statsByVersion(int version) {
     String statsKey = FORK_PREFIX + version;
-    return revokingDB.getUnchecked(statsKey.getBytes());
+    return getUnchecked(statsKey.getBytes()).getData();
   }
 
   public Boolean getForked(int version) {
@@ -2056,6 +2118,12 @@ public class DynamicPropertiesStore extends TronStoreWithRevoking<BytesCapsule> 
 
   public boolean allowPBFT() {
     return getAllowPBFT() == 1;
+  }
+
+  public boolean isSync() {
+    byte[] value = revokingDB.getUnchecked(LATEST_BLOCK_HEADER_TIMESTAMP);
+    long timestamp = ArrayUtils.isEmpty(value) ? 0 : Longs.fromByteArray(value);
+    return System.currentTimeMillis() - timestamp >= 3600_000L;
   }
 
   private static class DynamicResourceProperties {

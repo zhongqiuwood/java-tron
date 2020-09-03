@@ -58,7 +58,7 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
    * initial account capsule.
    */
   public AccountCapsule(ByteString accountName, ByteString address, AccountType accountType,
-      long balance) {
+                        long balance) {
     this.account = Account.newBuilder()
         .setAccountName(accountName)
         .setType(accountType)
@@ -82,7 +82,7 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
    * construct account from AccountCreateContract and createTime.
    */
   public AccountCapsule(final AccountCreateContract contract, long createTime,
-      boolean withDefaultPermission, DynamicPropertiesStore dynamicPropertiesStore) {
+                        boolean withDefaultPermission, DynamicPropertiesStore dynamicPropertiesStore) {
     if (withDefaultPermission) {
       Permission owner = createDefaultOwnerPermission(contract.getAccountAddress());
       Permission active = createDefaultActivePermission(contract.getAccountAddress(),
@@ -118,7 +118,7 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
    * get account from address and account name.
    */
   public AccountCapsule(ByteString address, ByteString accountName,
-      AccountType accountType) {
+                        AccountType accountType) {
     this.account = Account.newBuilder()
         .setType(accountType)
         .setAccountName(accountName)
@@ -130,7 +130,7 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
    * get account from address.
    */
   public AccountCapsule(ByteString address,
-      AccountType accountType) {
+                        AccountType accountType) {
     this.account = Account.newBuilder()
         .setType(accountType)
         .setAddress(address)
@@ -141,8 +141,8 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
    * get account from address.
    */
   public AccountCapsule(ByteString address,
-      AccountType accountType, long createTime,
-      boolean withDefaultPermission, DynamicPropertiesStore dynamicPropertiesStore) {
+                        AccountType accountType, long createTime,
+                        boolean withDefaultPermission, DynamicPropertiesStore dynamicPropertiesStore) {
     if (withDefaultPermission) {
       Permission owner = createDefaultOwnerPermission(address);
       Permission active = createDefaultActivePermission(address, dynamicPropertiesStore);
@@ -193,7 +193,7 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
   }
 
   public static Permission createDefaultActivePermission(ByteString address,
-      DynamicPropertiesStore dynamicPropertiesStore) {
+                                                         DynamicPropertiesStore dynamicPropertiesStore) {
     Key.Builder key = Key.newBuilder();
     key.setAddress(address);
     key.setWeight(1);
@@ -481,7 +481,7 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
   }
 
   public boolean assetBalanceEnoughV2(byte[] key, long amount,
-      DynamicPropertiesStore dynamicPropertiesStore) {
+                                      DynamicPropertiesStore dynamicPropertiesStore) {
     Map<String, Long> assetMap;
     String nameKey;
     Long currentAmount;
@@ -518,7 +518,7 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
    * reduce asset amount.
    */
   public boolean reduceAssetAmountV2(byte[] key, long amount,
-      DynamicPropertiesStore dynamicPropertiesStore, AssetIssueStore assetIssueStore) {
+                                     DynamicPropertiesStore dynamicPropertiesStore, AssetIssueStore assetIssueStore) {
     //key is token name
     if (dynamicPropertiesStore.getAllowSameTokenName() == 0) {
       Map<String, Long> assetMap = this.account.getAssetMap();
@@ -569,7 +569,7 @@ public class AccountCapsule implements ProtoCapsule<Account>, Comparable<Account
    * add asset amount.
    */
   public boolean addAssetAmountV2(byte[] key, long amount,
-      DynamicPropertiesStore dynamicPropertiesStore, AssetIssueStore assetIssueStore) {
+                                  DynamicPropertiesStore dynamicPropertiesStore, AssetIssueStore assetIssueStore) {
     //key is token name
     if (dynamicPropertiesStore.getAllowSameTokenName() == 0) {
       Map<String, Long> assetMap = this.account.getAssetMap();

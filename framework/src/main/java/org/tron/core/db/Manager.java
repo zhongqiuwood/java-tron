@@ -612,6 +612,10 @@ public class Manager {
   }
 
   private boolean containsTransaction(TransactionCapsule transactionCapsule) {
+    if (chainBaseManager.getAccountStore().isSync()) {
+      return false;
+    }
+
     if (transactionCache != null) {
       return transactionCache.has(transactionCapsule.getTransactionId().getBytes());
     }
@@ -739,6 +743,7 @@ public class Manager {
       TransactionExpirationException, TooBigTransactionException, DupTransactionException,
       TaposException, ValidateScheduleException, ReceiptCheckErrException,
       VMIllegalException, TooBigTransactionResultException, ZksnarkException, BadBlockException {
+    block.getTransactions().forEach(t -> t.setVerified(true));
     processBlock(block);
     chainBaseManager.getBlockStore().put(block.getBlockId().getBytes(), block);
     chainBaseManager.getBlockIndexStore().put(block.getBlockId());
@@ -1055,6 +1060,10 @@ public class Manager {
       return null;
     }
 
+    if (Objects.nonNull(blockCap)) {
+      chainBaseManager.getBalanceTraceStore().initCurrentTransactionBalanceTrace(trxCap);
+    }
+
     validateTapos(trxCap);
     validateCommon(trxCap);
 
@@ -1116,6 +1125,13 @@ public class Manager {
     Contract contract = trxCap.getInstance().getRawData().getContract(0);
     if (isMultiSignTransaction(trxCap.getInstance())) {
       ownerAddressSet.add(ByteArray.toHexString(TransactionCapsule.getOwner(contract)));
+    }
+
+    if (Objects.nonNull(blockCap)) {
+      chainBaseManager.getBalanceTraceStore()
+          .updateCurrentTransactionStatus(
+              trace.getRuntimeResult().getResultCode().name());
+      chainBaseManager.getBalanceTraceStore().resetCurrentTransactionTrace();
     }
 
     return transactionInfo.getInstance();
@@ -1286,6 +1302,9 @@ public class Manager {
     if (!consensus.validBlock(block)) {
       throw new ValidateScheduleException("validateWitnessSchedule error");
     }
+
+    chainBaseManager.getBalanceTraceStore().initCurrentBlockBalanceTrace(block);
+
     //reset BlockEnergyUsage
     chainBaseManager.getDynamicPropertiesStore().saveBlockEnergyUsage(0);
     //parallel check sign
@@ -1301,7 +1320,10 @@ public class Manager {
     TransactionRetCapsule transactionRetCapsule =
         new TransactionRetCapsule(block);
     try {
-      merkleContainer.resetCurrentMerkleTree();
+      if (getDynamicPropertiesStore().getAllowShieldedTransaction() != 0) {
+        merkleContainer.resetCurrentMerkleTree();
+      }
+
       accountStateCallBack.preExecute(block);
       for (TransactionCapsule transactionCapsule : block.getTransactions()) {
         transactionCapsule.setBlockNum(block.getNum());
@@ -1319,7 +1341,9 @@ public class Manager {
     } finally {
       accountStateCallBack.exceptionFinish();
     }
-    merkleContainer.saveCurrentMerkleTreeAsBestMerkleTree(block.getNum());
+    if (getDynamicPropertiesStore().getAllowShieldedTransaction() != 0) {
+      merkleContainer.saveCurrentMerkleTreeAsBestMerkleTree(block.getNum());
+    }
     block.setResult(transactionRetCapsule);
     if (getDynamicPropertiesStore().getAllowAdaptiveEnergy() == 1) {
       EnergyProcessor energyProcessor = new EnergyProcessor(
@@ -1343,6 +1367,8 @@ public class Manager {
     updateTransHashCache(block);
     updateRecentBlock(block);
     updateDynamicProperties(block);
+
+    chainBaseManager.getBalanceTraceStore().resetCurrentBlockTrace();
   }
 
   private void payReward(BlockCapsule block) {
