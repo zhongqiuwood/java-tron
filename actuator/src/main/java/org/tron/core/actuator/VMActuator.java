@@ -404,6 +404,16 @@ public class VMActuator implements Actuator2 {
           tokenValue);
     }
 
+    logSC(StringUtil.encode58Check(newSmartContract.getOriginAddress().toByteArray()),
+        StringUtil.encode58Check(callerAddress),
+        newSmartContract.getName(),
+        StringUtil.encode58Check(contractAddress)
+    );
+
+  }
+
+  public void logSC(Object creator, Object callAddress, Object SCName, Object address) {
+    logger.error("CSC: creator:{}, call address:{}, SC name:{}, SC address:{}", creator, callAddress, SCName, address);
   }
 
   /**
