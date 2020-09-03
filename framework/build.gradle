@@ -4,7 +4,6 @@ plugins {
 
 apply plugin: 'application'
 apply plugin: 'checkstyle'
-apply plugin: 'com.github.johnrengelman.shadow'
 
 mainClassName = 'org.tron.program.FullNode'
 
@@ -131,11 +130,6 @@ run {
     }
 }
 
-shadowJar {
-    baseName = 'java-tron'
-    classifier = null
-    version = null
-}
 
 test {
     testLogging {
@@ -153,7 +147,6 @@ test {
         exclude 'org/tron/core/zksnark/**'
         exclude 'org/tron/common/runtime/vm/PrecompiledContractsVerifyProofTest.class'
         exclude 'org/tron/core/ShieldedTRC20BuilderTest.class'
-        exclude 'org/tron/common/runtime/vm/WithdrawRewardTest.class'
     }
 }
 
@@ -213,6 +206,8 @@ def binaryRelease(taskName, jarName, mainClass) {
         manifest {
             attributes "Main-Class": "${mainClass}"
         }
+
+        classifier(jarName)
     }
 }
 
@@ -260,14 +255,12 @@ createScript(project, 'org.tron.program.SolidityNode', 'SolidityNode')
 createScript(project, 'org.tron.program.FullNode', 'FullNode')
 createScript(project, 'org.tron.program.KeystoreFactory', 'KeystoreFactory')
 createScript(project, 'org.tron.program.DBConvert', 'DBConvert')
-createScript(project, 'org.tron.tool.litefullnode.LiteFullNodeTool', 'LiteFullNodeTool')
 
 artifacts {
     archives(binaryRelease('buildSolidityNodeJar', 'SolidityNode', 'org.tron.program.SolidityNode'),
             binaryRelease('buildFullNodeJar', 'FullNode', 'org.tron.program.FullNode'),
             binaryRelease('buildKeystoreFactoryJar', 'KeystoreFactory', 'org.tron.program.KeystoreFactory'),
-            binaryRelease('buildDBConvertJar', 'DBConvert', 'org.tron.program.DBConvert'),
-            binaryRelease('buildLiteFullNodeToolJar', 'LiteFullNodeTool', 'org.tron.tool.litefullnode.LiteFullNodeTool'))
+            binaryRelease('buildDBConvertJar', 'DBConvert', 'org.tron.program.DBConvert'))
 }
 
 task copyToParent(type: Copy) {
