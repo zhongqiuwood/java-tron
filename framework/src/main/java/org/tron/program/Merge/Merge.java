@@ -29,12 +29,12 @@ public class Merge {
   public void merge(String dbName) {
     String fromString = Args.getInstance().getFrom();
     if (StringUtils.isEmpty(fromString)) {
-      throw new InvalidParameterException("from must be not empty");
+      throw new InvalidParameterException("from dir must be not empty");
     }
 
     String toString = Args.getInstance().getTo();
     if (StringUtils.isEmpty(toString)) {
-      throw new InvalidParameterException("from must be not empty");
+      throw new InvalidParameterException("to dir must be not empty");
     }
 
     String dbEngine = Args.getInstance().getStorage().getDbEngine();
