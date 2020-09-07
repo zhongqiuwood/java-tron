@@ -19,6 +19,7 @@ import org.tron.core.services.interfaceOnPBFT.RpcApiServiceOnPBFT;
 import org.tron.core.services.interfaceOnPBFT.http.PBFT.HttpApiOnPBFTService;
 import org.tron.core.services.interfaceOnSolidity.RpcApiServiceOnSolidity;
 import org.tron.core.services.interfaceOnSolidity.http.solidity.HttpApiOnSolidityService;
+import org.tron.program.Merge.Merge;
 
 @Slf4j(topic = "app")
 public class FullNode {
@@ -62,6 +63,10 @@ public class FullNode {
 
     if (Args.getInstance().isPrintBlock()) {
       new CurrentBlock().print();
+    }
+
+    if (Args.getInstance().isMerge()) {
+      new Merge().merge();
     }
 
     DefaultListableBeanFactory beanFactory = new DefaultListableBeanFactory();
