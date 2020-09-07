@@ -266,151 +266,146 @@ public class DataWord implements Comparable<DataWord> {
 
   public DataWord and(DataWord w2) {
 
+    byte[] newData = this.getClonedData();
     for (int i = 0; i < this.data.length; ++i) {
-      this.data[i] &= w2.data[i];
+      newData[i] &= w2.data[i];
     }
-    return this;
+    return new DataWord(newData);
   }
 
   public DataWord or(DataWord w2) {
 
+    byte[] newData = this.getClonedData();
     for (int i = 0; i < this.data.length; ++i) {
-      this.data[i] |= w2.data[i];
+      newData[i] |= w2.data[i];
     }
-    return this;
+    return new DataWord(newData);
   }
 
   public DataWord xor(DataWord w2) {
 
+    byte[] newData = this.getClonedData();
     for (int i = 0; i < this.data.length; ++i) {
-      this.data[i] ^= w2.data[i];
+      newData[i] ^= w2.data[i];
     }
-    return this;
+    return new DataWord(newData);
   }
 
-  public void negate() {
+  public DataWord negate() {
     if (this.isZero()) {
-      return;
+      return ZERO();
     }
 
-    bnot();
-    add(DataWord.ONE());
+    return bnot().add(DataWord.ONE());
   }
 
-  public void bnot() {
+  public DataWord bnot() {
     if (this.isZero()) {
-      this.data = ByteUtil.copyToArray(MAX_VALUE);
-      return;
+      return new DataWord(ByteUtil.copyToArray(MAX_VALUE));
     }
-    this.data = ByteUtil.copyToArray(MAX_VALUE.subtract(this.value()));
+    return new DataWord(ByteUtil.copyToArray(MAX_VALUE.subtract(this.value())));
   }
 
   // By   : Holger
   // From : http://stackoverflow.com/a/24023466/459349
-  public void add(DataWord word) {
+  public DataWord add(DataWord word) {
     byte[] result = new byte[32];
     for (int i = 31, overflow = 0; i >= 0; i--) {
       int v = (this.data[i] & 0xff) + (word.data[i] & 0xff) + overflow;
       result[i] = (byte) v;
       overflow = v >>> 8;
     }
-    this.data = result;
+    return new DataWord(result);
   }
 
   // old add-method with BigInteger quick hack
-  public void add2(DataWord word) {
+  public DataWord add2(DataWord word) {
     BigInteger result = value().add(word.value());
-    this.data = ByteUtil.copyToArray(result.and(MAX_VALUE));
+    return new DataWord(ByteUtil.copyToArray(result.and(MAX_VALUE)));
   }
 
   // TODO: mul can be done in more efficient way
   // TODO:     with shift left shift right trick
   // TODO      without BigInteger quick hack
-  public void mul(DataWord word) {
+  public DataWord mul(DataWord word) {
     BigInteger result = value().multiply(word.value());
-    this.data = ByteUtil.copyToArray(result.and(MAX_VALUE));
+    return new DataWord(ByteUtil.copyToArray(result.and(MAX_VALUE)));
   }
 
   // TODO: improve with no BigInteger
-  public void div(DataWord word) {
+  public DataWord div(DataWord word) {
 
     if (word.isZero()) {
-      this.and(ZERO);
-      return;
+      return ZERO();
     }
 
     BigInteger result = value().divide(word.value());
-    this.data = ByteUtil.copyToArray(result.and(MAX_VALUE));
+    return new DataWord(ByteUtil.copyToArray(result.and(MAX_VALUE)));
   }
 
   // TODO: improve with no BigInteger
-  public void sDiv(DataWord word) {
+  public DataWord sDiv(DataWord word) {
 
     if (word.isZero()) {
-      this.and(ZERO);
-      return;
+      return ZERO();
     }
 
     BigInteger result = sValue().divide(word.sValue());
-    this.data = ByteUtil.copyToArray(result.and(MAX_VALUE));
+    return new DataWord(ByteUtil.copyToArray(result.and(MAX_VALUE)));
   }
 
   // TODO: improve with no BigInteger
-  public void sub(DataWord word) {
+  public DataWord sub(DataWord word) {
     BigInteger result = value().subtract(word.value());
-    this.data = ByteUtil.copyToArray(result.and(MAX_VALUE));
+    return new DataWord(ByteUtil.copyToArray(result.and(MAX_VALUE)));
   }
 
   // TODO: improve with no BigInteger
-  public void exp(DataWord word) {
+  public DataWord exp(DataWord word) {
     BigInteger result = value().modPow(word.value(), _2_256);
-    this.data = ByteUtil.copyToArray(result);
+    return new DataWord(ByteUtil.copyToArray(result));
   }
 
   // TODO: improve with no BigInteger
-  public void mod(DataWord word) {
+  public DataWord mod(DataWord word) {
 
     if (word.isZero()) {
-      this.and(ZERO);
-      return;
+      return ZERO();
     }
 
     BigInteger result = value().mod(word.value());
-    this.data = ByteUtil.copyToArray(result.and(MAX_VALUE));
+    return new DataWord(ByteUtil.copyToArray(result.and(MAX_VALUE)));
   }
 
-  public void sMod(DataWord word) {
+  public DataWord sMod(DataWord word) {
 
     if (word.isZero()) {
-      this.and(ZERO());
-      return;
+      return ZERO();
     }
 
     BigInteger result = sValue().abs().mod(word.sValue().abs());
     result = (sValue().signum() == -1) ? result.negate() : result;
 
-    this.data = ByteUtil.copyToArray(result.and(MAX_VALUE));
+    return new DataWord(ByteUtil.copyToArray(result.and(MAX_VALUE)));
   }
 
-  public void addmod(DataWord word1, DataWord word2) {
+  public DataWord addmod(DataWord word1, DataWord word2) {
     if (word2.isZero()) {
-      this.data = new byte[32];
-      return;
+      return ZERO();
     }
 
     BigInteger result = value().add(word1.value()).mod(word2.value());
-    this.data = ByteUtil.copyToArray(result.and(MAX_VALUE));
+    return new DataWord(ByteUtil.copyToArray(result.and(MAX_VALUE)));
   }
 
-  public void mulmod(DataWord word1, DataWord word2) {
+  public DataWord mulmod(DataWord word1, DataWord word2) {
 
     if (this.isZero() || word1.isZero() || word2.isZero()) {
-      this.data = new byte[32];
-      return;
+      return ZERO();
     }
 
     BigInteger result = value().multiply(word1.value()).mod(word2.value());
-    this.data = ByteUtil.copyToArray(result.and(MAX_VALUE));
+    return new DataWord(ByteUtil.copyToArray(result.and(MAX_VALUE)));
   }
 
   @JsonValue
@@ -474,14 +469,16 @@ public class DataWord implements Comparable<DataWord> {
     return (int) Math.signum(result);
   }
 
-  public void signExtend(byte k) {
+  public DataWord signExtend(byte k) {
     if (0 > k || k > 31) {
       throw new IndexOutOfBoundsException();
     }
     byte mask = this.sValue().testBit((k * 8) + 7) ? (byte) 0xff : 0;
+    byte[] newData = this.getClonedData();
     for (int i = 31; i > k; i--) {
-      this.data[31 - i] = mask;
+      newData[31 - i] = mask;
     }
+    return new DataWord(newData);
   }
 
   public int bytesOccupied() {
@@ -541,8 +538,7 @@ public class DataWord implements Comparable<DataWord> {
     if (arg.value().compareTo(BigInteger.valueOf(MAX_POW)) >= 0) {
       if (this.isNegative()) {
         DataWord result = ONE();
-        result.negate();
-        return result;
+        return result.negate();
       } else {
         return ZERO();
       }
