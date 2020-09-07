@@ -21,6 +21,7 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.tuple.Pair;
 import org.spongycastle.util.encoders.Hex;
 import org.springframework.util.StringUtils;
 import org.tron.common.runtime.vm.DataWord;
@@ -93,7 +94,13 @@ public class VM {
     return energyCost;
   }
 
+  public long timeAll = 0;
+  public long count = 0;
+  public byte targetOp = 0x00;
   public void step(Program program) {
+    long startTime = 0;
+    byte currentOp = program.getCurrentOp();
+    startTime = System.nanoTime();
     if (config.vmTrace()) {
       program.saveOpTrace();
     }
@@ -1451,6 +1458,13 @@ public class VM {
       throw e;
     } finally {
       program.fullTrace();
+      long endTime = System.nanoTime();
+      if(currentOp == targetOp){
+//        long runTime = 0xffffffffffffffffL - startTime + endTime;
+        long runTime = endTime - startTime;
+        timeAll += runTime;
+        count++;
+      }
     }
   }
 
