@@ -1,4 +1,4 @@
-package org.tron.program.Merge;
+package org.tron.program.merge;
 
 import java.security.InvalidParameterException;
 import java.util.Map;
