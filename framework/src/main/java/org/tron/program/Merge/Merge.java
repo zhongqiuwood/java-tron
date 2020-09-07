@@ -65,6 +65,6 @@ public class Merge {
       count++;
     }
 
-    System.out.println("from size:" + count + "/" + to.getTotal() + ", to size:" + to.getTotal());
+    System.out.println("from size:" + count + ", to size:" + to.getTotal());
   }
 }
