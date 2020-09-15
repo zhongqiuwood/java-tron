@@ -2274,7 +2274,7 @@ public class RpcApiService implements Service {
         checkSupportShieldedTRC20Transaction();
 
         responseObserver.onNext(wallet.getIncomingViewingKey(ak.toByteArray(), nk.toByteArray()));
-      } catch (ZksnarkException e) {
+      } catch (ZksnarkException | BadItemException e) {
         responseObserver.onError(getRunTimeException(e));
         return;
       }
@@ -2403,7 +2403,7 @@ public class RpcApiService implements Service {
         BytesMessage nf = wallet
             .createShieldNullifier(request);
         responseObserver.onNext(nf);
-      } catch (ZksnarkException e) {
+      } catch (ZksnarkException | BadItemException e) {
         responseObserver.onError(getRunTimeException(e));
         return;
       }

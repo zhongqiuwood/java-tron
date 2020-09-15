@@ -1703,9 +1703,9 @@ public class Wallet {
       throws ContractValidateException, RuntimeException, ZksnarkException, BadItemException {
     checkNodeAllowSensitiveApi();
     checkFullNodeAllowShieldedTransaction();
+    checkNodeAllowSensitiveApi();
 
     ZenTransactionBuilder builder = new ZenTransactionBuilder(this);
-
     // set timeout
     long timeout = request.getTimeout();
     if (timeout < 0) {
@@ -1805,6 +1805,7 @@ public class Wallet {
       PrivateParametersWithoutAsk request)
       throws ContractValidateException, ZksnarkException, BadItemException {
     checkFullNodeAllowShieldedTransaction();
+    checkNodeAllowSensitiveApi();
 
     ZenTransactionBuilder builder = new ZenTransactionBuilder(this);
 
@@ -1922,6 +1923,7 @@ public class Wallet {
 
   public ShieldedAddressInfo getNewShieldedAddress() throws BadItemException, ZksnarkException {
     checkFullNodeAllowShieldedTransaction();
+    checkNodeAllowSensitiveApi();
 
     ShieldedAddressInfo.Builder addressInfo = ShieldedAddressInfo.newBuilder();
 
@@ -1991,6 +1993,7 @@ public class Wallet {
   public BytesMessage getAkFromAsk(ByteString ask) throws
       BadItemException, ZksnarkException {
     checkFullNodeAllowShieldedTransaction();
+    checkNodeAllowSensitiveApi();
 
     if (Objects.isNull(ask)) {
       throw new BadItemException("ask is null");
@@ -2007,6 +2010,7 @@ public class Wallet {
   public BytesMessage getNkFromNsk(ByteString nsk) throws
       BadItemException, ZksnarkException {
     checkFullNodeAllowShieldedTransaction();
+    checkNodeAllowSensitiveApi();
 
     if (Objects.isNull(nsk)) {
       throw new BadItemException("nsk is null");
@@ -2021,8 +2025,9 @@ public class Wallet {
   }
 
   public IncomingViewingKeyMessage getIncomingViewingKey(byte[] ak, byte[] nk)
-      throws ZksnarkException {
+      throws ZksnarkException, BadItemException {
     checkFullNodeAllowShieldedTransaction();
+    checkNodeAllowSensitiveApi();
 
     byte[] ivk = new byte[32]; // the incoming viewing key
     JLibrustzcash.librustzcashCrhIvk(new CrhIvkParams(ak, nk, ivk));
@@ -2058,6 +2063,7 @@ public class Wallet {
   public PaymentAddressMessage getPaymentAddress(IncomingViewingKey ivk,
       DiversifierT d) throws BadItemException, ZksnarkException {
     checkFullNodeAllowShieldedTransaction();
+    checkNodeAllowSensitiveApi();
 
     if (!JLibrustzcash.librustzcashCheckDiversifier(d.getData())) {
       throw new BadItemException("d is not valid");
@@ -2082,6 +2088,7 @@ public class Wallet {
   public SpendResult isSpend(NoteParameters noteParameters) throws
       ZksnarkException, InvalidProtocolBufferException, BadItemException, ItemNotFoundException {
     checkFullNodeAllowShieldedTransaction();
+    checkNodeAllowSensitiveApi();
 
     GrpcAPI.Note note = noteParameters.getNote();
     byte[] ak = noteParameters.getAk().toByteArray();
@@ -2136,8 +2143,9 @@ public class Wallet {
   }
 
   public BytesMessage createSpendAuthSig(SpendAuthSigParameters spendAuthSigParameters)
-      throws ZksnarkException {
+      throws ZksnarkException, BadItemException {
     checkFullNodeAllowShieldedTransaction();
+    checkNodeAllowSensitiveApi();
 
     byte[] result = new byte[64];
     SpendSigParams spendSigParams = new SpendSigParams(
@@ -2150,8 +2158,10 @@ public class Wallet {
     return BytesMessage.newBuilder().setValue(ByteString.copyFrom(result)).build();
   }
 
-  public BytesMessage createShieldNullifier(NfParameters nfParameters) throws ZksnarkException {
+  public BytesMessage createShieldNullifier(NfParameters nfParameters)
+      throws ZksnarkException, BadItemException {
     checkFullNodeAllowShieldedTransaction();
+    checkNodeAllowSensitiveApi();
 
     byte[] ak = nfParameters.getAk().toByteArray();
     byte[] nk = nfParameters.getNk().toByteArray();
@@ -3181,8 +3191,9 @@ public class Wallet {
 
   public ShieldedTRC20Parameters createShieldedContractParameters(
       PrivateShieldedTRC20Parameters request)
-      throws ContractValidateException, ZksnarkException, ContractExeException {
+      throws ContractValidateException, ZksnarkException, ContractExeException, BadItemException {
     checkFullNodeAllowShieldedTransaction();
+    checkNodeAllowSensitiveApi();
 
     ShieldedTRC20ParametersBuilder builder = new ShieldedTRC20ParametersBuilder();
 
@@ -3317,8 +3328,9 @@ public class Wallet {
 
   public ShieldedTRC20Parameters createShieldedContractParametersWithoutAsk(
       PrivateShieldedTRC20ParametersWithoutAsk request)
-      throws ZksnarkException, ContractValidateException, ContractExeException {
+      throws ZksnarkException, ContractValidateException, ContractExeException, BadItemException {
     checkFullNodeAllowShieldedTransaction();
+    checkNodeAllowSensitiveApi();
 
     ShieldedTRC20ParametersBuilder builder = new ShieldedTRC20ParametersBuilder();
     byte[] shieldedTRC20ContractAddress = request.getShieldedTRC20ContractAddress().toByteArray();
@@ -3614,6 +3626,7 @@ public class Wallet {
       byte[] ivk, byte[] ak, byte[] nk, ProtocolStringList topicsList)
       throws BadItemException, ZksnarkException, ContractExeException {
     checkFullNodeAllowShieldedTransaction();
+    checkNodeAllowSensitiveApi();
 
     return queryTRC20NoteByIvk(startNum, endNum,
         shieldedTRC20ContractAddress, ivk, ak, nk, topicsList);
@@ -3693,6 +3706,7 @@ public class Wallet {
       byte[] ovk, byte[] shieldedTRC20ContractAddress, ProtocolStringList topicsList)
       throws ZksnarkException, BadItemException {
     checkFullNodeAllowShieldedTransaction();
+    checkNodeAllowSensitiveApi();
 
     DecryptNotesTRC20.Builder builder = DecryptNotesTRC20.newBuilder();
     if (!(startNum >= 0 && endNum > startNum && endNum - startNum <= 1000)) {
@@ -3754,8 +3768,9 @@ public class Wallet {
   }
 
   public GrpcAPI.NullifierResult isShieldedTRC20ContractNoteSpent(NfTRC20Parameters request) throws
-      ZksnarkException, ContractExeException {
+      ZksnarkException, ContractExeException, BadItemException {
     checkFullNodeAllowShieldedTransaction();
+    checkNodeAllowSensitiveApi();
 
     return GrpcAPI.NullifierResult.newBuilder()
         .setIsSpent(isShieldedTRC20NoteSpent(request.getNote(),
