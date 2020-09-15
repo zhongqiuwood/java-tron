@@ -180,6 +180,7 @@ public class Args extends CommonParameter {
     PARAMETER.allowTvmIstanbul = 0;
     PARAMETER.allowTvmStake = 0;
     PARAMETER.allowTvmAssetIssue = 0;
+    PARAMETER.allowSensitiveApiArgs = true;
   }
 
   /**
@@ -683,6 +684,10 @@ public class Args extends CommonParameter {
     PARAMETER.shieldedTransInPendingMaxCounts =
         config.hasPath(Constant.NODE_SHIELDED_TRANS_IN_PENDING_MAX_COUNTS) ? config
             .getInt(Constant.NODE_SHIELDED_TRANS_IN_PENDING_MAX_COUNTS) : 10;
+
+    PARAMETER.allowSensitiveApiArgs =
+        !config.hasPath(Constant.NODE_ALLOW_SENSITIVE_API)
+            || config.getBoolean(Constant.NODE_ALLOW_SENSITIVE_API);
 
     if (PARAMETER.isWitness()) {
       PARAMETER.fullNodeAllowShieldedTransactionArgs = true;

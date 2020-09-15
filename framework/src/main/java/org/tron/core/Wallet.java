@@ -3969,5 +3969,11 @@ public class Wallet {
     boolean contains = getStandbyWitness().contains(ByteString.copyFrom(address));
     return contains;
   }
+
+  public void checkNodeAllowSensitiveApi() throws BadItemException {
+    if (!Args.getInstance().isAllowSensitiveApiArgs()) {
+      throw new BadItemException("This api needs to be opened in the config.");
+    }
+  }
 }
 
