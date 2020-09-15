@@ -17,6 +17,7 @@ import org.tron.common.crypto.SignUtils;
 import org.tron.core.Wallet;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.config.args.Args;
+import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.services.http.JsonFormat.ParseException;
 import org.tron.protos.Protocol.Transaction.Contract.ContractType;
@@ -41,6 +42,7 @@ public class EasyTransferAssetServlet extends RateLimiterServlet {
     EasyTransferResponse.Builder responseBuild = EasyTransferResponse.newBuilder();
     boolean visible = false;
     try {
+      wallet.checkNodeAllowSensitiveApi();
       String input = request.getReader().lines()
           .collect(Collectors.joining(System.lineSeparator()));
       visible = Util.getVisiblePost(input);
@@ -89,6 +91,16 @@ public class EasyTransferAssetServlet extends RateLimiterServlet {
     } catch (ContractValidateException e) {
       returnBuilder.setResult(false).setCode(response_code.CONTRACT_VALIDATE_ERROR)
           .setMessage(ByteString.copyFromUtf8(e.getMessage()));
+      responseBuild.setResult(returnBuilder.build());
+      try {
+        response.getWriter().println(JsonFormat.printToString(responseBuild.build(), visible));
+      } catch (IOException ioe) {
+        logger.debug(S_IOEXCEPTION, ioe.getMessage());
+      }
+      return;
+    } catch (BadItemException e) {
+      returnBuilder.setResult(false).setCode(response_code.OTHER_ERROR)
+                   .setMessage(ByteString.copyFromUtf8(e.getMessage()));
       responseBuild.setResult(returnBuilder.build());
       try {
         response.getWriter().println(JsonFormat.printToString(responseBuild.build(), visible));

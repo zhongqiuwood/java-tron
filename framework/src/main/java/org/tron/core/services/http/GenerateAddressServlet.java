@@ -12,6 +12,7 @@ import org.tron.common.utils.ByteArray;
 import org.tron.common.utils.StringUtil;
 import org.tron.common.utils.Utils;
 import org.tron.core.config.args.Args;
+import org.tron.core.exception.BadItemException;
 
 
 @Component
@@ -20,6 +21,10 @@ public class GenerateAddressServlet extends RateLimiterServlet {
 
   protected void doGet(HttpServletRequest request, HttpServletResponse response) {
     try {
+      if (!Args.getInstance().isAllowSensitiveApiArgs()) {
+        throw new BadItemException("This api needs to be opened in the config.");
+      }
+
       SignInterface sign = SignUtils.getGeneratedRandomSign(Utils.getRandom(),
           Args.getInstance().isECKeyCryptoEngine());
       byte[] priKey = sign.getPrivateKey();

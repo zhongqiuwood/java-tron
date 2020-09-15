@@ -1701,6 +1701,7 @@ public class Wallet {
 
   public TransactionCapsule createShieldedTransaction(PrivateParameters request)
       throws ContractValidateException, RuntimeException, ZksnarkException, BadItemException {
+    checkNodeAllowSensitiveApi();
     checkFullNodeAllowShieldedTransaction();
 
     ZenTransactionBuilder builder = new ZenTransactionBuilder(this);
@@ -1952,7 +1953,8 @@ public class Wallet {
 
   }
 
-  public BytesMessage getSpendingKey() throws ZksnarkException {
+  public BytesMessage getSpendingKey() throws ZksnarkException, BadItemException {
+    checkNodeAllowSensitiveApi();
     checkFullNodeAllowShieldedTransaction();
 
     byte[] sk = SpendingKey.random().getValue();
@@ -1961,6 +1963,7 @@ public class Wallet {
 
   public ExpandedSpendingKeyMessage getExpandedSpendingKey(ByteString spendingKey)
       throws BadItemException, ZksnarkException {
+    checkNodeAllowSensitiveApi();
     checkFullNodeAllowShieldedTransaction();
 
     if (Objects.isNull(spendingKey)) {
@@ -2998,6 +3001,7 @@ public class Wallet {
    */
   public GrpcAPI.DecryptNotes scanNoteByIvk(long startNum, long endNum,
       byte[] ivk) throws BadItemException, ZksnarkException {
+    checkNodeAllowSensitiveApi();
     checkFullNodeAllowShieldedTransaction();
 
     return queryNoteByIvk(startNum, endNum, ivk);
@@ -3009,6 +3013,7 @@ public class Wallet {
   public GrpcAPI.DecryptNotesMarked scanAndMarkNoteByIvk(long startNum, long endNum,
       byte[] ivk, byte[] ak, byte[] nk) throws BadItemException, ZksnarkException,
       InvalidProtocolBufferException, ItemNotFoundException {
+    checkNodeAllowSensitiveApi();
     checkFullNodeAllowShieldedTransaction();
 
     GrpcAPI.DecryptNotes srcNotes = queryNoteByIvk(startNum, endNum, ivk);
@@ -3042,6 +3047,7 @@ public class Wallet {
    */
   public GrpcAPI.DecryptNotes scanNoteByOvk(long startNum, long endNum,
       byte[] ovk) throws BadItemException, ZksnarkException {
+    checkNodeAllowSensitiveApi();
     checkFullNodeAllowShieldedTransaction();
 
     GrpcAPI.DecryptNotes.Builder builder = GrpcAPI.DecryptNotes.newBuilder();

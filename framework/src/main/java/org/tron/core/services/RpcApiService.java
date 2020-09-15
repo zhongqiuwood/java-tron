@@ -661,6 +661,14 @@ public class RpcApiService implements Service {
     @Override
     public void generateAddress(EmptyMessage request,
         StreamObserver<GrpcAPI.AddressPrKeyPairMessage> responseObserver) {
+      try {
+        wallet.checkNodeAllowSensitiveApi();
+      } catch (Exception e) {
+        responseObserver.onError(getRunTimeException(e));
+        logger.info(EXCEPTION_CAUGHT + e.getMessage());
+        return;
+      }
+
       SignInterface cryptoEngine = SignUtils.getGeneratedRandomSign(Utils.getRandom(),
           Args.getInstance().isECKeyCryptoEngine());
       byte[] priKey = cryptoEngine.getPrivateKey();
@@ -1038,6 +1046,13 @@ public class RpcApiService implements Service {
     @Override
     public void getTransactionSign(TransactionSign req,
         StreamObserver<Transaction> responseObserver) {
+      try {
+        wallet.checkNodeAllowSensitiveApi();
+      } catch (Exception e) {
+        responseObserver.onError(getRunTimeException(e));
+        logger.info(EXCEPTION_CAUGHT + e.getMessage());
+        return;
+      }
       TransactionCapsule result = TransactionUtil.getTransactionSign(req);
       responseObserver.onNext(result.getInstance());
       responseObserver.onCompleted();
@@ -1049,6 +1064,7 @@ public class RpcApiService implements Service {
       TransactionExtention.Builder trxExtBuilder = TransactionExtention.newBuilder();
       Return.Builder retBuilder = Return.newBuilder();
       try {
+        wallet.checkNodeAllowSensitiveApi();
         TransactionCapsule trx = TransactionUtil.getTransactionSign(req);
         trxExtBuilder.setTransaction(trx.getInstance());
         trxExtBuilder.setTxid(trx.getTransactionId().getByteString());
@@ -1069,6 +1085,7 @@ public class RpcApiService implements Service {
       TransactionExtention.Builder trxExtBuilder = TransactionExtention.newBuilder();
       Return.Builder retBuilder = Return.newBuilder();
       try {
+        wallet.checkNodeAllowSensitiveApi();
         TransactionCapsule trx = transactionUtil.addSign(req);
         trxExtBuilder.setTransaction(trx.getInstance());
         trxExtBuilder.setTxid(trx.getTransactionId().getByteString());
@@ -1102,6 +1119,14 @@ public class RpcApiService implements Service {
     @Override
     public void createAddress(BytesMessage req,
         StreamObserver<BytesMessage> responseObserver) {
+      try {
+        wallet.checkNodeAllowSensitiveApi();
+      } catch (Exception e) {
+        responseObserver.onError(getRunTimeException(e));
+        logger.info(EXCEPTION_CAUGHT + e.getMessage());
+        return;
+      }
+
       byte[] address = wallet.createAddress(req.getValue().toByteArray());
       BytesMessage.Builder builder = BytesMessage.newBuilder();
       builder.setValue(ByteString.copyFrom(address));
@@ -1115,6 +1140,7 @@ public class RpcApiService implements Service {
       GrpcAPI.Return.Builder returnBuilder = GrpcAPI.Return.newBuilder();
       EasyTransferResponse.Builder responseBuild = EasyTransferResponse.newBuilder();
       try {
+        wallet.checkNodeAllowSensitiveApi();
         SignInterface cryptoEngine = SignUtils.fromPrivate(privateKey, Args.getInstance()
             .isECKeyCryptoEngine());
         byte[] owner = cryptoEngine.getAddress();
@@ -1167,6 +1193,7 @@ public class RpcApiService implements Service {
       GrpcAPI.Return.Builder returnBuilder = GrpcAPI.Return.newBuilder();
       EasyTransferResponse.Builder responseBuild = EasyTransferResponse.newBuilder();
       try {
+        wallet.checkNodeAllowSensitiveApi();
         SignInterface cryptoEngine = SignUtils.fromPrivate(privateKey,
             Args.getInstance().isECKeyCryptoEngine());
         byte[] owner = cryptoEngine.getAddress();
@@ -2013,6 +2040,14 @@ public class RpcApiService implements Service {
     @Override
     public void generateAddress(EmptyMessage request,
         StreamObserver<GrpcAPI.AddressPrKeyPairMessage> responseObserver) {
+      try {
+        wallet.checkNodeAllowSensitiveApi();
+      } catch (Exception e) {
+        responseObserver.onError(getRunTimeException(e));
+        logger.info(EXCEPTION_CAUGHT + e.getMessage());
+        return;
+      }
+
       SignInterface cryptoEngine = SignUtils.getGeneratedRandomSign(Utils.getRandom(),
           Args.getInstance().isECKeyCryptoEngine());
       byte[] priKey = cryptoEngine.getPrivateKey();

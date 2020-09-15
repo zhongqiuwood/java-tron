@@ -8,6 +8,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.tron.core.capsule.TransactionCapsule;
+import org.tron.core.config.args.Args;
+import org.tron.core.exception.BadItemException;
 import org.tron.core.utils.TransactionUtil;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.TransactionSign;
@@ -26,6 +28,10 @@ public class AddTransactionSignServlet extends RateLimiterServlet {
 
   protected void doPost(HttpServletRequest request, HttpServletResponse response) {
     try {
+      if (!Args.getInstance().isAllowSensitiveApiArgs()) {
+        throw new BadItemException("This api needs to be opened in the config.");
+      }
+
       String contract = request.getReader().lines()
           .collect(Collectors.joining(System.lineSeparator()));
       Util.checkBodySize(contract);

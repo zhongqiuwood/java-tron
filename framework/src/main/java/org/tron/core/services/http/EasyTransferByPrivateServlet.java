@@ -36,6 +36,7 @@ public class EasyTransferByPrivateServlet extends RateLimiterServlet {
     EasyTransferResponse.Builder responseBuild = EasyTransferResponse.newBuilder();
     boolean visible = false;
     try {
+      wallet.checkNodeAllowSensitiveApi();
       PostParams params = PostParams.getPostParams(request);
       visible = params.isVisible();
       EasyTransferByPrivateMessage.Builder build = EasyTransferByPrivateMessage.newBuilder();

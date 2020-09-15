@@ -26,6 +26,7 @@ public class CreateAddressServlet extends RateLimiterServlet {
 
   protected void doGet(HttpServletRequest request, HttpServletResponse response) {
     try {
+      wallet.checkNodeAllowSensitiveApi();
       boolean visible = Util.getVisible(request);
       String input = request.getParameter(S_VALUE);
       if (visible) {
@@ -43,6 +44,7 @@ public class CreateAddressServlet extends RateLimiterServlet {
 
   protected void doPost(HttpServletRequest request, HttpServletResponse response) {
     try {
+      wallet.checkNodeAllowSensitiveApi();
       String input = request.getReader().lines()
           .collect(Collectors.joining(System.lineSeparator()));
       Util.checkBodySize(input);
