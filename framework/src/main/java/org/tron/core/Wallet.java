@@ -1703,7 +1703,6 @@ public class Wallet {
       throws ContractValidateException, RuntimeException, ZksnarkException, BadItemException {
     checkNodeAllowSensitiveApi();
     checkFullNodeAllowShieldedTransaction();
-    checkNodeAllowSensitiveApi();
 
     ZenTransactionBuilder builder = new ZenTransactionBuilder(this);
     // set timeout

@@ -269,6 +269,5 @@ public class Constant {
   public static final String METRICS_INFLUXDB_PORT = "node.metrics.influxdb.port";
   public static final String METRICS_INFLUXDB_DATABASE = "node.metrics.influxdb.database";
   public static final String METRICS_REPORT_INTERVAL = "node.metrics.influxdb.metricsReportInterval";
-  public static final String NODE_ALLOW_SENSITIVE_API = "node"
-      + ".allowSensitiveApi";
+  public static final String NODE_ALLOW_SENSITIVE_API = "node.allowSensitiveApi";
 }
