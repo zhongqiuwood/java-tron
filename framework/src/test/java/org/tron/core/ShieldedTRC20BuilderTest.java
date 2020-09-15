@@ -39,6 +39,7 @@ import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.db.BlockGenerate;
 import org.tron.core.db.Manager;
+import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ContractExeException;
 import org.tron.core.exception.ContractValidateException;
 import org.tron.core.exception.ZksnarkException;
@@ -113,7 +114,7 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
   @Ignore
   @Test
   public void createShieldedContractParametersForMint()
-      throws ZksnarkException, ContractValidateException, ContractExeException {
+      throws ZksnarkException, ContractValidateException, ContractExeException, BadItemException {
     int totalCountNum = 2;
     long leafCount = 0;
     long value = 100L;
@@ -148,7 +149,7 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
   @Ignore
   @Test
   public void createShieldedContractParametersForTransfer1v1()
-      throws ZksnarkException, ContractValidateException, ContractExeException {
+      throws ZksnarkException, ContractValidateException, ContractExeException, BadItemException {
     int totalCountNum = 2;
     long leafCount = 0;
     byte[] frontier = new byte[32 * 33];
@@ -275,7 +276,7 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
   @Ignore
   @Test
   public void createShieldedContractParametersForTransfer1v2()
-      throws ZksnarkException, ContractValidateException, ContractExeException {
+      throws ZksnarkException, ContractValidateException, ContractExeException, BadItemException {
     int totalCountNum = 2;
     long leafCount = 0;
     byte[] frontier = new byte[32 * 33];
@@ -421,7 +422,7 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
   @Ignore
   @Test
   public void createShieldedContractParametersForTransfer2v1()
-      throws ZksnarkException, ContractValidateException, ContractExeException {
+      throws ZksnarkException, ContractValidateException, ContractExeException, BadItemException {
     int totalCountNum = 2;
     long leafCount = 0;
     byte[] frontier = new byte[32 * 33];
@@ -606,7 +607,7 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
   @Ignore
   @Test
   public void createShieldedContractParametersForTransfer2v2()
-      throws ZksnarkException, ContractValidateException, ContractExeException {
+      throws ZksnarkException, ContractValidateException, ContractExeException, BadItemException {
     int totalCountNum = 2;
     long leafCount = 0;
     byte[] frontier = new byte[32 * 33];
@@ -806,7 +807,7 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
   @Ignore
   @Test
   public void createShieldedContractParametersForBurn()
-      throws ZksnarkException, ContractValidateException, ContractExeException {
+      throws ZksnarkException, ContractValidateException, ContractExeException, BadItemException {
     int totalCountNum = 2;
     long leafCount = 0;
     long value = 100L;
@@ -899,7 +900,7 @@ public class ShieldedTRC20BuilderTest extends BlockGenerate {
   @Ignore
   @Test
   public void createShieldedContractParametersForBurn1v2()
-      throws ZksnarkException, ContractValidateException, ContractExeException {
+      throws ZksnarkException, ContractValidateException, ContractExeException, BadItemException {
     int totalCountNum = 2;
     long leafCount = 0;
     long value = 100L;
