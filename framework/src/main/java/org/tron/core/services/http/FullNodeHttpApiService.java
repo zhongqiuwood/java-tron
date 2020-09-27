@@ -238,6 +238,8 @@ public class FullNodeHttpApiService implements Service {
   @Autowired
   private GetTriggerInputForShieldedTRC20ContractServlet
       getTriggerInputForShieldedTRC20ContractServlet;
+  @Autowired
+  private ShieldedTRC20MonitorInfoServlet shieldedTRC20MonitorInfoServlet;
 
   private static String getParamsFile(String fileName) {
     InputStream in = Thread.currentThread().getContextClassLoader()
@@ -420,6 +422,8 @@ public class FullNodeHttpApiService implements Service {
           "/scanshieldedtrc20notesbyovk");
       context.addServlet(new ServletHolder(getTriggerInputForShieldedTRC20ContractServlet),
           "/gettriggerinputforshieldedtrc20contract");
+      context.addServlet(new ServletHolder(shieldedTRC20MonitorInfoServlet),
+          "/shieldedtrc20monitorinfo");
 
       context.addServlet(new ServletHolder(broadcastHexServlet), "/broadcasthex");
       context.addServlet(new ServletHolder(getBrokerageServlet), "/getBrokerage");
