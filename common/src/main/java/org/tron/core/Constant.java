@@ -237,4 +237,5 @@ public class Constant {
   public static final String TRC20_CONTRACT_ADDRESS = "monitor.trc20ContractAddress";
   public static final String SHIELDED_TRC20_CONTRACT_ADDRESS = "monitor"
       + ".shieldedTrc20ContractAddress";
+  public static final String START_MONITOR_BLOCK_NUMBER = "monitor.startBlockNumber";
 }

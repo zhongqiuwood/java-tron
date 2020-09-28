@@ -3560,7 +3560,7 @@ public class Wallet {
   }
 
   private void scanShieldedTRC20Transaction() throws InterruptedException {
-    long startNum = dbManager.getDynamicPropertiesStore().getShieldedTRC20MonitorBlockNum();
+    long startNum = Args.getInstance().getStartMonitorBlockNumber();
     long latestNum = dbManager.getDynamicPropertiesStore().getLatestSolidifiedBlockNum();
     long endNum;
     while (startNum < latestNum) {
@@ -3750,7 +3750,8 @@ public class Wallet {
   private void clearShieldedTRC20DynamicPropertiesStore()
       throws InterruptedException {
     try {
-      dbManager.getDynamicPropertiesStore().saveShieldedTRC20MonitorBlockNum(0L);
+      dbManager.getDynamicPropertiesStore()
+          .saveShieldedTRC20MonitorBlockNum(Args.getInstance().getStartMonitorBlockNumber());
       dbManager.getDynamicPropertiesStore().saveShieldedTRC20NullifierNum(0L);
       dbManager.getDynamicPropertiesStore().saveShieldedTRC20CmNum(0L);
       dbManager.getDynamicPropertiesStore().saveShieldedTRC20MintNum(0L);

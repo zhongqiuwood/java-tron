@@ -542,6 +542,10 @@ public class Args {
   @Setter
   private String shieldedTrc20ContractAddress;
 
+  @Getter
+  @Setter
+  private long startMonitorBlockNumber;
+
   public static void clearParam() {
     INSTANCE.outputDirectory = "output-directory";
     INSTANCE.help = false;
@@ -631,6 +635,7 @@ public class Args {
     INSTANCE.isEckey = true;
     INSTANCE.trc20ContractAddress = "";
     INSTANCE.shieldedTrc20ContractAddress = "";
+    INSTANCE.startMonitorBlockNumber = 0;
   }
 
   /**
@@ -1117,6 +1122,10 @@ public class Args {
     INSTANCE.shieldedTrc20ContractAddress =
         config.hasPath(Constant.SHIELDED_TRC20_CONTRACT_ADDRESS) ? config
             .getString(Constant.SHIELDED_TRC20_CONTRACT_ADDRESS) : "";
+
+    INSTANCE.startMonitorBlockNumber =
+        config.hasPath(Constant.START_MONITOR_BLOCK_NUMBER) ? config
+            .getLong(Constant.START_MONITOR_BLOCK_NUMBER) : 0;
 
     logConfig();
     initDBConfig(INSTANCE);
