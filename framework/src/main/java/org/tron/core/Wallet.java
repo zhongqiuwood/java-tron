@@ -3560,7 +3560,7 @@ public class Wallet {
   }
 
   private void scanShieldedTRC20Transaction() throws InterruptedException {
-    long startNum = Args.getInstance().getStartMonitorBlockNumber();
+    long startNum = dbManager.getDynamicPropertiesStore().getShieldedTRC20MonitorBlockNum();
     long latestNum = dbManager.getDynamicPropertiesStore().getLatestSolidifiedBlockNum();
     long endNum;
     while (startNum < latestNum) {
@@ -3794,7 +3794,7 @@ public class Wallet {
       while (true) {
         try {
           scanShieldedTRC20Transaction();
-          Thread.sleep(10000);
+          Thread.sleep(3000);
         } catch (Exception e) {
           if (!monitorShieldedTrc20Thread.isInterrupted()) {
             monitorShieldedTrc20Thread.interrupt();
@@ -3920,7 +3920,7 @@ public class Wallet {
     } else {
       // trigger contract failed
       throw new ContractExeException(
-          "trigger contract to get the shielded TRC-20 address balance error.");
+          "trigger contract to get the shielded TRC-20 contract leaf count error.");
     }
   }
 
