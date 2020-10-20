@@ -1195,9 +1195,11 @@ public class Program {
   }
 
   public DataWord getRewardBalance(DataWord address) {
+    long start = System.nanoTime();
     ContractService contractService = ContractService.getInstance();
     long rewardBalance = contractService
             .queryReward(TransactionTrace.convertToTronAddress(address.getLast20Bytes()), getContractState());
+    logger.info("[timeoutTest]getRewardBalance spendTime:{}", System.nanoTime() - start);
     return new DataWord(rewardBalance);
   }
 

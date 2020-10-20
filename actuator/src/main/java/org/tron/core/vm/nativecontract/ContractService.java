@@ -94,7 +94,7 @@ public class ContractService {
       long userVote = vote.getVoteCount();
       double voteRate = (double) userVote / totalVote;
       reward += voteRate * totalReward;
-      logger.debug("computeReward {} {} {} {},{},{},{}", cycle,
+      logger.info("[timeoutTest]computeReward {} {} {} {},{},{},{}", cycle,
           Hex.toHexString(accountCapsule.getAddress().toByteArray()), Hex.toHexString(srAddress),
           userVote, totalVote, totalReward, reward);
     }
@@ -112,18 +112,30 @@ public class ContractService {
   }
 
   public long queryReward(byte[] address, Repository repository) {
+    long start = System.nanoTime();
+    long result = queryRewardPack(address, repository);
+    long end = System.nanoTime();
+    logger.info("[timeoutTest]queryRewardPack spendTime:{} ns, result:{}", end - start, result);
+    return result;
+  }
+
+  public long queryRewardPack(byte[] address, Repository repository) {
     if (!repository.getDynamicPropertiesStore().allowChangeDelegation()) {
+      logger.info("[timeoutTest]return at (1)");
       return 0;
     }
     AccountCapsule accountCapsule = repository.getAccount(address);
     long beginCycle = repository.getBeginCycle(address);
     long endCycle = repository.getEndCycle(address);
     long currentCycle = repository.getDynamicPropertiesStore().getCurrentCycleNumber();
+    logger.info("[timeoutTest]beginCycle={}, endCycle={}, currentCycle={}", beginCycle, endCycle, currentCycle);
     long reward = 0;
     if (accountCapsule == null) {
+      logger.info("[timeoutTest]return at (2)");
       return 0;
     }
     if (beginCycle > currentCycle) {
+      logger.info("[timeoutTest]return at (3)");
       return accountCapsule.getAllowance();
     }
     //withdraw the latest cycle reward
@@ -131,11 +143,13 @@ public class ContractService {
       AccountCapsule account = repository.getAccountVote(beginCycle, address);
       if (account != null) {
         reward = computeReward(beginCycle, account, repository);
+        logger.info("[timeoutTest]account != null, reward={}", reward);
       }
       beginCycle += 1;
     }
     endCycle = currentCycle;
     if (CollectionUtils.isEmpty(accountCapsule.getVotesList())) {
+      logger.info("[timeoutTest]return at (4)");
       return reward + accountCapsule.getAllowance();
     }
     if (beginCycle < endCycle) {
@@ -143,6 +157,7 @@ public class ContractService {
         reward += computeReward(cycle, accountCapsule, repository);
       }
     }
+    logger.info("[timeoutTest]return at (5)");
     return reward + accountCapsule.getAllowance();
   }
 }
