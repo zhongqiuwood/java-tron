@@ -17,6 +17,7 @@ public class GetRewardServlet extends RateLimiterServlet {
   private Manager manager;
 
   protected void doGet(HttpServletRequest request, HttpServletResponse response) {
+    long start = System.nanoTime();
     try {
       long value = 0;
       byte[] address = Util.getAddress(request);
@@ -32,6 +33,7 @@ public class GetRewardServlet extends RateLimiterServlet {
         logger.debug("IOException: {}", ioe.getMessage());
       }
     }
+    logger.info("[timeoutTest]GetRewardServlet spendTime:{}", System.nanoTime() - start);
   }
 
   protected void doPost(HttpServletRequest request, HttpServletResponse response) {

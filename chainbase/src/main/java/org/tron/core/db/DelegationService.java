@@ -137,6 +137,14 @@ public class DelegationService {
   }
 
   public long queryReward(byte[] address) {
+    long start = System.nanoTime();
+    long result = queryRewardPack(address);
+    long end = System.nanoTime();
+    logger.info("[timeoutTest]DelegationService.queryReward spendTime:{} ns, result:{}", end - start, result);
+    return result;
+  }
+
+  public long queryRewardPack(byte[] address) {
     if (!dynamicPropertiesStore.allowChangeDelegation()) {
       return 0;
     }

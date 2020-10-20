@@ -115,7 +115,7 @@ public class ContractService {
     long start = System.nanoTime();
     long result = queryRewardPack(address, repository);
     long end = System.nanoTime();
-    logger.info("[timeoutTest]queryRewardPack spendTime:{} ns, result:{}", end - start, result);
+    logger.info("[timeoutTest]ContractService.queryReward spendTime:{} ns, result:{}", end - start, result);
     return result;
   }
 

@@ -677,6 +677,7 @@ public class RpcApiService implements Service {
     @Override
     public void getRewardInfo(BytesMessage request,
         StreamObserver<NumberMessage> responseObserver) {
+      long start = System.nanoTime();
       try {
         long value = dbManager.getDelegationService().queryReward(request.getValue().toByteArray());
         NumberMessage.Builder builder = NumberMessage.newBuilder();
@@ -686,6 +687,7 @@ public class RpcApiService implements Service {
         responseObserver.onError(e);
       }
       responseObserver.onCompleted();
+      logger.info("[timeoutTest]RpcApiService.WalletSolidityApi.getRewardInfo spendTime:{}", System.nanoTime() - start);
     }
 
     @Override
@@ -2522,6 +2524,7 @@ public class RpcApiService implements Service {
     @Override
     public void getRewardInfo(BytesMessage request,
         StreamObserver<NumberMessage> responseObserver) {
+      long start = System.nanoTime();
       try {
         long value = dbManager.getDelegationService().queryReward(request.getValue().toByteArray());
         NumberMessage.Builder builder = NumberMessage.newBuilder();
@@ -2531,6 +2534,7 @@ public class RpcApiService implements Service {
         responseObserver.onError(e);
       }
       responseObserver.onCompleted();
+      logger.info("[timeoutTest]RpcApiService.WalletApi.getRewardInfo spendTime:{}", System.nanoTime() - start);
     }
 
     @Override
