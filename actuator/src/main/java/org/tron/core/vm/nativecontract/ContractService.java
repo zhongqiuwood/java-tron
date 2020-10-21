@@ -82,7 +82,7 @@ public class ContractService {
 
   private long computeReward(long cycle, AccountCapsule accountCapsule, Repository repository) {
     long reward = 0;
-
+    logger.info("[timeoutTest]cycle={}, votesList size={}", cycle, accountCapsule.getVotesList().size());
     for (Protocol.Vote vote : accountCapsule.getVotesList()) {
       byte[] srAddress = vote.getVoteAddress().toByteArray();
       long totalReward = repository.getDelegationStore().getReward(cycle,
@@ -152,6 +152,7 @@ public class ContractService {
       logger.info("[timeoutTest]return at (4)");
       return reward + accountCapsule.getAllowance();
     }
+    logger.info("[timeoutTest]cycle循环from {} to {}", beginCycle, endCycle);
     if (beginCycle < endCycle) {
       for (long cycle = beginCycle; cycle < endCycle; cycle++) {
         reward += computeReward(cycle, accountCapsule, repository);
