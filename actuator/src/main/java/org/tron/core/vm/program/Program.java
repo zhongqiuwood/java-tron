@@ -1088,7 +1088,7 @@ public class Program {
   public void checkCPUTimeLimit(String opName) {
     long vmNowInUs = System.nanoTime() / 1000;
     logger.info(
-        "opName: {}, minTimeRatio: {}, maxTimeRatio: {}, vm should end time in us: {}, "
+        "[timeoutTest]opName: {}, minTimeRatio: {}, maxTimeRatio: {}, vm should end time in us: {}, "
             + "vm now time in us: {}, vm start time in us: {}",
         opName,
         CommonParameter.getInstance().getMinTimeRatio(),
