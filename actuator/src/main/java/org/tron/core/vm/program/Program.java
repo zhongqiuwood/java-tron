@@ -1086,21 +1086,22 @@ public class Program {
   }
 
   public void checkCPUTimeLimit(String opName) {
-
+    long vmNowInUs = System.nanoTime() / 1000;
+    logger.info(
+        "opName: {}, minTimeRatio: {}, maxTimeRatio: {}, vm should end time in us: {}, "
+            + "vm now time in us: {}, vm start time in us: {}",
+        opName,
+        CommonParameter.getInstance().getMinTimeRatio(),
+        CommonParameter.getInstance().getMaxTimeRatio(),
+        getVmShouldEndInUs(), vmNowInUs, getVmStartInUs());
     if (CommonParameter.getInstance().isDebug()) {
       return;
     }
     if (CommonParameter.getInstance().isSolidityNode()) {
       return;
     }
-    long vmNowInUs = System.nanoTime() / 1000;
     if (vmNowInUs > getVmShouldEndInUs()) {
-      logger.info(
-          "minTimeRatio: {}, maxTimeRatio: {}, vm should end time in us: {}, "
-              + "vm now time in us: {}, vm start time in us: {}",
-          CommonParameter.getInstance().getMinTimeRatio(),
-          CommonParameter.getInstance().getMaxTimeRatio(),
-          getVmShouldEndInUs(), vmNowInUs, getVmStartInUs());
+      
       throw Exception.notEnoughTime(opName);
     }
 
