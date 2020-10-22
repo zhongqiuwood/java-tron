@@ -103,11 +103,13 @@ public class PbftManager {
   public boolean verifyMsg(PbftBaseMessage msg) {
     long epoch = msg.getPbftMessage().getRawData().getEpoch();
     List<ByteString> witnessList;
+    logger.info("verifyMsg {},{}",epoch,maintenanceManager.getBeforeMaintenanceTime());
     if (epoch > maintenanceManager.getBeforeMaintenanceTime()) {
       witnessList = maintenanceManager.getCurrentWitness();
     } else {
       witnessList = maintenanceManager.getBeforeWitness();
     }
+    logger.info("verifyMsg witnessList size:",witnessList.size());
     return witnessList.contains(ByteString.copyFrom(msg.getPublicKey()));
   }
 

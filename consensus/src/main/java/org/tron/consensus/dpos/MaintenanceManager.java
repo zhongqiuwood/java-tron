@@ -51,6 +51,10 @@ public class MaintenanceManager {
 
   public void init() {
     currentWitness.addAll(consensusDelegate.getActiveWitnesses());
+    consensusDelegate.getActiveWitnesses().forEach(witness->{
+      logger.info(Hex.toHexString(witness.toByteArray()));
+    });
+    logger.info("MaintenanceManager init finish:"+currentWitness.size());
   }
 
   public void applyBlock(BlockCapsule blockCapsule) {
