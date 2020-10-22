@@ -50,11 +50,12 @@ public class MaintenanceManager {
   private long beforeMaintenanceTime;
 
   public void init() {
+    logger.info("MaintenanceManager init begin");
     currentWitness.addAll(consensusDelegate.getActiveWitnesses());
-    consensusDelegate.getActiveWitnesses().forEach(witness->{
+    consensusDelegate.getActiveWitnesses().forEach(witness -> {
       logger.info(Hex.toHexString(witness.toByteArray()));
     });
-    logger.info("MaintenanceManager init finish:"+currentWitness.size());
+    logger.info("MaintenanceManager init finish:{}", currentWitness.size());
   }
 
   public void applyBlock(BlockCapsule blockCapsule) {

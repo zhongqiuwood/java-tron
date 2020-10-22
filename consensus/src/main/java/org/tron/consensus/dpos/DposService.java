@@ -69,6 +69,7 @@ public class DposService implements ConsensusInterface {
 
   @Override
   public void start(Param param) {
+    logger.info("DposService start");
     this.enable = param.isEnable();
     this.needSyncCheck = param.isNeedSyncCheck();
     this.minParticipationRate = param.getMinParticipationRate();
@@ -95,7 +96,9 @@ public class DposService implements ConsensusInterface {
         consensusDelegate.saveWitness(witnessCapsule);
       });
     }
+    logger.info("maintenanceManager before");
     maintenanceManager.init();
+    logger.info("maintenanceManager after");
     dposTask.init();
   }
 
