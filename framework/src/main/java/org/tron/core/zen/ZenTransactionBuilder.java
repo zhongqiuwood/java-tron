@@ -66,10 +66,6 @@ public class ZenTransactionBuilder {
   public ZenTransactionBuilder() {
   }
 
-  public void setTimeout(long value) {
-    timeout = value;
-  }
-
   public void addSpend(SpendDescriptionInfo spendDescriptionInfo) {
     spends.add(spendDescriptionInfo);
     valueBalance += spendDescriptionInfo.note.getValue();

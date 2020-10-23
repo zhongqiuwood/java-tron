@@ -536,6 +536,7 @@ public class Args {
 
   @Getter
   @Setter
+  @Parameter(names = {"--prune-block"})
   public boolean pruneBlock = false;
 
   public static void clearParam() {
