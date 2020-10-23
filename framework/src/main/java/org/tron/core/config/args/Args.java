@@ -534,6 +534,10 @@ public class Args {
   @Setter
   public boolean isEckey=true;
 
+  @Getter
+  @Setter
+  public boolean pruneBlock = false;
+
   public static void clearParam() {
     INSTANCE.outputDirectory = "output-directory";
     INSTANCE.help = false;

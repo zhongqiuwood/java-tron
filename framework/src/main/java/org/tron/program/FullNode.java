@@ -3,19 +3,29 @@ package org.tron.program;
 import ch.qos.logback.classic.LoggerContext;
 import ch.qos.logback.classic.joran.JoranConfigurator;
 import java.io.File;
+import java.util.Map;
+
+import com.google.common.primitives.Longs;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.support.DefaultListableBeanFactory;
 import org.tron.common.application.Application;
 import org.tron.common.application.ApplicationFactory;
 import org.tron.common.application.TronApplicationContext;
+import org.tron.common.utils.Sha256Hash;
 import org.tron.core.Constant;
+import org.tron.core.capsule.BlockCapsule;
+import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.config.DefaultConfig;
 import org.tron.core.config.args.Args;
+import org.tron.core.db.BlockIndexStore;
+import org.tron.core.db.BlockStore;
+import org.tron.core.db.TransactionStore;
 import org.tron.core.services.RpcApiService;
 import org.tron.core.services.http.FullNodeHttpApiService;
 import org.tron.core.services.interfaceOnSolidity.RpcApiServiceOnSolidity;
 import org.tron.core.services.interfaceOnSolidity.http.solidity.HttpApiOnSolidityService;
+import org.tron.core.store.DynamicPropertiesStore;
 
 @Slf4j(topic = "app")
 public class FullNode {
@@ -64,6 +74,7 @@ public class FullNode {
     context.register(DefaultConfig.class);
 
     context.refresh();
+    pruneBlock(context);
     Application appT = ApplicationFactory.create(context);
     shutdown(appT);
 
@@ -99,5 +110,17 @@ public class FullNode {
   public static void shutdown(final Application app) {
     logger.info("********register application shutdown hook********");
     Runtime.getRuntime().addShutdownHook(new Thread(app::shutdown));
+  }
+
+  public static void pruneBlock(TronApplicationContext context) {
+    if (!Args.getInstance().isPruneBlock()) {
+      return;
+    }
+
+    PruneBlock pruneBlock = context.getBean(PruneBlock.class);
+    pruneBlock.pruneAll();
+
+    System.out.println("prune block done");
+    System.exit(0);
   }
 }

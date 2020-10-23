@@ -136,6 +136,7 @@ import org.tron.core.store.WitnessScheduleStore;
 import org.tron.core.store.WitnessStore;
 import org.tron.core.store.ZKProofStore;
 import org.tron.core.utils.TransactionRegister;
+import org.tron.program.PruneBlock;
 import org.tron.protos.Protocol.AccountType;
 import org.tron.protos.Protocol.Transaction;
 import org.tron.protos.Protocol.Transaction.Contract;
@@ -269,6 +270,10 @@ public class Manager {
   @Autowired
   @Getter
   private ChainBaseManager chainBaseManager;
+
+  @Autowired
+  private PruneBlock pruneBlock;
+
   // transactions cache
   private List<TransactionCapsule> pendingTransactions;
   @Getter
@@ -932,6 +937,8 @@ public class Manager {
     } else {
       revokingStore.setMaxFlushCount(SnapshotManager.DEFAULT_MIN_FLUSH_COUNT);
     }
+
+    pruneBlock.prune(block);
   }
 
   private void switchFork(BlockCapsule newHead)
