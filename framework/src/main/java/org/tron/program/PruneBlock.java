@@ -46,7 +46,7 @@ public class PruneBlock {
   public void prune(BlockCapsule block) {
     long blockNumber = block.getNum();
     long min = blockNumber - MIN;
-    if (min <=0) {
+    if (min <= 0) {
       return;
     }
 
