@@ -46,6 +46,10 @@ public class PruneBlock {
   public void prune(BlockCapsule block) {
     long blockNumber = block.getNum();
     long min = blockNumber - MIN;
+    if (min <=0) {
+      return;
+    }
+
     try {
       BlockCapsule.BlockId blockId = blockIndexStore.get(min);
       BlockCapsule minBlock = blockStore.get(blockId.getBytes());
