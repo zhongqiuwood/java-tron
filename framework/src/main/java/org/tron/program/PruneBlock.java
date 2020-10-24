@@ -41,9 +41,17 @@ public class PruneBlock {
 
   public void pruneAll() {
     long blockNumber = dynamicPropertiesStore.getLatestBlockHeaderNumber();
+    if (blockNumber == 0) {
+      BlockCapsule blockCapsule = blockStore.getBlockByLatestNum(1).get(0);
+      dynamicPropertiesStore.saveLatestBlockHeaderNumber(blockCapsule.getNum());
+      dynamicPropertiesStore.saveLatestBlockHeaderHash(blockCapsule.getBlockId().getByteString());
+      dynamicPropertiesStore.saveLatestBlockHeaderTimestamp(blockCapsule.getTimeStamp());
+      blockNumber = blockCapsule.getNum();
+    }
+
     long min = blockNumber - MIN;
 
-    for (long index = min; index <= blockNumber; index++) {
+    for (long index = 0; index <= blockNumber; index++) {
       if (index < 0) {
         continue;
       }
@@ -57,6 +65,10 @@ public class PruneBlock {
         logger.info("prune block {}, {} done", index, blockId);
       } catch (ItemNotFoundException | BadItemException e) {
         logger.error(e.getMessage());
+      }
+
+      if (index == 0) {
+        index = min;
       }
     }
   }
