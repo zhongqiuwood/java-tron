@@ -32,9 +32,9 @@ stopService() {
 startService() {
  echo `date` >> start.log
  total=`cat /proc/meminfo  |grep MemTotal |awk -F ' ' '{print $2}'`
- xmx=`echo "$total/1024/1024*0.8" | bc |awk -F. '{print $1"g"}'`
+ xmx=8G
  logtime=`date +%Y-%m-%d_%H-%M-%S`
- nohup java -Xmx$xmx -XX:+UseConcMarkSweepGC -XX:+PrintGCDetails -Xloggc:./gc.log\
+ nohup java -Xmx$xmx -Xms$xmx -XX:+UseConcMarkSweepGC -XX:+PrintGCDetails -Xloggc:./gc.log\
  -XX:+PrintGCDateStamps -XX:+CMSParallelRemarkEnabled -XX:ReservedCodeCacheSize=256m\
  -XX:+CMSScavengeBeforeRemark -jar $JAR_NAME $START_OPT -c config.conf  >> start.log 2>&1 &
 
