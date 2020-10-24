@@ -560,30 +560,23 @@ public class Manager {
     if (this.containBlock(this.genesisBlock.getBlockId())) {
       Args.getInstance().setChainId(this.genesisBlock.getBlockId().toString());
     } else {
-      if (this.hasBlocks()) {
-        logger.error(
-            "genesis block modify, please delete database directory({}) and restart",
-            Args.getInstance().getOutputDirectory());
-        System.exit(1);
-      } else {
-        logger.info("create genesis block");
-        Args.getInstance().setChainId(this.genesisBlock.getBlockId().toString());
+      logger.info("create genesis block");
+      Args.getInstance().setChainId(this.genesisBlock.getBlockId().toString());
 
-        blockStore.put(this.genesisBlock.getBlockId().getBytes(), this.genesisBlock);
-        this.blockIndexStore.put(this.genesisBlock.getBlockId());
+      blockStore.put(this.genesisBlock.getBlockId().getBytes(), this.genesisBlock);
+      this.blockIndexStore.put(this.genesisBlock.getBlockId());
 
-        logger.info("save block: " + this.genesisBlock);
-        // init DynamicPropertiesStore
-        this.dynamicPropertiesStore.saveLatestBlockHeaderNumber(0);
-        this.dynamicPropertiesStore.saveLatestBlockHeaderHash(
-            this.genesisBlock.getBlockId().getByteString());
-        this.dynamicPropertiesStore.saveLatestBlockHeaderTimestamp(
-            this.genesisBlock.getTimeStamp());
-        this.initAccount();
-        this.initWitness();
-        this.khaosDb.start(genesisBlock);
-        this.updateRecentBlock(genesisBlock);
-      }
+      logger.info("save block: " + this.genesisBlock);
+      // init DynamicPropertiesStore
+      this.dynamicPropertiesStore.saveLatestBlockHeaderNumber(0);
+      this.dynamicPropertiesStore.saveLatestBlockHeaderHash(
+          this.genesisBlock.getBlockId().getByteString());
+      this.dynamicPropertiesStore.saveLatestBlockHeaderTimestamp(
+          this.genesisBlock.getTimeStamp());
+      this.initAccount();
+      this.initWitness();
+      this.khaosDb.start(genesisBlock);
+      this.updateRecentBlock(genesisBlock);
     }
   }
 
