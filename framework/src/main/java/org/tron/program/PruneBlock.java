@@ -9,6 +9,9 @@ import org.tron.core.capsule.BlockCapsule;
 import org.tron.core.capsule.TransactionCapsule;
 import org.tron.core.db.BlockIndexStore;
 import org.tron.core.db.BlockStore;
+import org.tron.core.db.NewBlockIndexStore;
+import org.tron.core.db.NewBlockStore;
+import org.tron.core.db.NewTransactionStore;
 import org.tron.core.db.TransactionStore;
 import org.tron.core.exception.BadItemException;
 import org.tron.core.exception.ItemNotFoundException;
@@ -18,14 +21,21 @@ import org.tron.core.store.DynamicPropertiesStore;
 @Slf4j(topic = "DB")
 public class PruneBlock {
 
-  public static final long MIN = (1<<16) + 100;
+  public static final long MIN = (1<<16) + 1000;
 
   @Autowired
   BlockStore blockStore;
   @Autowired
+  NewBlockStore newBlockStore;
+  @Autowired
   BlockIndexStore blockIndexStore;
   @Autowired
+  NewBlockIndexStore newBlockIndexStore;
+  @Autowired
   TransactionStore transactionStore;
+  @Autowired
+  NewTransactionStore newTransactionStore;
+
   @Autowired
   DynamicPropertiesStore dynamicPropertiesStore;
 
@@ -33,14 +43,22 @@ public class PruneBlock {
     long blockNumber = dynamicPropertiesStore.getLatestBlockHeaderNumber();
     long min = blockNumber - MIN;
 
-    blockStore.forEach(e -> {
-      BlockCapsule block = e.getValue();
-      long number = block.getNum();
-      if (number < min) {
-        delete(block);
+    for (long index = min; index <= blockNumber; index++) {
+      if (index < 0) {
+        continue;
       }
-    });
 
+      try {
+        BlockCapsule.BlockId blockId = blockIndexStore.get(index);
+        BlockCapsule block = blockStore.get(blockId.getBytes());
+        newBlockStore.put(blockId.getBytes(), block);
+        newBlockIndexStore.put(blockId);
+        block.getTransactions().forEach(t -> newTransactionStore.put(t.getTransactionId().getBytes(), t));
+        logger.info("prune block {}, {} done", index, blockId);
+      } catch (ItemNotFoundException | BadItemException e) {
+        logger.error(e.getMessage());
+      }
+    }
   }
 
   public void prune(BlockCapsule block) {
@@ -56,7 +74,7 @@ public class PruneBlock {
       delete(minBlock);
       logger.info("prune block {}, {} done", min, blockId);
     } catch (ItemNotFoundException | BadItemException e) {
-      logger.error(e.getMessage(), e);
+      logger.error(e.getMessage());
     }
   }
 

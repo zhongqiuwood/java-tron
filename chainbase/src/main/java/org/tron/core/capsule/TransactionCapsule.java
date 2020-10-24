@@ -108,6 +108,11 @@ public class TransactionCapsule implements ProtoCapsule<Transaction> {
     this.transaction = trx;
   }
 
+  public TransactionCapsule(Transaction trx, long blockNum) {
+    this.transaction = trx;
+    this.blockNum = blockNum;
+  }
+
   /**
    * get account from bytes data.
    */

@@ -79,15 +79,15 @@ public class DefaultConfig {
     return null;
   }
 
-  @Bean
-  public TransactionCache transactionCache() {
-    int dbVersion = Args.getInstance().getStorage().getDbVersion();
-    if (dbVersion == 2) {
-      return new TransactionCache("trans-cache");
-    }
-
-    return null;
-  }
+//  @Bean
+//  public TransactionCache transactionCache() {
+//    int dbVersion = Args.getInstance().getStorage().getDbVersion();
+//    if (dbVersion == 2) {
+//      return new TransactionCache("trans-cache");
+//    }
+//
+//    return null;
+//  }
 
   @Bean
   @Conditional(NeedBeanCondition.class)

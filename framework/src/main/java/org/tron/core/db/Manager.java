@@ -520,7 +520,7 @@ public class Manager {
     //for test only
     dynamicPropertiesStore.updateDynamicStoreByConfig();
 
-    initCacheTxs();
+    //initCacheTxs();
     revokingStore.enable();
     validateSignService = Executors
         .newFixedThreadPool(Args.getInstance().getValidateSignThreadNum());
