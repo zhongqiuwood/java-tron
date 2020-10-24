@@ -116,6 +116,7 @@ public class FullNode {
     if (!Args.getInstance().isPruneBlock()) {
       return;
     }
+    System.out.println("prune block start");
 
     PruneBlock pruneBlock = context.getBean(PruneBlock.class);
     pruneBlock.pruneAll();
