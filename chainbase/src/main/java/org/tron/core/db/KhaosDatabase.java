@@ -250,14 +250,20 @@ public class KhaosDatabase extends TronDatabase {
       return;
     }
 
+    List<BlockId> filters = new ArrayList<>();
     List<Boolean> haves = miniStore.hashKblkMap.keySet().stream()
-        .map(Sha256Hash::getBytes)
-        .map(blockStore::has)
+        .map(b -> {
+          boolean filter = blockStore.has(b.getBytes());
+          if (!filter) {
+            filters.add(b);
+          }
+
+          return filter;
+        })
         .collect(Collectors.toList());
 
-    logger.info("{}, transaction_id {}, block number {}, block hash {}, check unlink log begin", prefix, transactionId, num, blockId);
-    logger.info("{}, transaction_id {}, block number {}, block hash {}, check unlink log {}, {}", prefix, transactionId, num, blockId, haves, miniStore);
-    logger.info("{}, transaction_id {}, block number {}, block hash {}, check unlink log end", prefix, transactionId, num, blockId);
+    logger.info("{}, transaction_id {}, block number {}, block hash {}, check unlink log, haves {}, filters:{}, {}",
+        prefix, transactionId, num, blockId, haves, filters, miniStore);
   }
 
   public static class KhaosBlock {
@@ -310,7 +316,7 @@ public class KhaosDatabase extends TronDatabase {
       return "KhaosBlock{" +
           "id=" + id +
           ", num=" + num +
-          ", parent=" + (parent == null ? null : parent.get()) +
+          ", parent id =" + ((parent == null || parent.get() == null) ? null : parent.get().blk.getBlockId()) +
           ", blk=" + blk +
           '}';
     }
