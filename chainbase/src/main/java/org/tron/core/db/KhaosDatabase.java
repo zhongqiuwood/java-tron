@@ -254,9 +254,7 @@ public class KhaosDatabase extends TronDatabase {
         .map(b -> org.apache.commons.lang3.tuple.Pair.of(b, blockStore.has(b.getBytes())))
         .collect(Collectors.toList());
 
-    logger.info("{}, transaction_id {}, block number {}, block hash {}, check unlink log begin", prefix, transactionId, num, blockId);
     logger.info("{}, transaction_id {}, block number {}, block hash {}, check unlink log {}, {}", prefix, transactionId, num, blockId, haves, miniStore);
-    logger.info("{}, transaction_id {}, block number {}, block hash {}, check unlink log end", prefix, transactionId, num, blockId);
   }
 
   public static class KhaosBlock {
