@@ -1055,7 +1055,7 @@ public class Program {
 
       BlockCapsule blockCapsule = contractState.getBlockByNum(index);
       testIndex = index;
-      logger.info("DATAWORD BlockHash KHAOS:" + Hex.toHexString(blockCapsule.getData()) + " height: " +index);
+      logger.info("DATAWORD BlockHash KHAOS:" + Hex.toHexString(blockCapsule.getBlockId().getBytes()) + " height: " +index);
 
       if (Objects.nonNull(blockCapsule)) {
         return new DataWord(blockCapsule.getBlockId().getBytes());
