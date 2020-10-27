@@ -1058,7 +1058,7 @@ public class Program {
       logger.info("DATAWORD BlockHash KHAOS:" + blockCapsule.getBlockId().getBytes() +" " + Hex.toHexString(blockCapsule.getBlockId().getBytes()) + " height: " +index);
 
       if (Objects.nonNull(blockCapsule)) {
-        return new DataWord(blockCapsule.getBlockId().getBytes());
+        return new DataWord(blockCapsule.getBlockId().getBytes()).clone();
       } else {
         return DataWord.ZERO.clone();
       }
