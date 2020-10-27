@@ -534,6 +534,11 @@ public class Args {
   @Setter
   public boolean isEckey=true;
 
+  @Getter
+  @Setter
+  @Parameter(names = "--stop")
+  public boolean stop = false;
+
   public static void clearParam() {
     INSTANCE.outputDirectory = "output-directory";
     INSTANCE.help = false;

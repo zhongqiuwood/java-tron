@@ -13,6 +13,7 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -26,6 +27,7 @@ import org.tron.core.exception.NonCommonBlockException;
 import org.tron.core.exception.UnLinkedBlockException;
 
 @Component
+@Slf4j(topic = "DB")
 public class KhaosDatabase extends TronDatabase {
 
   private KhaosBlock head;
@@ -243,6 +245,18 @@ public class KhaosDatabase extends TronDatabase {
     return !this.miniStore.hashKblkMap.isEmpty();
   }
 
+  public void log(String prefix, Sha256Hash transactionId, long num, BlockId blockId, BlockStore blockStore) {
+    if (num < 24063100) {
+      return;
+    }
+
+    List<org.apache.commons.lang3.tuple.Pair<BlockId, Boolean>> haves = miniStore.hashKblkMap.keySet().stream()
+        .map(b -> org.apache.commons.lang3.tuple.Pair.of(b, blockStore.has(b.getBytes())))
+        .collect(Collectors.toList());
+
+    logger.info("{}, transaction_id {}, block number {}, block hash {}, check unlink log {}, {}", prefix, transactionId, num, blockId, haves, miniStore);
+  }
+
   public static class KhaosBlock {
 
     @Getter
@@ -286,6 +300,16 @@ public class KhaosDatabase extends TronDatabase {
     public int hashCode() {
 
       return Objects.hash(id);
+    }
+
+    @Override
+    public String toString() {
+      return "KhaosBlock{" +
+          "id=" + id +
+          ", num=" + num +
+          ", parent id =" + ((parent == null || parent.get() == null) ? null : parent.get().blk.getBlockId()) +
+          ", blk=" + blk +
+          '}';
     }
   }
 
@@ -357,5 +381,13 @@ public class KhaosDatabase extends TronDatabase {
       return hashKblkMap.size();
     }
 
+    @Override
+    public String toString() {
+      return "KhaosStore{" +
+          "maxCapcity=" + maxCapcity +
+          ", hashKblkMap.size=" + hashKblkMap.size() +
+          ", hashKblkMap=" + hashKblkMap +
+          '}';
+    }
   }
 }

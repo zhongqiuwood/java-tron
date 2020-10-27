@@ -1041,6 +1041,13 @@ public class Manager {
       TaposException, TooBigTransactionException, TooBigTransactionResultException, DupTransactionException, TransactionExpirationException,
       BadNumberBlockException, BadBlockException, NonCommonBlockException,
       ReceiptCheckErrException, VMIllegalException, ZksnarkException {
+    if (Args.getInstance().isStop()) {
+      if (block.getNum() >= 24063100) {
+        logger.info("block number is {}, so exit", block.getNum());
+        System.exit(0);
+      }
+    }
+
     long start = System.currentTimeMillis();
     try (PendingManager pm = new PendingManager(this)) {
 
@@ -1527,6 +1534,7 @@ public class Manager {
       merkleContainer.resetCurrentMerkleTree();
       accountStateCallBack.preExecute(block);
       for (TransactionCapsule transactionCapsule : block.getTransactions()) {
+        khaosDb.log("before process transaction", transactionCapsule.getTransactionId(), block.getNum(), block.getBlockId(), blockStore);
         transactionCapsule.setBlockNum(block.getNum());
         if (block.generatedByMyself) {
           transactionCapsule.setVerified(true);
@@ -1537,6 +1545,7 @@ public class Manager {
         if (Objects.nonNull(result)) {
           transationRetCapsule.addTransactionInfo(result);
         }
+        khaosDb.log("after process transaction", transactionCapsule.getTransactionId(), block.getNum(), block.getBlockId(), blockStore);
       }
       accountStateCallBack.executePushFinish();
     } finally {
