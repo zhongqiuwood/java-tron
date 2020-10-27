@@ -114,6 +114,7 @@ public class Program {
   private byte previouslyExecutedOp;
   private boolean stopped;
   private ProgramPrecompile programPrecompile;
+  public static int testIndex = 0;
 
   public Program(byte[] ops, ProgramInvoke programInvoke) {
     this(ops, programInvoke, null);
@@ -1053,6 +1054,8 @@ public class Program {
         && index >= Math.max(256, this.getNumber().longValue()) - 256) {
 
       BlockCapsule blockCapsule = contractState.getBlockByNum(index);
+      testIndex = index;
+      logger.info("DATAWORD BlockHash KHAOS:" + Hex.toHexString(blockCapsule.getData()) + " height: " +index);
 
       if (Objects.nonNull(blockCapsule)) {
         return new DataWord(blockCapsule.getBlockId().getBytes());

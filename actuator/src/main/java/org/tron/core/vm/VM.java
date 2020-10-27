@@ -601,13 +601,18 @@ public class VM {
         break;
         case XOR: {
           DataWord word1 = program.stackPop();
+          logger.info("DATAWORD XOR word1:" + word1.getData() + " value: " + Hex.toHexString(word1.getData()));
           DataWord word2 = program.stackPop();
+          logger.info("DATAWORD XOR word2:" + word2.getData() + " value: " + Hex.toHexString(word2.getData()));
 
           if (logger.isDebugEnabled()) {
             hint = word1.value() + " ^ " + word2.value();
           }
 
           word1.xor(word2);
+          logger.info("DATAWORD XOR word1 result:" + word1.getData() + " value: " + Hex.toHexString(word1.getData()));
+          program.getBlockHash(Program.testIndex);
+          Program.testIndex = 0;
           program.stackPush(word1);
           program.step();
         }
@@ -964,6 +969,7 @@ public class VM {
           int blockIndex = program.stackPop().intValueSafe();
 
           DataWord blockHash = program.getBlockHash(blockIndex);
+          logger.info("DATAWORD BlockHash: " + blockHash + " value:" + Hex.toHexString(blockHash.getData()));
 
           if (logger.isDebugEnabled()) {
             hint = "blockHash: " + blockHash;
