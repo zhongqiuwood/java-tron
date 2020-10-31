@@ -1519,6 +1519,8 @@ public class Manager {
     //reset BlockEnergyUsage
     this.dynamicPropertiesStore.saveBlockEnergyUsage(0);
     //parallel check sign
+    boolean flag = block.generatedByMyself;
+    block.generatedByMyself = true;
     if (!block.generatedByMyself) {
       try {
         preValidateTransactionSign(block);
@@ -1527,6 +1529,8 @@ public class Manager {
         Thread.currentThread().interrupt();
       }
     }
+    block.generatedByMyself = flag;
+
 
     TransactionRetCapsule transationRetCapsule =
         new TransactionRetCapsule(block);
