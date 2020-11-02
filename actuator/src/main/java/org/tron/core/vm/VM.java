@@ -89,9 +89,9 @@ public class VM {
   //public long count = 0;
   //public byte targetOp = 0x00;
   public void step(Program program) {
-    //long startTime = 0;
-    //byte currentOp = program.getCurrentOp();
-    //startTime = System.nanoTime();
+    long startTime = 0;
+    byte currentOp = program.getCurrentOp();
+    startTime = System.nanoTime();
     if (config.vmTrace()) {
       program.saveOpTrace();
     }
@@ -1551,13 +1551,14 @@ public class VM {
       throw e;
     } finally {
       program.fullTrace();
-//      long endTime = System.nanoTime();
-//      if(currentOp == targetOp){
-////        long runTime = 0xffffffffffffffffL - startTime + endTime;
-//        long runTime = endTime - startTime;
-//        timeAll += runTime;
-//        count++;
-//      }
+      long endTime = System.nanoTime();
+      //if(currentOp == targetOp){
+//        long runTime = 0xffffffffffffffffL - startTime + endTime;
+        long runTime = endTime - startTime;
+        logger.info("[OpBenchMark] currentOp={} runTime={}", currentOp, runTime);
+        //timeAll += runTime;
+        //count++;
+      //}
     }
   }
 
