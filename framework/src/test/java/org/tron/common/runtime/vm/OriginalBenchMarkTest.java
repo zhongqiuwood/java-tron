@@ -1,3 +1,4 @@
+/*
 package org.tron.common.runtime.vm;
 
 import lombok.extern.slf4j.Slf4j;
@@ -11,7 +12,6 @@ import org.tron.core.vm.OpCode;
 import org.tron.core.vm.VM;
 import org.tron.core.vm.program.Program;
 import org.tron.core.vm.program.invoke.ProgramInvokeMockImpl;
-import org.tron.protos.Protocol.Transaction;
 
 import java.io.*;
 import java.util.LinkedHashMap;
@@ -103,3 +103,4 @@ public class OriginalBenchMarkTest {
     bufferedWriter.close();
   }
 }
+*/
