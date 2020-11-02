@@ -2,7 +2,6 @@ package org.tron.common.runtime.vm;
 
 import lombok.extern.slf4j.Slf4j;
 import org.junit.*;
-import org.tron.common.parameter.CommonParameter;
 import org.tron.common.runtime.InternalTransaction;
 import org.tron.core.config.args.Args;
 import org.tron.core.vm.OpCode;
@@ -26,7 +25,7 @@ public class BenchMark {
 
   @BeforeClass
   public static void init() {
-    CommonParameter.getInstance().setDebug(true);
+    Args.getInstance().setDebug(true);
   }
 
   @AfterClass

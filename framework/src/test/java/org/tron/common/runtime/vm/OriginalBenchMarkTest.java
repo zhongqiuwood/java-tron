@@ -5,7 +5,6 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.springframework.core.io.ClassPathResource;
-import org.tron.common.parameter.CommonParameter;
 import org.tron.common.runtime.InternalTransaction;
 import org.tron.core.config.args.Args;
 import org.tron.core.vm.OpCode;
@@ -27,7 +26,7 @@ public class OriginalBenchMarkTest {
 
   @BeforeClass
   public static void init() {
-    CommonParameter.getInstance().setDebug(true);
+    Args.getInstance().setDebug(true);
   }
 
   @AfterClass
