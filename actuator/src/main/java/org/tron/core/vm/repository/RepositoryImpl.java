@@ -522,6 +522,8 @@ public class RepositoryImpl implements Repository {
 
   @Override
   public void commit() {
+    long startTime = System.nanoTime();
+    
     Repository repository = null;
     if (parent != null) {
       repository = parent;
@@ -534,6 +536,10 @@ public class RepositoryImpl implements Repository {
     commitVotesCache(repository);
     commitAssetIssue(repository);
     commitDelegationCache(repository);
+  
+    long endTime = System.nanoTime();
+    long runTime = endTime - startTime;
+    logger.info("[OpBenchMark] commit runTime={}", runTime);
   }
 
   @Override
