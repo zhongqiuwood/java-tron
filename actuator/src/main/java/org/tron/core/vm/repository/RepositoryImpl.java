@@ -532,10 +532,10 @@ public class RepositoryImpl implements Repository {
     commitCodeCache(repository);
     commitContractCache(repository);
     commitStorageCache(repository);
-    commitDynamicCache(repository);
-    commitVotesCache(repository);
-    commitAssetIssue(repository);
-    commitDelegationCache(repository);
+    //commitDynamicCache(repository);
+    //commitVotesCache(repository);
+    //commitAssetIssue(repository);
+    //commitDelegationCache(repository);
   
     long endTime = System.nanoTime();
     long runTime = endTime - startTime;
