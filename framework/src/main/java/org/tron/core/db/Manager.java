@@ -13,16 +13,12 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.protobuf.ByteString;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.Set;
+
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.*;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
@@ -1423,7 +1419,22 @@ public class Manager {
       // apply transaction
       try (ISession tmpSeesion = revokingStore.buildSession()) {
         accountStateCallBack.preExeTrans();
+        long startTime = System.nanoTime();
         TransactionInfo result = processTransaction(trx, blockCapsule);
+        long endTime = System.nanoTime();
+        long runTime = 0xffffffffffffffffL - startTime + 1 + endTime;
+        if(trx.getInstance().getRawData().getContractCount() > 0) {
+          try {
+            BufferedWriter out = new BufferedWriter(new FileWriter("transaction_time.csv", true));
+            out.write(String.format("%s,%s,%d\n"
+                ,new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date(System.currentTimeMillis()))
+                ,ByteArray.toHexString(trx.getInstance().getRawData().getContractList().get(0).getParameter().getValue().toByteArray())
+                ,runTime));
+            out.close();
+          } catch (IOException e) {
+            logger.error(e.getMessage());
+          }
+        }
         accountStateCallBack.exeTransFinish();
         tmpSeesion.merge();
         blockCapsule.addTransaction(trx);
