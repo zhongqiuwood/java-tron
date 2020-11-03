@@ -830,7 +830,22 @@ public class Manager {
         }
 
         try (ISession tmpSession = revokingStore.buildSession()) {
+          long startTime = System.nanoTime();
           processTransaction(trx, null);
+          long endTime = System.nanoTime();
+          long runTime = 0xffffffffffffffffL - startTime + 1 + endTime;
+          if(trx.getInstance().getRawData().getContractCount() > 0) {
+            try {
+              BufferedWriter out = new BufferedWriter(new FileWriter("transaction_time4.0.csv", true));
+              out.write(String.format("%s,%s,%d\n"
+                  , new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date(System.currentTimeMillis()))
+                  , ByteArray.toHexString(trx.getInstance().getRawData().getContractList().get(0).getParameter().getValue().toByteArray())
+                  , runTime));
+              out.close();
+            } catch (IOException e) {
+              logger.error(e.getMessage());
+            }
+          }
           pendingTransactions.add(trx);
           tmpSession.merge();
         }
@@ -1419,22 +1434,7 @@ public class Manager {
       // apply transaction
       try (ISession tmpSeesion = revokingStore.buildSession()) {
         accountStateCallBack.preExeTrans();
-        long startTime = System.nanoTime();
         TransactionInfo result = processTransaction(trx, blockCapsule);
-        long endTime = System.nanoTime();
-        long runTime = 0xffffffffffffffffL - startTime + 1 + endTime;
-        if(trx.getInstance().getRawData().getContractCount() > 0) {
-          try {
-            BufferedWriter out = new BufferedWriter(new FileWriter("transaction_time.csv", true));
-            out.write(String.format("%s,%s,%d\n"
-                ,new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date(System.currentTimeMillis()))
-                ,ByteArray.toHexString(trx.getInstance().getRawData().getContractList().get(0).getParameter().getValue().toByteArray())
-                ,runTime));
-            out.close();
-          } catch (IOException e) {
-            logger.error(e.getMessage());
-          }
-        }
         accountStateCallBack.exeTransFinish();
         tmpSeesion.merge();
         blockCapsule.addTransaction(trx);
