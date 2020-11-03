@@ -133,19 +133,19 @@ public class VM {
         throw Program.Exception.invalidOpCode(program.getCurrentOp());
       }
 
-//      if (!VMConfig.allowTvmIstanbul() && (op == SELFBALANCE || op == CHAINID)) {
-//        throw Program.Exception.invalidOpCode(program.getCurrentOp());
-//      }
-//
-//      if (!VMConfig.allowTvmStake()
-//          && (op == ISSRCANDIDATE || op == REWARDBALANCE || op == STAKE || op == UNSTAKE
-//          || op == WITHDRAWREWARD)) {
-//        throw Program.Exception.invalidOpCode(program.getCurrentOp());
-//      }
-//
-//      if(!VMConfig.allowTvmAssetIssue() && (op == TOKENISSUE || op == UPDATEASSET)) {
-//        throw Program.Exception.invalidOpCode(program.getCurrentOp());
-//      }
+      if (!VMConfig.allowTvmIstanbul() && (op == SELFBALANCE || op == CHAINID)) {
+        throw Program.Exception.invalidOpCode(program.getCurrentOp());
+      }
+
+      if (!VMConfig.allowTvmStake()
+          && (op == ISSRCANDIDATE || op == REWARDBALANCE || op == STAKE || op == UNSTAKE
+          || op == WITHDRAWREWARD)) {
+        throw Program.Exception.invalidOpCode(program.getCurrentOp());
+      }
+
+      if(!VMConfig.allowTvmAssetIssue() && (op == TOKENISSUE || op == UPDATEASSET)) {
+        throw Program.Exception.invalidOpCode(program.getCurrentOp());
+      }
 
       program.setLastOp(op.val());
       program.verifyStackSize(op.require());
