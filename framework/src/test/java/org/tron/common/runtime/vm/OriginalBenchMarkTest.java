@@ -6,6 +6,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.springframework.core.io.ClassPathResource;
 import org.tron.common.runtime.InternalTransaction;
+import org.tron.common.utils.DBConfig;
 import org.tron.core.config.args.Args;
 import org.tron.core.vm.OpCode;
 import org.tron.core.vm.VM;
@@ -26,7 +27,7 @@ public class OriginalBenchMarkTest {
   
   @BeforeClass
   public static void init() {
-    Args.getInstance().setDebug(true);
+    DBConfig.setDebug(true);
   }
   
   @AfterClass
