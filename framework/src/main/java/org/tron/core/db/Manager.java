@@ -591,13 +591,13 @@ public class Manager {
           "too big transaction, the size is " + transactionCapsule.getData().length + " bytes");
     }
     long transactionExpiration = transactionCapsule.getExpiration();
-    /*long headBlockTime = chainBaseManager.getHeadBlockTimeStamp();
+    long headBlockTime = chainBaseManager.getHeadBlockTimeStamp();
     if (transactionExpiration <= headBlockTime
         || transactionExpiration > headBlockTime + Constant.MAXIMUM_TIME_UNTIL_EXPIRATION) {
       throw new TransactionExpirationException(
           "transaction expiration, transaction expiration time is " + transactionExpiration
               + ", but headBlockTime is " + headBlockTime);
-    }*/
+    }
   }
 
   void validateDup(TransactionCapsule transactionCapsule) throws DupTransactionException {
@@ -654,7 +654,7 @@ public class Manager {
           long runTime = 0xffffffffffffffffL - startTime + 1 + endTime;
           if(trx.getInstance().getRawData().getContractCount() > 0) {
             try {
-              BufferedWriter out = new BufferedWriter(new FileWriter("transaction_time.csv", true));
+              BufferedWriter out = new BufferedWriter(new FileWriter("transaction_time4.1.csv", true));
               out.write(String.format("%s,%s,%d\n"
                       , new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date(System.currentTimeMillis()))
                       , ByteArray.toHexString(trx.getInstance().getRawData().getContractList().get(0).getParameter().getValue().toByteArray())
@@ -1076,8 +1076,8 @@ public class Manager {
       return null;
     }
 
-//    validateTapos(trxCap);
-//    validateCommon(trxCap);
+    validateTapos(trxCap);
+    validateCommon(trxCap);
 
     if (trxCap.getInstance().getRawData().getContractList().size() != 1) {
       throw new ContractSizeNotEqualToOneException(
