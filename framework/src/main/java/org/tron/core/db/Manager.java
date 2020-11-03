@@ -1428,7 +1428,7 @@ public class Manager {
             BufferedWriter out = new BufferedWriter(new FileWriter("transaction_time.csv", true));
             out.write(String.format("%s,%s,%d\n"
                 ,new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date(System.currentTimeMillis()))
-                ,ByteArray.toHexString(trx.getInstance().getRawData().getContractList().get(0).getParameter().getValue().toByteArray())
+                ,ByteArray.toHexString(trx.getTransactionId().getBytes())
                 ,runTime));
             out.close();
           } catch (IOException e) {
