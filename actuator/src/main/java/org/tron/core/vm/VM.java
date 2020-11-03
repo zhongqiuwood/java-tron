@@ -3,7 +3,21 @@ package org.tron.core.vm;
 import static org.tron.common.crypto.Hash.sha3;
 import static org.tron.common.utils.ByteUtil.EMPTY_BYTE_ARRAY;
 import static org.tron.core.db.TransactionTrace.convertToTronAddress;
-import static org.tron.core.vm.OpCode.*;
+import static org.tron.core.vm.OpCode.CALL;
+import static org.tron.core.vm.OpCode.CALLTOKEN;
+import static org.tron.core.vm.OpCode.CALLTOKENID;
+import static org.tron.core.vm.OpCode.CALLTOKENVALUE;
+import static org.tron.core.vm.OpCode.CHAINID;
+import static org.tron.core.vm.OpCode.CREATE2;
+import static org.tron.core.vm.OpCode.EXTCODEHASH;
+import static org.tron.core.vm.OpCode.ISCONTRACT;
+import static org.tron.core.vm.OpCode.PUSH1;
+import static org.tron.core.vm.OpCode.REVERT;
+import static org.tron.core.vm.OpCode.SAR;
+import static org.tron.core.vm.OpCode.SELFBALANCE;
+import static org.tron.core.vm.OpCode.SHL;
+import static org.tron.core.vm.OpCode.SHR;
+import static org.tron.core.vm.OpCode.TOKENBALANCE;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -13,7 +27,6 @@ import org.spongycastle.util.encoders.Hex;
 import org.springframework.util.StringUtils;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.runtime.vm.LogInfo;
-import org.tron.common.utils.ByteArray;
 import org.tron.core.vm.config.VMConfig;
 import org.tron.core.vm.program.Program;
 import org.tron.core.vm.program.Program.JVMStackOverFlowException;
@@ -48,7 +61,7 @@ public class VM {
    * + size, unless size is 0, in which case the result is also 0.
    *
    * @param offset starting position of the memory
-   * @param size number of bytes needed
+   * @param size   number of bytes needed
    * @return offset + size, unless size is 0. In that case memNeeded is also 0.
    */
   private static BigInteger memNeeded(DataWord offset, DataWord size) {
@@ -115,15 +128,15 @@ public class VM {
         throw Program.Exception.invalidOpCode(program.getCurrentOp());
       }
 
-      if (!VMConfig.allowTvmStake()
-              && (op == ISSRCANDIDATE || op == REWARDBALANCE || op == STAKE || op == UNSTAKE
-                || op == WITHDRAWREWARD)) {
-        throw Program.Exception.invalidOpCode(program.getCurrentOp());
-      }
-
-      if(!VMConfig.allowTvmAssetIssue() && (op == TOKENISSUE || op == UPDATEASSET)) {
-        throw Program.Exception.invalidOpCode(program.getCurrentOp());
-      }
+//      if (!VMConfig.allowTvmStake()
+//          && (op == ISSRCANDIDATE || op == REWARDBALANCE || op == STAKE || op == UNSTAKE
+//          || op == WITHDRAWREWARD)) {
+//        throw Program.Exception.invalidOpCode(program.getCurrentOp());
+//      }
+//
+//      if (!VMConfig.allowTvmAssetIssue() && (op == TOKENISSUE || op == UPDATEASSET)) {
+//        throw Program.Exception.invalidOpCode(program.getCurrentOp());
+//      }
 
       program.setLastOp(op.val());
       program.verifyStackSize(op.require());
@@ -173,9 +186,9 @@ public class VM {
           break;
         case TOKENBALANCE:
         case BALANCE:
-        case REWARDBALANCE:
+//        case REWARDBALANCE:
         case ISCONTRACT:
-        case ISSRCANDIDATE:
+//        case ISSRCANDIDATE:
           energyCost = energyCosts.getBALANCE();
           break;
 
@@ -317,19 +330,19 @@ public class VM {
           energyCost =
               (long) energyCosts.getEXP_ENERGY() + energyCosts.getEXP_BYTE_ENERGY() * bytesOccupied;
           break;
-        case STAKE:
-        case UNSTAKE:
-          energyCost = energyCosts.getStakeAndUnstake();
-          break;
-        case WITHDRAWREWARD:
-          energyCost = energyCosts.getWithdrawReward();
-          break;
-        case TOKENISSUE:
-          energyCost = energyCosts.getTokenIssue();
-          break;
-        case UPDATEASSET:
-          energyCost = energyCosts.getUpdateAsset();
-          break;
+//        case STAKE:
+//        case UNSTAKE:
+//          energyCost = energyCosts.getStakeAndUnstake();
+//          break;
+//        case WITHDRAWREWARD:
+//          energyCost = energyCosts.getWithdrawReward();
+//          break;
+//        case TOKENISSUE:
+//          energyCost = energyCosts.getTokenIssue();
+//          break;
+//        case UPDATEASSET:
+//          energyCost = energyCosts.getUpdateAsset();
+//          break;
         default:
           break;
       }
@@ -763,20 +776,20 @@ public class VM {
           program.step();
         }
         break;
-        case REWARDBALANCE: {
-          DataWord address = program.stackPop();
-          DataWord rewardBalance = program.getRewardBalance(address);
-
-          if (logger.isDebugEnabled()) {
-            hint = ADDRESS_LOG
-                    + Hex.toHexString(address.getLast20Bytes())
-                    + " reward balance: " + rewardBalance.toString();
-          }
-
-          program.stackPush(rewardBalance);
-          program.step();
-        }
-        break;
+//        case REWARDBALANCE: {
+//          DataWord address = program.stackPop();
+//          DataWord rewardBalance = program.getRewardBalance(address);
+//
+//          if (logger.isDebugEnabled()) {
+//            hint = ADDRESS_LOG
+//                + Hex.toHexString(address.getLast20Bytes())
+//                + " reward balance: " + rewardBalance.toString();
+//          }
+//
+//          program.stackPush(rewardBalance);
+//          program.step();
+//        }
+//        break;
         case ISCONTRACT: {
           DataWord address = program.stackPop();
           DataWord isContract = program.isContract(address);
@@ -785,14 +798,14 @@ public class VM {
           program.step();
         }
         break;
-        case ISSRCANDIDATE: {
-          DataWord address = program.stackPop();
-          DataWord isSRCandidate = program.isSRCandidate(address);
-
-          program.stackPush(isSRCandidate);
-          program.step();
-        }
-        break;
+//        case ISSRCANDIDATE: {
+//          DataWord address = program.stackPop();
+//          DataWord isSRCandidate = program.isSRCandidate(address);
+//
+//          program.stackPush(isSRCandidate);
+//          program.step();
+//        }
+//        break;
         case ORIGIN: {
           DataWord originAddress = program.getOriginAddress();
 
@@ -1452,46 +1465,46 @@ public class VM {
           program.step();
           break;
         }
-        case STAKE: {
-          DataWord srAddress = program.stackPop();
-          DataWord stakeAmount = program.stackPop();
-          boolean result = program.stake(srAddress, stakeAmount);
-          program.stackPush(new DataWord(result ? 1 : 0));
-
-          program.step();
-        }
-        break;
-        case UNSTAKE: {
-          boolean result = program.unstake();
-          program.stackPush(new DataWord(result ? 1 : 0));
-
-          program.step();
-        }
-        break;
-        case WITHDRAWREWARD: {
-          program.withdrawReward();
-          program.step();
-        }
-        break;
-        case TOKENISSUE: {
-          DataWord name = program.stackPop();
-          DataWord abbr = program.stackPop();
-          DataWord totalSupply = program.stackPop();
-          DataWord precision = program.stackPop();
-
-          program.tokenIssue(name, abbr, totalSupply, precision);
-          program.step();
-          break;
-        }
-        case UPDATEASSET: {
-          program.stackPop();
-          DataWord urlDataOffs = program.stackPop();
-          DataWord descriptionDataOffs = program.stackPop();
-
-          program.updateAsset(urlDataOffs, descriptionDataOffs);
-          program.step();
-          break;
-        }
+//        case STAKE: {
+//          DataWord srAddress = program.stackPop();
+//          DataWord stakeAmount = program.stackPop();
+//          boolean result = program.stake(srAddress, stakeAmount);
+//          program.stackPush(new DataWord(result ? 1 : 0));
+//
+//          program.step();
+//        }
+//        break;
+//        case UNSTAKE: {
+//          boolean result = program.unstake();
+//          program.stackPush(new DataWord(result ? 1 : 0));
+//
+//          program.step();
+//        }
+//        break;
+//        case WITHDRAWREWARD: {
+//          program.withdrawReward();
+//          program.step();
+//        }
+//        break;
+//        case TOKENISSUE: {
+//          DataWord name = program.stackPop();
+//          DataWord abbr = program.stackPop();
+//          DataWord totalSupply = program.stackPop();
+//          DataWord precision = program.stackPop();
+//
+//          program.tokenIssue(name, abbr, totalSupply, precision);
+//          program.step();
+//          break;
+//        }
+//        case UPDATEASSET: {
+//          program.stackPop();
+//          DataWord urlDataOffs = program.stackPop();
+//          DataWord descriptionDataOffs = program.stackPop();
+//
+//          program.updateAsset(urlDataOffs, descriptionDataOffs);
+//          program.step();
+//          break;
+//        }
         case RETURN:
         case REVERT: {
           DataWord offset = program.stackPop();
