@@ -3,7 +3,12 @@ package org.tron.core.vm;
 import static org.tron.common.crypto.Hash.sha3;
 import static org.tron.common.utils.ByteUtil.EMPTY_BYTE_ARRAY;
 import static org.tron.core.db.TransactionTrace.convertToTronAddress;
-import static org.tron.core.vm.OpCode.*;
+import static org.tron.core.vm.OpCode.CALL;
+import static org.tron.core.vm.OpCode.CALLTOKEN;
+import static org.tron.core.vm.OpCode.ISCONTRACT;
+import static org.tron.core.vm.OpCode.PUSH1;
+import static org.tron.core.vm.OpCode.REVERT;
+import static org.tron.core.vm.OpCode.TOKENBALANCE;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -13,7 +18,6 @@ import org.spongycastle.util.encoders.Hex;
 import org.springframework.util.StringUtils;
 import org.tron.common.runtime.vm.DataWord;
 import org.tron.common.runtime.vm.LogInfo;
-import org.tron.common.utils.ByteArray;
 import org.tron.core.vm.config.VMConfig;
 import org.tron.core.vm.program.Program;
 import org.tron.core.vm.program.Program.JVMStackOverFlowException;
@@ -48,7 +52,7 @@ public class VM {
    * + size, unless size is 0, in which case the result is also 0.
    *
    * @param offset starting position of the memory
-   * @param size number of bytes needed
+   * @param size   number of bytes needed
    * @return offset + size, unless size is 0. In that case memNeeded is also 0.
    */
   private static BigInteger memNeeded(DataWord offset, DataWord size) {
@@ -97,33 +101,33 @@ public class VM {
       }
 
       // hard fork for 3.2
-      if (!VMConfig.allowTvmTransferTrc10()
-          && (op == CALLTOKEN || op == TOKENBALANCE || op == CALLTOKENVALUE || op == CALLTOKENID)) {
-        throw Program.Exception.invalidOpCode(program.getCurrentOp());
-      }
+//      if (!VMConfig.allowTvmTransferTrc10()
+//          && (op == CALLTOKEN || op == TOKENBALANCE || op == CALLTOKENVALUE || op == CALLTOKENID)) {
+//        throw Program.Exception.invalidOpCode(program.getCurrentOp());
+//      }
 
-      if (!VMConfig.allowTvmConstantinople()
-          && (op == SHL || op == SHR || op == SAR || op == CREATE2 || op == EXTCODEHASH)) {
-        throw Program.Exception.invalidOpCode(program.getCurrentOp());
-      }
+//      if (!VMConfig.allowTvmConstantinople()
+//          && (op == SHL || op == SHR || op == SAR || op == CREATE2 || op == EXTCODEHASH)) {
+//        throw Program.Exception.invalidOpCode(program.getCurrentOp());
+//      }
 
-      if (!VMConfig.allowTvmSolidity059() && op == ISCONTRACT) {
-        throw Program.Exception.invalidOpCode(program.getCurrentOp());
-      }
+//      if (!VMConfig.allowTvmSolidity059() && op == ISCONTRACT) {
+//        throw Program.Exception.invalidOpCode(program.getCurrentOp());
+//      }
 
-      if (!VMConfig.allowTvmIstanbul() && (op == SELFBALANCE || op == CHAINID)) {
-        throw Program.Exception.invalidOpCode(program.getCurrentOp());
-      }
+//      if (!VMConfig.allowTvmIstanbul() && (op == SELFBALANCE || op == CHAINID)) {
+//        throw Program.Exception.invalidOpCode(program.getCurrentOp());
+//      }
 
-      if (!VMConfig.allowTvmStake()
-              && (op == ISSRCANDIDATE || op == REWARDBALANCE || op == STAKE || op == UNSTAKE
-                || op == WITHDRAWREWARD)) {
-        throw Program.Exception.invalidOpCode(program.getCurrentOp());
-      }
+//      if (!VMConfig.allowTvmStake()
+//              && (op == ISSRCANDIDATE || op == REWARDBALANCE || op == STAKE || op == UNSTAKE
+//                || op == WITHDRAWREWARD)) {
+//        throw Program.Exception.invalidOpCode(program.getCurrentOp());
+//      }
 
-      if(!VMConfig.allowTvmAssetIssue() && (op == TOKENISSUE || op == UPDATEASSET)) {
-        throw Program.Exception.invalidOpCode(program.getCurrentOp());
-      }
+//      if(!VMConfig.allowTvmAssetIssue() && (op == TOKENISSUE || op == UPDATEASSET)) {
+//        throw Program.Exception.invalidOpCode(program.getCurrentOp());
+//      }
 
       program.setLastOp(op.val());
       program.verifyStackSize(op.require());
@@ -173,9 +177,14 @@ public class VM {
           break;
         case TOKENBALANCE:
         case BALANCE:
-        case REWARDBALANCE:
+//        case REWARDBALANCE:
         case ISCONTRACT:
-        case ISSRCANDIDATE:
+//        case ISSRCANDIDATE:
+          if ((op == TOKENBALANCE && !VMConfig.allowTvmTransferTrc10())
+              || (op == ISCONTRACT && !VMConfig.allowTvmSolidity059())) {
+            throw Program.Exception.invalidOpCode(program.getCurrentOp());
+          }
+
           energyCost = energyCosts.getBALANCE();
           break;
 
@@ -227,6 +236,9 @@ public class VM {
               stack.get(stack.size() - 4).longValueSafe(), op);
           break;
         case EXTCODEHASH:
+          if (!VMConfig.allowTvmConstantinople()) {
+            throw Program.Exception.invalidOpCode(program.getCurrentOp());
+          }
           energyCost = energyCosts.getEXT_CODE_HASH();
           break;
         case CALL:
@@ -235,6 +247,9 @@ public class VM {
         case STATICCALL:
         case CALLTOKEN:
           // here, contract call an other contract, or a library, and so on
+          if (op == CALLTOKEN && !VMConfig.allowTvmTransferTrc10()) {
+            throw Program.Exception.invalidOpCode(program.getCurrentOp());
+          }
           energyCost = energyCosts.getCALL();
           DataWord callEnergyWord = stack.get(stack.size() - 1);
           DataWord callAddressWord = stack.get(stack.size() - 2);
@@ -280,6 +295,9 @@ public class VM {
               memNeeded(stack.get(stack.size() - 2), stack.get(stack.size() - 3)), 0, op);
           break;
         case CREATE2:
+          if (!VMConfig.allowTvmConstantinople()) {
+            throw Program.Exception.invalidOpCode(program.getCurrentOp());
+          }
           DataWord codeSize = stack.get(stack.size() - 3);
           energyCost = energyCosts.getCREATE();
           energyCost += calcMemEnergy(energyCosts, oldMemSize,
@@ -317,19 +335,59 @@ public class VM {
           energyCost =
               (long) energyCosts.getEXP_ENERGY() + energyCosts.getEXP_BYTE_ENERGY() * bytesOccupied;
           break;
-        case STAKE:
-        case UNSTAKE:
-          energyCost = energyCosts.getStakeAndUnstake();
+//        case STAKE:
+//        case UNSTAKE:
+//          energyCost = energyCosts.getStakeAndUnstake();
+//          break;
+//        case WITHDRAWREWARD:
+//          energyCost = energyCosts.getWithdrawReward();
+//          break;
+//        case TOKENISSUE:
+//          energyCost = energyCosts.getTokenIssue();
+//          break;
+//        case UPDATEASSET:
+//          energyCost = energyCosts.getUpdateAsset();
+//          break;
+        case SHL: {
+          if (!VMConfig.allowTvmConstantinople()) {
+            throw Program.Exception.invalidOpCode(program.getCurrentOp());
+          }
           break;
-        case WITHDRAWREWARD:
-          energyCost = energyCosts.getWithdrawReward();
+        }
+        case SHR: {
+          if (!VMConfig.allowTvmConstantinople()) {
+            throw Program.Exception.invalidOpCode(program.getCurrentOp());
+          }
           break;
-        case TOKENISSUE:
-          energyCost = energyCosts.getTokenIssue();
+        }
+        case SAR: {
+          if (!VMConfig.allowTvmConstantinople()) {
+            throw Program.Exception.invalidOpCode(program.getCurrentOp());
+          }
           break;
-        case UPDATEASSET:
-          energyCost = energyCosts.getUpdateAsset();
+        }
+        case CALLTOKENVALUE:
+          if (!VMConfig.allowTvmTransferTrc10()) {
+            throw Program.Exception.invalidOpCode(program.getCurrentOp());
+          }
           break;
+        case CALLTOKENID:
+          if (!VMConfig.allowTvmTransferTrc10()) {
+            throw Program.Exception.invalidOpCode(program.getCurrentOp());
+          }
+          break;
+        case CHAINID: {
+          if (!VMConfig.allowTvmIstanbul()) {
+            throw Program.Exception.invalidOpCode(program.getCurrentOp());
+          }
+          break;
+        }
+        case SELFBALANCE: {
+          if (!VMConfig.allowTvmIstanbul()) {
+            throw Program.Exception.invalidOpCode(program.getCurrentOp());
+          }
+          break;
+        }
         default:
           break;
       }
@@ -769,8 +827,8 @@ public class VM {
 
           if (logger.isDebugEnabled()) {
             hint = ADDRESS_LOG
-                    + Hex.toHexString(address.getLast20Bytes())
-                    + " reward balance: " + rewardBalance.toString();
+                + Hex.toHexString(address.getLast20Bytes())
+                + " reward balance: " + rewardBalance.toString();
           }
 
           program.stackPush(rewardBalance);
@@ -1452,46 +1510,46 @@ public class VM {
           program.step();
           break;
         }
-        case STAKE: {
-          DataWord srAddress = program.stackPop();
-          DataWord stakeAmount = program.stackPop();
-          boolean result = program.stake(srAddress, stakeAmount);
-          program.stackPush(new DataWord(result ? 1 : 0));
-
-          program.step();
-        }
-        break;
-        case UNSTAKE: {
-          boolean result = program.unstake();
-          program.stackPush(new DataWord(result ? 1 : 0));
-
-          program.step();
-        }
-        break;
-        case WITHDRAWREWARD: {
-          program.withdrawReward();
-          program.step();
-        }
-        break;
-        case TOKENISSUE: {
-          DataWord name = program.stackPop();
-          DataWord abbr = program.stackPop();
-          DataWord totalSupply = program.stackPop();
-          DataWord precision = program.stackPop();
-
-          program.tokenIssue(name, abbr, totalSupply, precision);
-          program.step();
-          break;
-        }
-        case UPDATEASSET: {
-          program.stackPop();
-          DataWord urlDataOffs = program.stackPop();
-          DataWord descriptionDataOffs = program.stackPop();
-
-          program.updateAsset(urlDataOffs, descriptionDataOffs);
-          program.step();
-          break;
-        }
+//        case STAKE: {
+//          DataWord srAddress = program.stackPop();
+//          DataWord stakeAmount = program.stackPop();
+//          boolean result = program.stake(srAddress, stakeAmount);
+//          program.stackPush(new DataWord(result ? 1 : 0));
+//
+//          program.step();
+//        }
+//        break;
+//        case UNSTAKE: {
+//          boolean result = program.unstake();
+//          program.stackPush(new DataWord(result ? 1 : 0));
+//
+//          program.step();
+//        }
+//        break;
+//        case WITHDRAWREWARD: {
+//          program.withdrawReward();
+//          program.step();
+//        }
+//        break;
+//        case TOKENISSUE: {
+//          DataWord name = program.stackPop();
+//          DataWord abbr = program.stackPop();
+//          DataWord totalSupply = program.stackPop();
+//          DataWord precision = program.stackPop();
+//
+//          program.tokenIssue(name, abbr, totalSupply, precision);
+//          program.step();
+//          break;
+//        }
+//        case UPDATEASSET: {
+//          program.stackPop();
+//          DataWord urlDataOffs = program.stackPop();
+//          DataWord descriptionDataOffs = program.stackPop();
+//
+//          program.updateAsset(urlDataOffs, descriptionDataOffs);
+//          program.step();
+//          break;
+//        }
         case RETURN:
         case REVERT: {
           DataWord offset = program.stackPop();
