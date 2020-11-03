@@ -77,9 +77,11 @@ public class OriginalBenchMarkTest {
         long billion40 = 40000000000L;
 
         String msg;
-        BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter("OriginalBenchMark.txt")) ;
+        BufferedWriter bufferedWriter;
         for (Map.Entry<Byte, byte[]> entry : opMap.entrySet()) {
+            bufferedWriter = new BufferedWriter(new FileWriter("4.1BenchMark.txt", true)) ;
             bufferedWriter.write("-------->" + OpCode.code(entry.getKey()) + "\n");
+            bufferedWriter.close();
             for(int i = 1; i <= 10; i++) {
                 VM vm = new VM();
                 vm.targetOp = entry.getKey();
@@ -98,9 +100,10 @@ public class OriginalBenchMarkTest {
                 msg = String.format("%d,%s(0x%02x),%d,%d,%f",
                         i, OpCode.code(entry.getKey()), entry.getKey(), vm.timeAll, vm.count,
                         time);
+                bufferedWriter = new BufferedWriter(new FileWriter("4.1BenchMark.txt", true)) ;
                 bufferedWriter.write(msg + "\n");
+                bufferedWriter.close();
             }
         }
-        bufferedWriter.close();
     }
 }
