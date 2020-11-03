@@ -94,9 +94,7 @@ public class VM {
   }
 
   public void step(Program program) {
-    long startTime = 0;
-    byte currentOp = program.getCurrentOp();
-    startTime = System.nanoTime();
+
     if (config.vmTrace()) {
       program.saveOpTrace();
     }
@@ -1453,9 +1451,7 @@ public class VM {
       program.stop();
       throw e;
     } finally {
-      long endTime = System.nanoTime();
-      long runTime = endTime - startTime;
-      logger.info("[OpBenchMark] currentOp={} runTime={}", currentOp, runTime);
+      program.fullTrace();
     }
   }
 
