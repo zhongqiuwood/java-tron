@@ -92,7 +92,10 @@ public class VM {
     }
     return energyCost;
   }
-
+  
+  public long timeAll = 0;
+  public long count = 0;
+  public byte targetOp = 0x00;
   public void step(Program program) {
     long startTime = 0;
     byte currentOp = program.getCurrentOp();
@@ -1453,9 +1456,14 @@ public class VM {
       program.stop();
       throw e;
     } finally {
+      program.fullTrace();
       long endTime = System.nanoTime();
-      long runTime = endTime - startTime;
-      logger.info("[OpBenchMark] currentOp={} runTime={}", currentOp, runTime);
+      if(currentOp == targetOp){
+//        long runTime = 0xffffffffffffffffL - startTime + endTime;
+        long runTime = endTime - startTime;
+        timeAll += runTime;
+        count++;
+      }
     }
   }
 
