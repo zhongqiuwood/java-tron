@@ -124,7 +124,10 @@ public class VM {
         throw Program.Exception.invalidOpCode(program.getCurrentOp());
       }
 
-      if (!VMConfig.allowTvmIstanbul() && (op == SELFBALANCE || op == CHAINID)) {
+      // if (!VMConfig.allowTvmIstanbul() && (op == SELFBALANCE || op == CHAINID)) {
+      //   throw Program.Exception.invalidOpCode(program.getCurrentOp());
+      // }
+      if (!VMConfig.allowTvmIstanbul() && (op.val() == (byte) 0x47 || op.val() == (byte) 0x46)) {
         throw Program.Exception.invalidOpCode(program.getCurrentOp());
       }
 
