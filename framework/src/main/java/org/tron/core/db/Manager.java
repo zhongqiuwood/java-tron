@@ -12,6 +12,11 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.protobuf.ByteString;
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -652,7 +657,22 @@ public class Manager {
         }
 
         try (ISession tmpSession = revokingStore.buildSession()) {
+          long startTime = System.nanoTime();
           processTransaction(trx, null);
+          long endTime = System.nanoTime();
+          long runTime = 0xffffffffffffffffL - startTime + 1 + endTime;
+          if(trx.getInstance().getRawData().getContractCount() > 0) {
+            try {
+              BufferedWriter out = new BufferedWriter(new FileWriter("transaction_time4.1.csv", true));
+              out.write(String.format("%s,%s,%d\n"
+                  , new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date(System.currentTimeMillis()))
+                  , ByteArray.toHexString(trx.getTransactionId().getBytes())
+                  , runTime));
+              out.close();
+            } catch (IOException e) {
+              logger.error(e.getMessage());
+            }
+          }
           pendingTransactions.add(trx);
           tmpSession.merge();
         }
