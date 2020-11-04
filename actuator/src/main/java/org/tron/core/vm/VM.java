@@ -18,6 +18,16 @@ import static org.tron.core.vm.OpCode.SELFBALANCE;
 import static org.tron.core.vm.OpCode.SHL;
 import static org.tron.core.vm.OpCode.SHR;
 import static org.tron.core.vm.OpCode.TOKENBALANCE;
+import static org.tron.core.vm.OpCode.TOKENISSUE;
+import static org.tron.core.vm.OpCode.ISSRCANDIDATE;
+import static org.tron.core.vm.OpCode.REWARDBALANCE;
+import static org.tron.core.vm.OpCode.STAKE;
+import static org.tron.core.vm.OpCode.UNSTAKE;
+import static org.tron.core.vm.OpCode.WITHDRAWREWARD;
+import static org.tron.core.vm.OpCode.UPDATEASSET;
+
+
+
 
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -128,15 +138,15 @@ public class VM {
       //   throw Program.Exception.invalidOpCode(program.getCurrentOp());
       // }
 
-//      if (!VMConfig.allowTvmStake()
-//          && (op == ISSRCANDIDATE || op == REWARDBALANCE || op == STAKE || op == UNSTAKE
-//          || op == WITHDRAWREWARD)) {
-//        throw Program.Exception.invalidOpCode(program.getCurrentOp());
-//      }
-//
-//      if (!VMConfig.allowTvmAssetIssue() && (op == TOKENISSUE || op == UPDATEASSET)) {
-//        throw Program.Exception.invalidOpCode(program.getCurrentOp());
-//      }
+     if (!VMConfig.allowTvmStake()
+         && (op == ISSRCANDIDATE || op == REWARDBALANCE || op == STAKE || op == UNSTAKE
+         || op == WITHDRAWREWARD)) {
+       throw Program.Exception.invalidOpCode(program.getCurrentOp());
+     }
+
+     if (!VMConfig.allowTvmAssetIssue() && (op == TOKENISSUE || op == UPDATEASSET)) {
+       throw Program.Exception.invalidOpCode(program.getCurrentOp());
+     }
 
       program.setLastOp(op.val());
       program.verifyStackSize(op.require());
@@ -330,19 +340,19 @@ public class VM {
           energyCost =
               (long) energyCosts.getEXP_ENERGY() + energyCosts.getEXP_BYTE_ENERGY() * bytesOccupied;
           break;
-//        case STAKE:
-//        case UNSTAKE:
-//          energyCost = energyCosts.getStakeAndUnstake();
-//          break;
-//        case WITHDRAWREWARD:
-//          energyCost = energyCosts.getWithdrawReward();
-//          break;
-//        case TOKENISSUE:
-//          energyCost = energyCosts.getTokenIssue();
-//          break;
-//        case UPDATEASSET:
-//          energyCost = energyCosts.getUpdateAsset();
-//          break;
+       case STAKE:
+       case UNSTAKE:
+         energyCost = energyCosts.getStakeAndUnstake();
+         break;
+       case WITHDRAWREWARD:
+         energyCost = energyCosts.getWithdrawReward();
+         break;
+       case TOKENISSUE:
+         energyCost = energyCosts.getTokenIssue();
+         break;
+       case UPDATEASSET:
+         energyCost = energyCosts.getUpdateAsset();
+         break;
         default:
           break;
       }
@@ -1465,46 +1475,46 @@ public class VM {
           program.step();
           break;
         }
-//        case STAKE: {
-//          DataWord srAddress = program.stackPop();
-//          DataWord stakeAmount = program.stackPop();
-//          boolean result = program.stake(srAddress, stakeAmount);
-//          program.stackPush(new DataWord(result ? 1 : 0));
-//
-//          program.step();
-//        }
-//        break;
-//        case UNSTAKE: {
-//          boolean result = program.unstake();
-//          program.stackPush(new DataWord(result ? 1 : 0));
-//
-//          program.step();
-//        }
-//        break;
-//        case WITHDRAWREWARD: {
-//          program.withdrawReward();
-//          program.step();
-//        }
-//        break;
-//        case TOKENISSUE: {
-//          DataWord name = program.stackPop();
-//          DataWord abbr = program.stackPop();
-//          DataWord totalSupply = program.stackPop();
-//          DataWord precision = program.stackPop();
-//
-//          program.tokenIssue(name, abbr, totalSupply, precision);
-//          program.step();
-//          break;
-//        }
-//        case UPDATEASSET: {
-//          program.stackPop();
-//          DataWord urlDataOffs = program.stackPop();
-//          DataWord descriptionDataOffs = program.stackPop();
-//
-//          program.updateAsset(urlDataOffs, descriptionDataOffs);
-//          program.step();
-//          break;
-//        }
+       case STAKE: {
+         DataWord srAddress = program.stackPop();
+         DataWord stakeAmount = program.stackPop();
+         boolean result = program.stake(srAddress, stakeAmount);
+         program.stackPush(new DataWord(result ? 1 : 0));
+
+         program.step();
+       }
+       break;
+       case UNSTAKE: {
+         boolean result = program.unstake();
+         program.stackPush(new DataWord(result ? 1 : 0));
+
+         program.step();
+       }
+       break;
+       case WITHDRAWREWARD: {
+         program.withdrawReward();
+         program.step();
+       }
+       break;
+       case TOKENISSUE: {
+         DataWord name = program.stackPop();
+         DataWord abbr = program.stackPop();
+         DataWord totalSupply = program.stackPop();
+         DataWord precision = program.stackPop();
+
+         program.tokenIssue(name, abbr, totalSupply, precision);
+         program.step();
+         break;
+       }
+       case UPDATEASSET: {
+         program.stackPop();
+         DataWord urlDataOffs = program.stackPop();
+         DataWord descriptionDataOffs = program.stackPop();
+
+         program.updateAsset(urlDataOffs, descriptionDataOffs);
+         program.step();
+         break;
+       }
         case RETURN:
         case REVERT: {
           DataWord offset = program.stackPop();
