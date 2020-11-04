@@ -124,9 +124,9 @@ public class VM {
         throw Program.Exception.invalidOpCode(program.getCurrentOp());
       }
 
-      if (!VMConfig.allowTvmIstanbul() && (op == SELFBALANCE || op == CHAINID)) {
-        throw Program.Exception.invalidOpCode(program.getCurrentOp());
-      }
+      // if (!VMConfig.allowTvmIstanbul() && (op == SELFBALANCE || op == CHAINID)) {
+      //   throw Program.Exception.invalidOpCode(program.getCurrentOp());
+      // }
 
 //      if (!VMConfig.allowTvmStake()
 //          && (op == ISSRCANDIDATE || op == REWARDBALANCE || op == STAKE || op == UNSTAKE
@@ -1084,18 +1084,18 @@ public class VM {
           program.step();
         }
         break;
-        case CHAINID: {
-          DataWord chainId = program.getChainId();
-          program.stackPush(chainId);
-          program.step();
-          break;
-        }
-        case SELFBALANCE: {
-          DataWord selfBalance = program.getBalance(program.getContractAddress());
-          program.stackPush(selfBalance);
-          program.step();
-          break;
-        }
+        // case CHAINID: {
+        //   DataWord chainId = program.getChainId();
+        //   program.stackPush(chainId);
+        //   program.step();
+        //   break;
+        // }
+        // case SELFBALANCE: {
+        //   DataWord selfBalance = program.getBalance(program.getContractAddress());
+        //   program.stackPush(selfBalance);
+        //   program.step();
+        //   break;
+        // }
         case POP: {
           program.stackPop();
           program.step();
