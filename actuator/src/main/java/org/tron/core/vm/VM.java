@@ -106,30 +106,35 @@ public class VM {
     try {
       OpCode op = OpCode.code(program.getCurrentOp());
       if (op == null) {
-        throw Program.Exception.invalidOpCode(program.getCurrentOp());
+        return;
+        //throw Program.Exception.invalidOpCode(program.getCurrentOp());
       }
 
       // hard fork for 3.2
       if (!VMConfig.allowTvmTransferTrc10()
           && (op == CALLTOKEN || op == TOKENBALANCE || op == CALLTOKENVALUE || op == CALLTOKENID)) {
-        throw Program.Exception.invalidOpCode(program.getCurrentOp());
+        return;
+        //throw Program.Exception.invalidOpCode(program.getCurrentOp());
       }
 
       if (!VMConfig.allowTvmConstantinople()
           && (op == SHL || op == SHR || op == SAR || op == CREATE2 || op == EXTCODEHASH)) {
-        throw Program.Exception.invalidOpCode(program.getCurrentOp());
+        return;
+        //throw Program.Exception.invalidOpCode(program.getCurrentOp());
       }
 
       if (!VMConfig.allowTvmSolidity059() && op == ISCONTRACT) {
-        throw Program.Exception.invalidOpCode(program.getCurrentOp());
+        return;
+        //throw Program.Exception.invalidOpCode(program.getCurrentOp());
       }
 
-      // if (!VMConfig.allowTvmIstanbul() && (op == SELFBALANCE || op == CHAINID)) {
+      if (!VMConfig.allowTvmIstanbul() && (op == SELFBALANCE || op == CHAINID)) {
+        return;
+        //throw Program.Exception.invalidOpCode(program.getCurrentOp());
+      }
+      // if (!VMConfig.allowTvmIstanbul() && (op.val() == (byte) 0x47 || op.val() == (byte) 0x46)) {
       //   throw Program.Exception.invalidOpCode(program.getCurrentOp());
       // }
-      if (!VMConfig.allowTvmIstanbul() && (op.val() == (byte) 0x47 || op.val() == (byte) 0x46)) {
-        throw Program.Exception.invalidOpCode(program.getCurrentOp());
-      }
 
 //      if (!VMConfig.allowTvmStake()
 //          && (op == ISSRCANDIDATE || op == REWARDBALANCE || op == STAKE || op == UNSTAKE
