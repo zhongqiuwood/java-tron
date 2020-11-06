@@ -123,10 +123,10 @@ public class VM {
         throw Program.Exception.invalidOpCode(program.getCurrentOp());
       }
 
-      if (!VMConfig.allowTvmSolidity059() && op == ISCONTRACT) {
-        //return;
-        throw Program.Exception.invalidOpCode(program.getCurrentOp());
-      }
+      // if (!VMConfig.allowTvmSolidity059() && op == ISCONTRACT) {
+      //   //return;
+      //   throw Program.Exception.invalidOpCode(program.getCurrentOp());
+      // }
 
       if (!VMConfig.allowTvmIstanbul() && (op == SELFBALANCE || op == CHAINID)) {
         //return;
