@@ -239,11 +239,11 @@ public enum OpCode {
   /**
    * (0x46) Get the chain id
    */
-  CHAINID(0x46, 0, 1, OpCode.Tier.BaseTier),
+  //CHAINID(0x46, 0, 1, OpCode.Tier.BaseTier),
   /**
    * (0x47) Get current account balance
    */
-  //SELFBALANCE(0x47, 0, 1, Tier.LowTier),
+  SELFBALANCE(0x47, 0, 1, Tier.LowTier),
 
 
   /*  Memory, Storage and Flow Operations */

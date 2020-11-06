@@ -7,14 +7,14 @@ import static org.tron.core.vm.OpCode.CALL;
 import static org.tron.core.vm.OpCode.CALLTOKEN;
 import static org.tron.core.vm.OpCode.CALLTOKENID;
 import static org.tron.core.vm.OpCode.CALLTOKENVALUE;
-import static org.tron.core.vm.OpCode.CHAINID;
+//import static org.tron.core.vm.OpCode.CHAINID;
 import static org.tron.core.vm.OpCode.CREATE2;
 import static org.tron.core.vm.OpCode.EXTCODEHASH;
 import static org.tron.core.vm.OpCode.ISCONTRACT;
 import static org.tron.core.vm.OpCode.PUSH1;
 import static org.tron.core.vm.OpCode.REVERT;
 import static org.tron.core.vm.OpCode.SAR;
-//import static org.tron.core.vm.OpCode.SELFBALANCE;
+import static org.tron.core.vm.OpCode.SELFBALANCE;
 import static org.tron.core.vm.OpCode.SHL;
 import static org.tron.core.vm.OpCode.SHR;
 import static org.tron.core.vm.OpCode.TOKENBALANCE;
@@ -1097,18 +1097,18 @@ public class VM {
           program.step();
         }
         break;
-        case CHAINID: {
-          DataWord chainId = program.getChainId();
-          program.stackPush(chainId);
-          program.step();
-          break;
-        }
-        //case SELFBALANCE: {
-        //  DataWord selfBalance = program.getBalance(program.getContractAddress());
-        //  program.stackPush(selfBalance);
+        //case CHAINID: {
+        //  DataWord chainId = program.getChainId();
+        //  program.stackPush(chainId);
         //  program.step();
         //  break;
         //}
+        case SELFBALANCE: {
+          DataWord selfBalance = program.getBalance(program.getContractAddress());
+          program.stackPush(selfBalance);
+          program.step();
+          break;
+        }
         case POP: {
           program.stackPop();
           program.step();
