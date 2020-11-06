@@ -355,7 +355,7 @@ public class StressPrecondition {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
   }
 
-  @Test(enabled = true)
+  @Test(enabled = false)
   public void test07CreateTokenAndDispatchToken() {
     if (PublicMethed.queryAccount(assetIssueOwnerKey, blockingStubFull).getAssetIssuedID()
         .isEmpty()) {
@@ -444,7 +444,7 @@ public class StressPrecondition {
     PublicMethed.waitProduceNextBlock(blockingStubFull);
   }
 
-  @Test(enabled = true)
+  @Test(enabled = false)
   public void test08CreateExchange() {
     listExchange = PublicMethed.getExchangeList(blockingStubFull);
     Long exchangeId = 0L;
@@ -490,7 +490,7 @@ public class StressPrecondition {
   }
 
 
-  @Test(enabled = true)
+  @Test(enabled = false)
   public void test09MutiSignUpdate() {
     String[] permissionKeyString = new String[5];
     String[] ownerKeyString = new String[1];
@@ -614,7 +614,7 @@ public class StressPrecondition {
 
 
 
-  @Test(enabled = true)
+  @Test(enabled = false)
   public void test14ChangeMaintainTime() {
     ChainParameters chainParameters = blockingStubFull
         .getChainParameters(EmptyMessage.newBuilder().build());
