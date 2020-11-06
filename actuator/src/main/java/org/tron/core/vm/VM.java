@@ -7,7 +7,7 @@ import static org.tron.core.vm.OpCode.CALL;
 import static org.tron.core.vm.OpCode.CALLTOKEN;
 import static org.tron.core.vm.OpCode.CALLTOKENID;
 import static org.tron.core.vm.OpCode.CALLTOKENVALUE;
-//import static org.tron.core.vm.OpCode.CHAINID;
+import static org.tron.core.vm.OpCode.CHAINID;
 import static org.tron.core.vm.OpCode.CREATE2;
 import static org.tron.core.vm.OpCode.EXTCODEHASH;
 import static org.tron.core.vm.OpCode.ISCONTRACT;
@@ -1097,12 +1097,12 @@ public class VM {
           program.step();
         }
         break;
-        //case CHAINID: {
-        //  DataWord chainId = program.getChainId();
-        //  program.stackPush(chainId);
-        //  program.step();
-        //  break;
-        //}
+        case CHAINID: {
+          DataWord chainId = program.getChainId();
+          program.stackPush(chainId);
+          program.step();
+          break;
+        }
         //case SELFBALANCE: {
         //  DataWord selfBalance = program.getBalance(program.getContractAddress());
         //  program.stackPush(selfBalance);

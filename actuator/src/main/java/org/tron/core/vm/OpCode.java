@@ -239,7 +239,7 @@ public enum OpCode {
   /**
    * (0x46) Get the chain id
    */
-  //CHAINID(0x46, 0, 1, OpCode.Tier.BaseTier),
+  CHAINID(0x46, 0, 1, OpCode.Tier.BaseTier),
   /**
    * (0x47) Get current account balance
    */
