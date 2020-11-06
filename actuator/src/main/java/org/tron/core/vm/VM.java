@@ -18,6 +18,12 @@ import static org.tron.core.vm.OpCode.SELFBALANCE;
 import static org.tron.core.vm.OpCode.SHL;
 import static org.tron.core.vm.OpCode.SHR;
 import static org.tron.core.vm.OpCode.TOKENBALANCE;
+import static org.tron.core.vm.OpCode.ISSRCANDIDATE;
+import static org.tron.core.vm.OpCode.REWARDBALANCE;
+import static org.tron.core.vm.OpCode.STAKE;
+import static org.tron.core.vm.OpCode.UNSTAKE;
+import static org.tron.core.vm.OpCode.WITHDRAWREWARD;
+
 
 import java.math.BigInteger;
 import java.util.ArrayList;
@@ -123,24 +129,24 @@ public class VM {
         throw Program.Exception.invalidOpCode(program.getCurrentOp());
       }
 
-      // if (!VMConfig.allowTvmSolidity059() && op == ISCONTRACT) {
-      //   //return;
-      //   throw Program.Exception.invalidOpCode(program.getCurrentOp());
-      // }
-
-      if (!VMConfig.allowTvmIstanbul() && (op == SELFBALANCE || op == CHAINID)) {
+      if (!VMConfig.allowTvmSolidity059() && op == ISCONTRACT) {
         //return;
         throw Program.Exception.invalidOpCode(program.getCurrentOp());
       }
+
+      // if (!VMConfig.allowTvmIstanbul() && (op == SELFBALANCE || op == CHAINID)) {
+      //   //return;
+      //   throw Program.Exception.invalidOpCode(program.getCurrentOp());
+      // }
       // if (!VMConfig.allowTvmIstanbul() && (op.val() == (byte) 0x47 || op.val() == (byte) 0x46)) {
       //   throw Program.Exception.invalidOpCode(program.getCurrentOp());
       // }
 
-//      if (!VMConfig.allowTvmStake()
-//          && (op == ISSRCANDIDATE || op == REWARDBALANCE || op == STAKE || op == UNSTAKE
-//          || op == WITHDRAWREWARD)) {
-//        throw Program.Exception.invalidOpCode(program.getCurrentOp());
-//      }
+     if (!VMConfig.allowTvmStake()
+         && (op == ISSRCANDIDATE || op == REWARDBALANCE || op == STAKE || op == UNSTAKE
+         || op == WITHDRAWREWARD)) {
+       throw Program.Exception.invalidOpCode(program.getCurrentOp());
+     }
 //
 //      if (!VMConfig.allowTvmAssetIssue() && (op == TOKENISSUE || op == UPDATEASSET)) {
 //        throw Program.Exception.invalidOpCode(program.getCurrentOp());
