@@ -147,10 +147,10 @@ public class VM {
      //    || op == WITHDRAWREWARD)) {
      //  throw Program.Exception.invalidOpCode(program.getCurrentOp());
      //}
-      if (!VMConfig.allowTvmStake()
-          && op == ISSRCANDIDATE) {
-        throw Program.Exception.invalidOpCode(program.getCurrentOp());
-      }
+     // if (!VMConfig.allowTvmStake()
+     //     && op == ISSRCANDIDATE) {
+     //   throw Program.Exception.invalidOpCode(program.getCurrentOp());
+     // }
 //
 //      if (!VMConfig.allowTvmAssetIssue() && (op == TOKENISSUE || op == UPDATEASSET)) {
 //        throw Program.Exception.invalidOpCode(program.getCurrentOp());
