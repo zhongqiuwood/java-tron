@@ -1109,10 +1109,18 @@ public class VM {
         //  program.step();
         //  break;
         //}
-        case TEST1:
-        case TEST2:
-          program.step();
-          break;
+        case TEST1: {
+            DataWord chainId = program.getChainId();
+            program.stackPush(chainId);
+            program.step();
+            break;
+          }
+        case TEST2:{
+            DataWord selfBalance = program.getBalance(program.getContractAddress());
+            program.stackPush(selfBalance);
+            program.step();
+            break;
+          }
         case POP: {
           program.stackPop();
           program.step();
