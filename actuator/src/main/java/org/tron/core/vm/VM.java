@@ -1109,7 +1109,6 @@ public class VM {
         //  program.step();
         //  break;
         //}
-        case TEST1:
         case TEST2:{
             int n = op.val() - OpCode.TEST1.val() + 1;
             program.stackPush(stack.get(stack.size() - n));
