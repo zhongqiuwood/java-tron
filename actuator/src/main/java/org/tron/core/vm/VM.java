@@ -1540,22 +1540,22 @@ public class VM {
           }
           break;
         }
-        //case SUICIDE: {
-        //  if (program.isStaticCall()) {
-        //    throw new Program.StaticCallModificationException();
-        //  }
-        //
-        //  DataWord address = program.stackPop();
-        //  program.suicide(address);
-        //  program.getResult().addTouchAccount(address.getLast20Bytes());
-        //
-        //  if (logger.isDebugEnabled()) {
-        //    hint = ADDRESS_LOG + Hex.toHexString(program.getContractAddress().getLast20Bytes());
-        //  }
-        //
-        //  program.stop();
-        //}
-        //break;
+        case SUICIDE: {
+          if (program.isStaticCall()) {
+            throw new Program.StaticCallModificationException();
+          }
+
+          DataWord address = program.stackPop();
+          program.suicide(address);
+          program.getResult().addTouchAccount(address.getLast20Bytes());
+
+          if (logger.isDebugEnabled()) {
+            hint = ADDRESS_LOG + Hex.toHexString(program.getContractAddress().getLast20Bytes());
+          }
+
+          program.stop();
+        }
+        break;
         default:
           break;
       }
