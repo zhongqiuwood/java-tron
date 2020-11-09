@@ -1386,18 +1386,18 @@ public class VM {
           program.step();
         }
         break;
-        case CREATE2: {
-          if (program.isStaticCall()) {
-            throw new Program.StaticCallModificationException();
-          }
-          DataWord value = program.stackPop();
-          DataWord inOffset = program.stackPop();
-          DataWord inSize = program.stackPop();
-          DataWord salt = program.stackPop();
-          program.createContract2(value, inOffset, inSize, salt);
-          program.step();
-        }
-        break;
+        //case CREATE2: {
+        //  if (program.isStaticCall()) {
+        //    throw new Program.StaticCallModificationException();
+        //  }
+        //  DataWord value = program.stackPop();
+        //  DataWord inOffset = program.stackPop();
+        //  DataWord inSize = program.stackPop();
+        //  DataWord salt = program.stackPop();
+        //  program.createContract2(value, inOffset, inSize, salt);
+        //  program.step();
+        //}
+        //break;
         case TOKENBALANCE: {
           DataWord tokenId = program.stackPop();
           DataWord address = program.stackPop();
