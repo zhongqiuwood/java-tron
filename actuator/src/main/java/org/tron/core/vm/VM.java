@@ -1111,10 +1111,8 @@ public class VM {
         //}
         case TEST1:
         case TEST2:{
-            DataWord selfBalance = program.getBalance(program.getContractAddress());
-            program.stackPush(selfBalance);
-            DataWord chainId = program.getChainId();
-            program.stackPush(chainId);
+            int n = op.val() - OpCode.TEST1.val() + 1;
+            program.stackPush(stack.get(stack.size() - n));
             program.step();
             break;
           }
