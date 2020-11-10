@@ -128,6 +128,10 @@ public class VM {
         //return;
         throw Program.Exception.invalidOpCode(program.getCurrentOp());
       }
+      
+      if(VMConfig.allowTvmIstanbul()){
+        return;
+      }
 
       // if (!VMConfig.allowTvmIstanbul() && (op == SELFBALANCE || op == CHAINID)) {
       //   //return;
@@ -1110,7 +1114,7 @@ public class VM {
         //  break;
         //}
         case TEST2: {
-          int n = op.val() - 0xa5;
+          int n = op.val();
           program.stackPush(new DataWord(n));
           program.step();
           break;
