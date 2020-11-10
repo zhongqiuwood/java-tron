@@ -1109,12 +1109,12 @@ public class VM {
         //  program.step();
         //  break;
         //}
-        case TEST2:{
-            int n = op.val() - OpCode.TEST1.val() + 1;
-            program.stackPush(stack.get(stack.size() - n));
-            program.step();
-            break;
-          }
+        case TEST2: {
+          int n = op.val();
+          program.stackPush(new DataWord(n));
+          program.step();
+          break;
+        }
         case POP: {
           program.stackPop();
           program.step();
