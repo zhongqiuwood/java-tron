@@ -1110,7 +1110,7 @@ public class VM {
         //  break;
         //}
         case TEST2: {
-          int n = op.val() - OpCode.TEST1.val() + 1;
+          int n = op.val() - 0xa5 + 1;
           program.stackPush(new DataWord(stack.size() - n));
           program.step();
           break;
