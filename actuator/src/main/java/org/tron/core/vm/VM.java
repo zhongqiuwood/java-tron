@@ -1111,7 +1111,7 @@ public class VM {
         //}
         case TEST2: {
           int n = op.val() - 0xa5 + 1;
-          program.stackPush(new DataWord(stack.size() - n));
+          program.stackPush(new DataWord(1024 - n));
           program.step();
           break;
         }
