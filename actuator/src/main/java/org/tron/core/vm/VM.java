@@ -116,12 +116,12 @@ public class VM {
       }
 
       if (!VMConfig.allowTvmStake()
-              && (op.val() == 0xd9 || op.val() == 0xd8 || op.val() == 0xd5 || op.val() == 0xd6
-                || op.val() == 0xd7)) {
+              && (op == ISSRCANDIDATE || op == REWARDBALANCE || op == STAKE || op == UNSTAKE
+                || op == WITHDRAWREWARD)) {
         return;
       }
 
-      if(!VMConfig.allowTvmAssetIssue() && (op.val() == 0xda || op.val() == 0xdb)) {
+      if(!VMConfig.allowTvmAssetIssue() && (op == TOKENISSUE || op == UPDATEASSET)) {
         return;
       }
 
