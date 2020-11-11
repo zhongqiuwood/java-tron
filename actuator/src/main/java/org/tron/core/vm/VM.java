@@ -93,36 +93,36 @@ public class VM {
     try {
       OpCode op = OpCode.code(program.getCurrentOp());
       if (op == null) {
-        throw Program.Exception.invalidOpCode(program.getCurrentOp());
+        return;
       }
 
       // hard fork for 3.2
       if (!VMConfig.allowTvmTransferTrc10()
           && (op == CALLTOKEN || op == TOKENBALANCE || op == CALLTOKENVALUE || op == CALLTOKENID)) {
-        throw Program.Exception.invalidOpCode(program.getCurrentOp());
+        return;
       }
 
       if (!VMConfig.allowTvmConstantinople()
           && (op == SHL || op == SHR || op == SAR || op == CREATE2 || op == EXTCODEHASH)) {
-        throw Program.Exception.invalidOpCode(program.getCurrentOp());
+        return;
       }
 
       if (!VMConfig.allowTvmSolidity059() && op == ISCONTRACT) {
-        throw Program.Exception.invalidOpCode(program.getCurrentOp());
+        return;
       }
 
       if (!VMConfig.allowTvmIstanbul() && (op == SELFBALANCE || op == CHAINID)) {
-        throw Program.Exception.invalidOpCode(program.getCurrentOp());
+        return;
       }
 
       if (!VMConfig.allowTvmStake()
               && (op.val() == 0xd9 || op.val() == 0xd8 || op.val() == 0xd5 || op.val() == 0xd6
                 || op.val() == 0xd7)) {
-        throw Program.Exception.invalidOpCode(program.getCurrentOp());
+        return;
       }
 
       if(!VMConfig.allowTvmAssetIssue() && (op.val() == 0xda || op.val() == 0xdb)) {
-        throw Program.Exception.invalidOpCode(program.getCurrentOp());
+        return;
       }
 
       program.setLastOp(op.val());
