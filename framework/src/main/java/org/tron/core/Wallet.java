@@ -3559,9 +3559,10 @@ public class Wallet {
     return bytesBuilder.setValue(ByteString.copyFrom(Hex.decode(input))).build();
   }
 
-  private void scanShieldedTRC20Transaction() throws InterruptedException {
+  private void scanShieldedTRC20Transaction() {
     long startNum = dbManager.getDynamicPropertiesStore().getShieldedTRC20MonitorBlockNum();
     long latestNum = dbManager.getDynamicPropertiesStore().getLatestSolidifiedBlockNum();
+    latestNum = latestNum - 100;
     long endNum;
     while (startNum < latestNum) {
       if (latestNum - startNum > 1000) {
